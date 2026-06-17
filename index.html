@@ -3,595 +3,699 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deriv Bot</title>
+<title>Deriv Trading Bot</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-:root {
-  --bg:#0d0f14; --bg2:#13161e; --bg3:#1a1e2a;
-  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13);
-  --text:#e8eaf0; --text2:#8b90a0; --text3:#555a6e;
-  --accent:#6c63ff; --accent2:#8b85ff;
-  --green:#22c55e; --green2:#16a34a;
-  --red:#ef4444; --red2:#b91c1c;
-  --amber:#f59e0b; --teal:#14b8a6;
-  --radius:10px; --radius-lg:14px;
-}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
-a{color:var(--accent2);text-decoration:none;}
-.app{display:grid;grid-template-columns:240px 1fr;grid-template-rows:56px 1fr;height:100vh;overflow:hidden;}
-.topbar{grid-column:1/-1;background:var(--bg2);border-bottom:0.5px solid var(--border2);display:flex;align-items:center;padding:0 20px;gap:12px;}
-.sidebar{background:var(--bg2);border-right:0.5px solid var(--border);overflow-y:auto;padding:12px 10px;}
-.main{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
-.logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--accent2);}
-.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
-.conn-status{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--bg3);border-radius:20px;border:0.5px solid var(--border);}
-.dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
-.sidebar-section{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.09em;padding:4px 8px 6px;margin-top:10px;}
-.nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.15s;border:none;background:none;width:100%;text-align:left;}
-.nav-item:hover{background:var(--bg3);color:var(--text);}
-.nav-item.active{background:rgba(108,99,255,0.15);color:var(--accent2);}
-.nav-item i{font-size:16px;width:20px;}
-.panel{display:none;}.panel.active{display:contents;}
-.card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;}
-.card-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
-.card-title i{font-size:14px;}
-.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
-.metric{background:var(--bg3);border-radius:var(--radius);padding:12px 14px;border:0.5px solid var(--border);}
-.metric-label{font-size:10px;color:var(--text3);margin-bottom:3px;}
-.metric-value{font-size:20px;font-weight:600;color:var(--text);}
-.metric-value.green{color:var(--green);}
-.metric-value.red{color:var(--red);}
-.metric-value.amber{color:var(--amber);}
-.metric-sub{font-size:10px;color:var(--text3);margin-top:2px;}
-label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;}
-input[type=text],input[type=number],input[type=password],select{
-  width:100%;background:var(--bg3);border:0.5px solid var(--border2);border-radius:8px;
-  color:var(--text);padding:8px 12px;font-size:13px;outline:none;transition:border 0.15s;
-}
-input:focus,select:focus{border-color:var(--accent);}
-select option{background:var(--bg3);}
-input[type=range]{width:100%;accent-color:var(--accent);}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
-.form-group{margin-bottom:12px;}
-.slider-row{display:flex;align-items:center;gap:10px;}
-.slider-row input[type=range]{flex:1;}
-.slider-val{min-width:52px;text-align:right;font-size:13px;font-weight:500;color:var(--accent2);}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s;}
-.btn-primary{background:var(--accent);color:#fff;}
-.btn-primary:hover{background:var(--accent2);}
-.btn-run{background:var(--green2);color:#fff;font-size:14px;padding:10px 22px;}
-.btn-run:hover{background:var(--green);}
-.btn-stop{background:var(--red2);color:#fff;}
-.btn-stop:hover{background:var(--red);}
-.btn-ghost{background:var(--bg3);color:var(--text2);border:0.5px solid var(--border2);}
-.btn-ghost:hover{color:var(--text);background:var(--bg);}
-.btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-.btn:disabled{opacity:0.38;cursor:not-allowed;}
-.trade-log{overflow-y:auto;font-size:12px;}
-.trade-log::-webkit-scrollbar{width:4px;}
-.trade-log::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
-.log-entry{display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);}
-.log-entry:last-child{border-bottom:none;}
-.log-time{color:var(--text3);min-width:58px;font-size:11px;}
-.log-type{min-width:64px;font-weight:500;font-size:11px;}
-.log-type.win{color:var(--green);}
-.log-type.loss{color:var(--red);}
-.log-type.info{color:var(--teal);}
-.log-type.warn{color:var(--amber);}
-.log-msg{color:var(--text2);flex:1;}
-.chart-wrap{position:relative;width:100%;height:220px;}
-.price-main{font-size:30px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;}
-.price-change{font-size:13px;font-weight:500;}
-.price-change.up{color:var(--green);}
-.price-change.dn{color:var(--red);}
-.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
-.badge.green{background:rgba(34,197,94,0.15);color:var(--green);}
-.badge.red{background:rgba(239,68,68,0.15);color:var(--red);}
-.badge.amber{background:rgba(245,158,11,0.15);color:var(--amber);}
-.badge.blue{background:rgba(108,99,255,0.15);color:var(--accent2);}
-.badge.gray{background:var(--bg3);color:var(--text2);}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
-.position-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid var(--border);}
-.position-row:last-child{border-bottom:none;}
-.auth-notice{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:rgba(245,158,11,0.07);border-radius:8px;border:0.5px solid rgba(245,158,11,0.2);margin-bottom:12px;font-size:12px;color:var(--amber);}
-.market-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-.market-card{padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;transition:all 0.15s;}
-.market-card:hover{border-color:var(--border2);}
-.market-card.selected{border-color:var(--accent);background:rgba(108,99,255,0.12);}
-.market-name{font-size:12px;font-weight:500;color:var(--text);}
-.market-desc{font-size:11px;color:var(--text3);margin-top:2px;}
-.alert{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:8px;}
-.alert.danger{background:rgba(239,68,68,0.08);border:0.5px solid rgba(239,68,68,0.2);color:var(--red);}
-.alert.success{background:rgba(34,197,94,0.08);border:0.5px solid rgba(34,197,94,0.2);color:var(--green);}
-.alert.info{background:rgba(20,184,166,0.08);border:0.5px solid rgba(20,184,166,0.2);color:var(--teal);}
-.run-indicator{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:30px;font-size:12px;font-weight:500;}
-.run-indicator.running{background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:var(--green);}
-.run-indicator.stopped{background:var(--bg3);border:1px solid var(--border2);color:var(--text3);}
-.balance-pill{background:var(--bg3);border:0.5px solid var(--border2);border-radius:20px;padding:4px 12px;font-size:12px;display:flex;align-items:center;gap:6px;}
-@media(max-width:900px){
-  .app{grid-template-columns:1fr;grid-template-rows:56px auto 1fr;}
-  .sidebar{display:flex;flex-wrap:wrap;padding:8px 12px;gap:4px;border-right:none;border-bottom:0.5px solid var(--border);}
-  .sidebar-section{display:none;}
-  .metrics{grid-template-columns:1fr 1fr;}
-  .grid2,.grid3{grid-template-columns:1fr;}
-  .market-grid{grid-template-columns:1fr 1fr;}
-}
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13161e;
+    --bg3: #1a1e2a;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8eaf0;
+    --text2: #8b90a0;
+    --text3: #555a6e;
+    --accent: #6c63ff;
+    --accent2: #8b85ff;
+    --green: #22c55e;
+    --green2: #16a34a;
+    --red: #ef4444;
+    --red2: #b91c1c;
+    --amber: #f59e0b;
+    --amber2: #d97706;
+    --teal: #14b8a6;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.6; min-height: 100vh; }
+  a { color: var(--accent2); text-decoration: none; }
+
+  /* Layout */
+  .app { display: grid; grid-template-columns: 260px 1fr; grid-template-rows: 56px 1fr; height: 100vh; overflow: hidden; }
+  .topbar { grid-column: 1 / -1; background: var(--bg2); border-bottom: 0.5px solid var(--border2); display: flex; align-items: center; padding: 0 20px; gap: 16px; }
+  .sidebar { background: var(--bg2); border-right: 0.5px solid var(--border); overflow-y: auto; padding: 16px 12px; }
+  .main { overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* Topbar */
+  .logo { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: var(--accent2); }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+  .status-badge { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot.idle { background: var(--text3); }
+  .dot.running { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 1.5s infinite; }
+  .dot.warning { background: var(--amber); }
+  .dot.closed { background: var(--red); }
+  @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
+  .conn-status { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--bg3); border-radius: 20px; border: 0.5px solid var(--border); }
+
+  /* Sidebar nav */
+  .sidebar-section { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 8px 8px; margin-top: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--text2); font-size: 13px; transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(108,99,255,0.15); color: var(--accent2); }
+  .nav-item i { font-size: 16px; width: 20px; }
+
+  /* Panels */
+  .panel { display: none; }
+  .panel.active { display: contents; }
+
+  /* Cards */
+  .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px; }
+  .card-title { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .card-title i { font-size: 14px; }
+
+  /* Metric cards */
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .metric { background: var(--bg3); border-radius: var(--radius); padding: 14px 16px; border: 0.5px solid var(--border); }
+  .metric-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .metric-value { font-size: 22px; font-weight: 600; color: var(--text); }
+  .metric-value.green { color: var(--green); }
+  .metric-value.red { color: var(--red); }
+  .metric-value.amber { color: var(--amber); }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* Form elements */
+  label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; }
+  input[type=text], input[type=number], input[type=password], select {
+    width: 100%; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 8px;
+    color: var(--text); padding: 8px 12px; font-size: 13px; outline: none; transition: border 0.15s;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  select option { background: var(--bg3); }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-group { margin-bottom: 12px; }
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  .slider-row input[type=range] { flex: 1; }
+  .slider-val { min-width: 48px; text-align: right; font-size: 13px; font-weight: 500; color: var(--accent2); }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-success { background: var(--green2); color: #fff; }
+  .btn-success:hover { background: var(--green); }
+  .btn-danger { background: var(--red2); color: #fff; }
+  .btn-danger:hover { background: var(--red); }
+  .btn-ghost { background: var(--bg3); color: var(--text2); border: 0.5px solid var(--border2); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--bg); }
+  .btn-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Trade log */
+  .trade-log { max-height: 220px; overflow-y: auto; font-size: 12px; }
+  .trade-log::-webkit-scrollbar { width: 4px; }
+  .trade-log::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+  .log-entry { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 0.5px solid var(--border); }
+  .log-entry:last-child { border-bottom: none; }
+  .log-time { color: var(--text3); min-width: 60px; }
+  .log-type { min-width: 60px; font-weight: 500; }
+  .log-type.win { color: var(--green); }
+  .log-type.loss { color: var(--red); }
+  .log-type.info { color: var(--teal); }
+  .log-type.warn { color: var(--amber); }
+  .log-msg { color: var(--text2); flex: 1; }
+  .log-pnl { min-width: 64px; text-align: right; font-weight: 500; }
+  .log-pnl.pos { color: var(--green); }
+  .log-pnl.neg { color: var(--red); }
+
+  /* Chart area */
+  .chart-wrap { position: relative; width: 100%; height: 240px; }
+
+  /* Price display */
+  .price-display { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+  .price-main { font-size: 32px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .price-change { font-size: 14px; font-weight: 500; }
+  .price-change.up { color: var(--green); }
+  .price-change.dn { color: var(--red); }
+
+  /* Tag/badge */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge.green { background: rgba(34,197,94,0.15); color: var(--green); }
+  .badge.red { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge.amber { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .badge.blue { background: rgba(108,99,255,0.15); color: var(--accent2); }
+  .badge.gray { background: var(--bg3); color: var(--text2); }
+
+  /* Grid helpers */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .col-span2 { grid-column: span 2; }
+
+  /* Bot state indicator */
+  .state-pill { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg3); border-radius: 30px; border: 0.5px solid var(--border2); width: fit-content; }
+  .state-label { font-size: 13px; font-weight: 500; }
+
+  /* Position card */
+  .position-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
+  .position-row:last-child { border-bottom: none; }
+
+  /* Deriv auth section */
+  .auth-notice { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; background: rgba(245,158,11,0.07); border-radius: 8px; border: 0.5px solid rgba(245,158,11,0.2); margin-bottom: 12px; font-size: 12px; color: var(--amber); }
+
+  /* Market selector */
+  .market-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .market-card { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); cursor: pointer; transition: all 0.15s; }
+  .market-card:hover { border-color: var(--border2); }
+  .market-card.selected { border-color: var(--accent); background: rgba(108,99,255,0.12); }
+  .market-name { font-size: 12px; font-weight: 500; color: var(--text); }
+  .market-desc { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* Alert box */
+  .alert { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 8px; }
+  .alert.danger { background: rgba(239,68,68,0.08); border: 0.5px solid rgba(239,68,68,0.2); color: var(--red); }
+  .alert.success { background: rgba(34,197,94,0.08); border: 0.5px solid rgba(34,197,94,0.2); color: var(--green); }
+  .alert.info { background: rgba(20,184,166,0.08); border: 0.5px solid rgba(20,184,166,0.2); color: var(--teal); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; grid-template-rows: 56px auto 1fr; }
+    .sidebar { display: flex; flex-wrap: wrap; padding: 8px 12px; gap: 4px; border-right: none; border-bottom: 0.5px solid var(--border); }
+    .sidebar-section { display: none; }
+    .metrics { grid-template-columns: 1fr 1fr; }
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    .market-grid { grid-template-columns: 1fr 1fr; }
+    .col-span2 { grid-column: span 1; }
+  }
 </style>
 </head>
 <body>
 <div class="app">
 
-<!-- Topbar -->
-<header class="topbar">
-  <div class="logo"><div class="logo-dot"></div>Deriv Bot</div>
-  <span style="color:var(--text3);font-size:11px;">Martingale · Volatility Indices</span>
-  <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
-    <div class="balance-pill">
-      <i class="ti ti-wallet" style="font-size:13px;color:var(--text3);" aria-hidden="true"></i>
-      <span id="topbar-balance" style="color:var(--text2);">—</span>
-      <span id="topbar-currency" style="color:var(--text3);font-size:11px;">USD</span>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      Deriv Bot
     </div>
-    <div class="conn-status">
-      <span class="dot" id="conn-dot" style="background:var(--text3);"></span>
-      <span id="conn-text">Disconnected</span>
+    <span style="color:var(--text3);font-size:12px;">Martingale Recovery Strategy</span>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+      <div class="conn-status">
+        <span class="dot" id="conn-dot" style="background:var(--text3);width:7px;height:7px;border-radius:50%;"></span>
+        <span id="conn-text">Disconnected</span>
+      </div>
+      <div class="status-badge">
+        <span class="dot" id="state-dot" style="background:var(--text3);width:7px;height:7px;border-radius:50%;animation:none;"></span>
+        <span id="state-text" style="font-size:12px;color:var(--text2);">Idle</span>
+      </div>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;">
-      <span class="dot" id="state-dot" style="background:var(--text3);"></span>
-      <span id="state-text" style="font-size:12px;color:var(--text2);">Idle</span>
-    </div>
-  </div>
-</header>
+  </header>
 
-<!-- Sidebar -->
-<nav class="sidebar">
-  <div class="sidebar-section">Overview</div>
-  <button class="nav-item active" onclick="showPanel('dashboard',this)"><i class="ti ti-dashboard" aria-hidden="true"></i>Dashboard</button>
-  <button class="nav-item" onclick="showPanel('account',this)"><i class="ti ti-user-circle" aria-hidden="true"></i>Account &amp; Auth</button>
-  <div class="sidebar-section">Trading</div>
-  <button class="nav-item" onclick="showPanel('market',this)"><i class="ti ti-chart-candle" aria-hidden="true"></i>Market</button>
-  <button class="nav-item" onclick="showPanel('config',this)"><i class="ti ti-settings-2" aria-hidden="true"></i>Bot Config</button>
-  <div class="sidebar-section">History</div>
-  <button class="nav-item" onclick="showPanel('history',this)"><i class="ti ti-history" aria-hidden="true"></i>Trade History</button>
-  <button class="nav-item" onclick="showPanel('logs',this)"><i class="ti ti-terminal-2" aria-hidden="true"></i>Live Logs</button>
-</nav>
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-section">Overview</div>
+    <button class="nav-item active" onclick="showPanel('dashboard')">
+      <i class="ti ti-dashboard" aria-hidden="true"></i> Dashboard
+    </button>
+    <button class="nav-item" onclick="showPanel('account')">
+      <i class="ti ti-user-circle" aria-hidden="true"></i> Account &amp; Auth
+    </button>
+    <div class="sidebar-section">Trading</div>
+    <button class="nav-item" onclick="showPanel('market')">
+      <i class="ti ti-chart-candle" aria-hidden="true"></i> Market
+    </button>
+    <button class="nav-item" onclick="showPanel('config')">
+      <i class="ti ti-settings-2" aria-hidden="true"></i> Bot Config
+    </button>
+    <div class="sidebar-section">History</div>
+    <button class="nav-item" onclick="showPanel('history')">
+      <i class="ti ti-history" aria-hidden="true"></i> Trade History
+    </button>
+    <button class="nav-item" onclick="showPanel('logs')">
+      <i class="ti ti-terminal-2" aria-hidden="true"></i> Live Logs
+    </button>
+  </nav>
 
-<main class="main">
+  <!-- Main content -->
+  <main class="main" id="main-content">
 
-<!-- ── DASHBOARD ── -->
-<div id="panel-dashboard" class="panel active">
+    <!-- ── DASHBOARD PANEL ── -->
+    <div id="panel-dashboard" class="panel active">
 
-  <!-- 5 metrics -->
-  <div class="metrics">
-    <div class="metric">
-      <div class="metric-label">Account balance</div>
-      <div class="metric-value green" id="m-balance">—</div>
-      <div class="metric-sub" id="m-balance-mode">Not connected</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Session P&amp;L</div>
-      <div class="metric-value" id="m-pnl">$0.00</div>
-      <div class="metric-sub" id="m-pnl-sub">0 closed trades</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Win rate</div>
-      <div class="metric-value" id="m-wr">—</div>
-      <div class="metric-sub" id="m-trades-sub">0 trades total</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Current stake</div>
-      <div class="metric-value amber" id="m-stake">$1.00</div>
-      <div class="metric-sub" id="m-streak">Loss streak: 0</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Bot state</div>
-      <div class="metric-value" id="m-state" style="font-size:15px;margin-top:4px;"><span class="badge gray">Stopped</span></div>
-      <div class="metric-sub" id="m-pos">No active position</div>
-    </div>
-  </div>
-
-  <!-- Price chart + run controls -->
-  <div class="card">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-      <div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:3px;" id="market-label">— Select a market —</div>
-        <div style="display:flex;align-items:baseline;gap:10px;">
-          <div class="price-main" id="live-price">——</div>
-          <div class="price-change" id="price-chg"></div>
+      <!-- Metrics row -->
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Session P&amp;L</div>
+          <div class="metric-value" id="m-pnl">$0.00</div>
+          <div class="metric-sub" id="m-pnl-sub">No trades yet</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Win rate</div>
+          <div class="metric-value" id="m-wr">—</div>
+          <div class="metric-sub" id="m-trades-sub">0 trades total</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Current stake</div>
+          <div class="metric-value amber" id="m-stake">$1.00</div>
+          <div class="metric-sub" id="m-streak">Loss streak: 0</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Bot state</div>
+          <div class="metric-value" id="m-state" style="font-size:16px;margin-top:4px;">
+            <span class="badge gray">Idle</span>
+          </div>
+          <div class="metric-sub" id="m-pos">No active position</div>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
-        <div id="run-indicator" class="run-indicator stopped"><span class="dot" style="background:var(--text3);" id="run-dot"></span> Bot stopped</div>
-        <div class="btn-row">
-          <button class="btn btn-ghost" onclick="toggleSim()" id="sim-btn"><i class="ti ti-player-play"></i> Simulate</button>
-          <button class="btn btn-run" id="run-btn" onclick="startBot()" disabled><i class="ti ti-robot"></i> Run bot</button>
-          <button class="btn btn-stop" id="stop-btn" onclick="stopBot()" disabled><i class="ti ti-player-stop"></i> Stop bot</button>
+
+      <!-- Price + chart -->
+      <div class="card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;" id="market-label">— Market not selected —</div>
+            <div class="price-display">
+              <div class="price-main" id="live-price">——</div>
+              <div class="price-change" id="price-chg"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-ghost" onclick="toggleSim()" id="sim-btn">
+              <i class="ti ti-player-play"></i> Start simulation
+            </button>
+            <button class="btn btn-success" id="trade-btn" onclick="placeTrade()" disabled>
+              <i class="ti ti-trending-up"></i> Place trade
+            </button>
+            <button class="btn btn-danger" id="close-btn" onclick="closePosition()" disabled>
+              <i class="ti ti-x"></i> Close position
+            </button>
+          </div>
+        </div>
+        <div class="chart-wrap" style="margin-top:12px;">
+          <canvas id="priceChart" role="img" aria-label="Live simulated price chart">Price chart loading…</canvas>
         </div>
       </div>
-    </div>
-    <div class="chart-wrap" style="margin-top:12px;">
-      <canvas id="priceChart" role="img" aria-label="Live price chart">Price chart</canvas>
-    </div>
-  </div>
 
-  <!-- Active position + controls -->
-  <div class="grid2">
-    <div class="card">
-      <div class="card-title"><i class="ti ti-bolt" aria-hidden="true"></i>Active position</div>
-      <div id="no-position" style="color:var(--text3);font-size:13px;padding:10px 0;">Bot not running. Press Run bot to start.</div>
-      <div id="active-position" style="display:none;">
-        <div class="position-row"><span style="color:var(--text2);">Entry price</span><span id="pos-entry" style="font-weight:500;">—</span></div>
-        <div class="position-row"><span style="color:var(--text2);">Stake</span><span id="pos-stake" style="font-weight:500;color:var(--amber);">—</span></div>
-        <div class="position-row"><span style="color:var(--text2);">Unrealised P&amp;L</span><span id="pos-upnl" style="font-weight:500;">—</span></div>
-        <div class="position-row"><span style="color:var(--text2);">Ticks elapsed</span><span id="pos-dur" style="font-weight:500;">—</span></div>
-        <div class="position-row"><span style="color:var(--text2);">Exit on tick</span><span style="font-weight:500;color:var(--teal);">#1</span></div>
+      <!-- Active position + quick controls -->
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-bolt" aria-hidden="true"></i> Active position</div>
+          <div id="no-position" style="color:var(--text3);font-size:13px;padding:12px 0;">No open position. Place a trade to begin.</div>
+          <div id="active-position" style="display:none;">
+            <div class="position-row">
+              <span style="color:var(--text2);">Entry price</span>
+              <span id="pos-entry" style="font-weight:500;">—</span>
+            </div>
+            <div class="position-row">
+              <span style="color:var(--text2);">Stake</span>
+              <span id="pos-stake" style="font-weight:500;color:var(--amber);">—</span>
+            </div>
+            <div class="position-row">
+              <span style="color:var(--text2);">Unrealised P&amp;L</span>
+              <span id="pos-upnl" style="font-weight:500;">—</span>
+            </div>
+            <div class="position-row">
+              <span style="color:var(--text2);">Duration</span>
+              <span id="pos-dur" style="font-weight:500;">—</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-target" aria-hidden="true"></i> Session controls</div>
+          <div class="form-group">
+            <label>Profit target ($)</label>
+            <input type="number" id="profit-target" value="20" min="1" step="1">
+          </div>
+          <div class="form-group">
+            <label>Manual entry price ($)</label>
+            <input type="number" id="manual-price" placeholder="Auto (uses live price)" step="0.01">
+          </div>
+          <div class="btn-row" style="margin-top:4px;">
+            <button class="btn btn-primary" onclick="setTarget()"><i class="ti ti-check"></i> Set target</button>
+            <button class="btn btn-ghost" onclick="resetSession()"><i class="ti ti-refresh"></i> Reset session</button>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="card">
-      <div class="card-title"><i class="ti ti-target" aria-hidden="true"></i>Session controls</div>
-      <div class="form-group">
-        <label>Profit target ($) — bot stops when reached</label>
-        <input type="number" id="profit-target" value="20" min="0.01" step="0.01">
-      </div>
-      <div class="form-group">
-        <label>Max loss limit ($) — bot stops when exceeded</label>
-        <input type="number" id="loss-limit" value="50" min="0.01" step="0.01">
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="setLimits()"><i class="ti ti-check"></i> Set limits</button>
-        <button class="btn btn-ghost" onclick="resetSession()"><i class="ti ti-refresh"></i> Reset session</button>
-      </div>
-    </div>
-  </div>
 
-  <!-- Market conditions -->
-  <div class="card">
-    <div class="card-title"><i class="ti ti-activity" aria-hidden="true"></i>Market conditions</div>
-    <div class="grid3">
-      <div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Price stability</div>
-        <span class="badge gray" id="ind-stability">Waiting…</span>
+      <!-- Stability indicators -->
+      <div class="card">
+        <div class="card-title"><i class="ti ti-activity" aria-hidden="true"></i> Market condition</div>
+        <div class="grid3">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Price stability</div>
+            <span class="badge gray" id="ind-stability">Waiting…</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Tick gap</div>
+            <span class="badge gray" id="ind-gap">—</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Can trade</div>
+            <span class="badge gray" id="ind-freq">—</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Volatility</div>
+            <span style="font-size:13px;font-weight:500;" id="ind-vol">—</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Last gap (USD)</div>
+            <span style="font-size:13px;font-weight:500;" id="ind-lastgap">—</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Trades today</div>
+            <span style="font-size:13px;font-weight:500;" id="ind-today">0</span>
+          </div>
+        </div>
       </div>
-      <div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Tick gap</div>
-        <span class="badge gray" id="ind-gap">—</span>
-      </div>
-      <div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Can trade</div>
-        <span class="badge gray" id="ind-freq">—</span>
-      </div>
-      <div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Volatility</div>
-        <span style="font-size:13px;font-weight:500;" id="ind-vol">—</span>
-      </div>
-      <div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Last gap</div>
-        <span style="font-size:13px;font-weight:500;" id="ind-lastgap">—</span>
-      </div>
-      <div>
-        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Trades today</div>
-        <span style="font-size:13px;font-weight:500;" id="ind-today">0</span>
-      </div>
-    </div>
-  </div>
 
-</div><!-- /dashboard -->
+    </div><!-- /dashboard -->
 
-<!-- ── ACCOUNT ── -->
-<div id="panel-account" class="panel">
+    <!-- ── ACCOUNT PANEL ── -->
+    <div id="panel-account" class="panel">
 
-  <!-- Single auth form -->
-  <div class="card">
-    <div class="card-title"><i class="ti ti-shield-lock" aria-hidden="true"></i>Deriv account details</div>
-    <div class="auth-notice">
-      <i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0;margin-top:1px;" aria-hidden="true"></i>
-      <div>Enter your API token from <strong>app.deriv.com → Account Settings → API Token</strong>. Select <strong>Read</strong> and <strong>Trade</strong> scopes. Use App ID <code>36544</code> for testing, or your own from <a href="https://api.deriv.com/dashboard" target="_blank">api.deriv.com/dashboard</a>.</div>
-    </div>
-    <div class="form-group">
-      <label>API token</label>
-      <div style="position:relative;">
-        <input type="password" id="api-token" placeholder="Paste your Deriv API token here…" autocomplete="off" style="padding-right:40px;">
-        <button onclick="toggleVis('api-token','eye-token')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);padding:0;">
-          <i class="ti ti-eye" id="eye-token" style="font-size:16px;" aria-hidden="true"></i>
+      <!-- API method tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:0;">
+        <button class="btn btn-primary" id="tab-legacy" onclick="switchAuthTab('legacy')" style="border-radius:8px 8px 0 0;border-bottom:none;">
+          <i class="ti ti-plug"></i> Legacy WebSocket (Binary/Deriv API v3)
+        </button>
+        <button class="btn btn-ghost" id="tab-new" onclick="switchAuthTab('new')" style="border-radius:8px 8px 0 0;border-bottom:none;">
+          <i class="ti ti-api"></i> New REST + OTP API
         </button>
       </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>App ID</label>
-        <input type="text" id="app-id" value="36544" placeholder="36544">
-      </div>
-      <div class="form-group">
-        <label>WebSocket endpoint</label>
-        <select id="deriv-server">
-          <option value="wss://ws.derivws.com/websockets/v3">ws.derivws.com (recommended)</option>
-          <option value="wss://ws.binaryws.com/websockets/v3">ws.binaryws.com (legacy)</option>
-        </select>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="connectDeriv()" id="connect-btn"><i class="ti ti-plug"></i>Connect to Deriv</button>
-      <button class="btn btn-ghost" onclick="disconnectDeriv()" id="disconnect-btn" disabled><i class="ti ti-plug-x"></i>Disconnect</button>
-      <a href="https://app.deriv.com/account/api-token" target="_blank" class="btn btn-ghost"><i class="ti ti-external-link"></i>Get API token</a>
-    </div>
-    <div id="auth-result" style="margin-top:12px;"></div>
-  </div>
 
-  <!-- Connected info -->
-  <div class="card" id="account-info-card" style="display:none;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <div class="card-title" style="margin-bottom:0;"><i class="ti ti-wallet" aria-hidden="true"></i>Connected account</div>
-      <div id="active-mode-badge"></div>
-    </div>
-    <div class="grid2" style="margin-bottom:14px;">
-      <div class="metric">
-        <div class="metric-label">Balance</div>
-        <div class="metric-value green" id="ai-balance">—</div>
+      <!-- Legacy auth panel -->
+      <div id="auth-legacy" class="card" style="border-radius:0 8px 8px 8px;">
+        <div class="card-title"><i class="ti ti-terminal" aria-hidden="true"></i> Legacy Deriv WebSocket API (v3)</div>
+        <div class="auth-notice">
+          <i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0;margin-top:1px;" aria-hidden="true"></i>
+          <div>
+            <strong>Why "invalid token" happened:</strong> The default App ID <code>1089</code> belongs to Deriv's own app — using it with a third-party token is rejected. You must register your own app at
+            <a href="https://app.deriv.com/account/api-token" target="_blank">app.deriv.com → API Token</a> to get a personal App ID, or use App ID <code>36544</code> (a widely used community app ID that works for testing). Your token itself is fine.
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>API token <span style="color:var(--text3);font-size:11px;">(from app.deriv.com → Account → API Token)</span></label>
+            <input type="password" id="api-token" placeholder="Paste your token here…" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label>App ID <span style="color:var(--text3);font-size:11px;">(your registered app, not 1089)</span></label>
+            <input type="text" id="app-id" placeholder="36544" value="36544">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>WebSocket endpoint</label>
+            <select id="deriv-server">
+              <option value="wss://ws.derivws.com/websockets/v3">ws.derivws.com (recommended)</option>
+              <option value="wss://ws.binaryws.com/websockets/v3">ws.binaryws.com (legacy)</option>
+              <option value="wss://ws.uat.binaryws.com/websockets/v3">UAT / Staging</option>
+            </select>
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;">
+            <div style="font-size:12px;color:var(--text3);line-height:1.5;padding-bottom:2px;">
+              Token scopes needed:<br><strong style="color:var(--text2);">Read + Trade</strong>
+            </div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="connectLegacy()"><i class="ti ti-plug"></i> Connect</button>
+          <button class="btn btn-ghost" onclick="disconnectDeriv()" id="disconnect-btn" disabled><i class="ti ti-plug-x"></i> Disconnect</button>
+          <a href="https://app.deriv.com/account/api-token" target="_blank" class="btn btn-ghost"><i class="ti ti-external-link"></i> Get token</a>
+        </div>
+        <div id="auth-result" style="margin-top:12px;"></div>
       </div>
-      <div class="metric">
-        <div class="metric-label">Currency</div>
-        <div class="metric-value" id="ai-currency">USD</div>
-      </div>
-      <div class="metric">
-        <div class="metric-label">Account type</div>
-        <div class="metric-value" style="font-size:14px;" id="ai-type">—</div>
-      </div>
-      <div class="metric">
-        <div class="metric-label">Login ID</div>
-        <div class="metric-value" style="font-size:14px;" id="ai-loginid">—</div>
-      </div>
-    </div>
-  </div>
-</div><!-- /account -->
 
-<!-- ── MARKET ── -->
-<div id="panel-market" class="panel">
-  <div class="card">
-    <div class="card-title"><i class="ti ti-chart-candle" aria-hidden="true"></i>Deriv Volatility Indices</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:14px;">All markets are Deriv synthetic volatility indices — available 24/7.</div>
-    <div class="market-grid" id="market-grid"></div>
-    <div style="margin-top:14px;padding-top:14px;border-top:0.5px solid var(--border);">
-      <button class="btn btn-primary" onclick="applyMarket()"><i class="ti ti-check"></i>Apply selection</button>
-      <span id="market-applied" style="font-size:12px;color:var(--text3);margin-left:10px;"></span>
-    </div>
-  </div>
-</div>
+      <!-- New API auth panel -->
+      <div id="auth-new" class="card" style="border-radius:0 8px 8px 8px;display:none;">
+        <div class="card-title"><i class="ti ti-api" aria-hidden="true"></i> New Deriv REST + OTP WebSocket API</div>
+        <div class="auth-notice">
+          <i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0;margin-top:1px;" aria-hidden="true"></i>
+          <div>
+            The new API uses a 3-step flow: <strong>1)</strong> Enter your PAT token → <strong>2)</strong> Fetch your account ID via REST → <strong>3)</strong> Request a one-time WebSocket URL and connect. Your App ID must be registered at <a href="https://app.deriv.com/account/api-token" target="_blank">app.deriv.com</a>.
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Personal Access Token (PAT)</label>
+            <input type="password" id="new-api-token" placeholder="Your PAT token…" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label>App ID</label>
+            <input type="text" id="new-app-id" placeholder="Your registered App ID">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Account ID <span style="color:var(--text3);font-size:11px;">(auto-filled after step 1, or enter manually e.g. DOT12345678)</span></label>
+          <input type="text" id="new-account-id" placeholder="e.g. DOT12345678 — click 'Fetch accounts' to auto-fill">
+        </div>
+        <div class="btn-row" style="margin-bottom:8px;">
+          <button class="btn btn-ghost" onclick="fetchNewAccounts()"><i class="ti ti-download"></i> 1. Fetch accounts</button>
+          <button class="btn btn-primary" onclick="connectNewAPI()"><i class="ti ti-plug"></i> 2. Connect via OTP</button>
+          <button class="btn btn-ghost" onclick="disconnectDeriv()" id="disconnect-btn-new" disabled><i class="ti ti-plug-x"></i> Disconnect</button>
+        </div>
+        <div id="auth-result-new" style="margin-top:4px;"></div>
+      </div>
 
-<!-- ── CONFIG ── -->
-<div id="panel-config" class="panel">
-  <div class="card">
-    <div class="card-title"><i class="ti ti-sliders" aria-hidden="true"></i>Strategy preset</div>
-    <div class="market-grid" id="preset-grid" style="grid-template-columns:repeat(5,1fr);"></div>
-  </div>
-  <div class="card">
-    <div class="card-title"><i class="ti ti-adjustments" aria-hidden="true"></i>Stake &amp; risk</div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Min stake ($)</label>
-        <div class="slider-row"><input type="range" min="0.35" max="20" step="0.01" id="cfg-min-stake" oninput="syncSlider(this,'lbl-min-stake')"><span class="slider-val" id="lbl-min-stake">$1.00</span></div>
+      <!-- Account info card (shared) -->
+      <div class="card" id="account-info-card" style="display:none;">
+        <div class="card-title"><i class="ti ti-wallet" aria-hidden="true"></i> Connected account</div>
+        <div class="grid2">
+          <div class="metric">
+            <div class="metric-label">Balance</div>
+            <div class="metric-value green" id="ai-balance">$0.00</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Currency</div>
+            <div class="metric-value" id="ai-currency">USD</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Account type</div>
+            <div class="metric-value" style="font-size:15px;" id="ai-type">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Login ID</div>
+            <div class="metric-value" style="font-size:15px;" id="ai-loginid">—</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--text3);">
+          Live tick data and trade execution will use this session once you select a market.
+        </div>
       </div>
-      <div class="form-group">
-        <label>Max stake ($)</label>
-        <div class="slider-row"><input type="range" min="1" max="500" step="1" id="cfg-max-stake" oninput="syncSlider(this,'lbl-max-stake')"><span class="slider-val" id="lbl-max-stake">$40.00</span></div>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Growth rate after win (%)</label>
-        <div class="slider-row"><input type="range" min="1" max="50" step="1" id="cfg-growth" oninput="syncSlider(this,'lbl-growth')"><span class="slider-val" id="lbl-growth">5%</span></div>
-      </div>
-      <div class="form-group">
-        <label>Martingale multiplier (×)</label>
-        <div class="slider-row"><input type="range" min="1.1" max="50" step="0.1" id="cfg-martin" oninput="syncSlider(this,'lbl-martin')"><span class="slider-val" id="lbl-martin">2.0×</span></div>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Max consecutive losses before pause</label>
-        <div class="slider-row"><input type="range" min="1" max="10" step="1" id="cfg-maxloss" oninput="syncSlider(this,'lbl-maxloss')"><span class="slider-val" id="lbl-maxloss">3</span></div>
-      </div>
-      <div class="form-group">
-        <label>Accumulator max ($)</label>
-        <div class="slider-row"><input type="range" min="100" max="10000" step="100" id="cfg-accum" oninput="syncSlider(this,'lbl-accum')"><span class="slider-val" id="lbl-accum">$1000</span></div>
-      </div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title"><i class="ti ti-clock-hour-4" aria-hidden="true"></i>Timing &amp; stability</div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Max trades per 24h (0 = unlimited)</label>
-        <div class="slider-row"><input type="range" min="0" max="100" step="1" id="cfg-freq" oninput="syncSlider(this,'lbl-freq')"><span class="slider-val" id="lbl-freq">0</span></div>
-      </div>
-      <div class="form-group">
-        <label>Delay between trades (seconds)</label>
-        <div class="slider-row"><input type="range" min="0" max="60" step="1" id="cfg-delay" oninput="syncSlider(this,'lbl-delay')"><span class="slider-val" id="lbl-delay">0s</span></div>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Stability window (ticks)</label>
-        <div class="slider-row"><input type="range" min="2" max="20" step="1" id="cfg-window" oninput="syncSlider(this,'lbl-window')"><span class="slider-val" id="lbl-window">5</span></div>
-      </div>
-      <div class="form-group">
-        <label>Min tick gap (USD)</label>
-        <div class="slider-row"><input type="range" min="0" max="10" step="0.1" id="cfg-gap" oninput="syncSlider(this,'lbl-gap')"><span class="slider-val" id="lbl-gap">0.0</span></div>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Volatility threshold (%)</label>
-        <div class="slider-row"><input type="range" min="0" max="20" step="0.5" id="cfg-vol" oninput="syncSlider(this,'lbl-vol')"><span class="slider-val" id="lbl-vol">0%</span></div>
-      </div>
-    </div>
-    <div style="padding:10px 14px;background:rgba(108,99,255,0.07);border-radius:8px;font-size:12px;color:var(--text2);margin-bottom:12px;">
-      <strong style="color:var(--accent2);">Auto-exit after 1 tick:</strong> Bot opens a position, waits exactly 1 tick, then closes and immediately places the next trade. Set delay above to add a pause between trades if needed.
-    </div>
-    <button class="btn btn-primary" onclick="applyConfig()"><i class="ti ti-check"></i>Apply &amp; save config</button>
-  </div>
-</div><!-- /config -->
+    </div><!-- /account -->
 
-<!-- ── HISTORY ── -->
-<div id="panel-history" class="panel">
-  <div class="metrics" style="grid-template-columns:repeat(3,1fr);">
-    <div class="metric">
-      <div class="metric-label">Total P&amp;L</div>
-      <div class="metric-value" id="h-total-pnl">$0.00</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Total trades</div>
-      <div class="metric-value" id="h-total-trades">0</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Win / Loss</div>
-      <div class="metric-value" id="h-wl">0 / 0</div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title"><i class="ti ti-chart-bar" aria-hidden="true"></i>Cumulative P&amp;L</div>
-    <div class="chart-wrap" style="height:180px;">
-      <canvas id="pnlChart" role="img" aria-label="Cumulative P&L">P&L chart.</canvas>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title" style="justify-content:space-between;">
-      <span><i class="ti ti-list" aria-hidden="true"></i>Trade history</span>
-      <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="exportCSV()"><i class="ti ti-download"></i>Export CSV</button>
-    </div>
-    <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <thead>
-          <tr style="border-bottom:0.5px solid var(--border2);">
-            <th style="text-align:left;padding:6px 8px;color:var(--text3);font-weight:500;">#</th>
-            <th style="text-align:left;padding:6px 8px;color:var(--text3);font-weight:500;">Time</th>
-            <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:500;">Entry</th>
-            <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:500;">Exit</th>
-            <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:500;">Stake</th>
-            <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:500;">P&amp;L</th>
-            <th style="text-align:center;padding:6px 8px;color:var(--text3);font-weight:500;">Result</th>
-          </tr>
-        </thead>
-        <tbody id="history-tbody">
-          <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3);">No trades yet.</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+    <!-- ── MARKET PANEL ── -->
+    <div id="panel-market" class="panel">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-world" aria-hidden="true"></i> Select market / symbol</div>
+        <div style="margin-bottom:14px;">
+          <label>Category</label>
+          <select id="market-cat" onchange="filterMarkets()">
+            <option value="all">All markets</option>
+            <option value="volatility">Volatility indices</option>
+            <option value="crypto">Crypto</option>
+            <option value="forex">Forex</option>
+            <option value="commodities">Commodities</option>
+          </select>
+        </div>
+        <div class="market-grid" id="market-grid">
+          <!-- populated by JS -->
+        </div>
+        <div style="margin-top:14px;">
+          <div class="form-group">
+            <label>Custom symbol (override)</label>
+            <input type="text" id="custom-symbol" placeholder="e.g. R_100, BTCUSD, frxEURUSD">
+          </div>
+          <button class="btn btn-primary" onclick="applyMarket()"><i class="ti ti-check"></i> Apply market selection</button>
+        </div>
+      </div>
+    </div><!-- /market -->
 
-<!-- ── LOGS ── -->
-<div id="panel-logs" class="panel">
-  <div class="card">
-    <div class="card-title" style="justify-content:space-between;">
-      <span><i class="ti ti-terminal-2" aria-hidden="true"></i>Live log</span>
-      <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="clearLogs()"><i class="ti ti-trash"></i>Clear</button>
-    </div>
-    <div class="trade-log" id="log-container" style="max-height:600px;"></div>
-  </div>
-</div>
+    <!-- ── CONFIG PANEL ── -->
+    <div id="panel-config" class="panel">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-sliders" aria-hidden="true"></i> Strategy preset</div>
+        <div class="market-grid" id="preset-grid" style="grid-template-columns:repeat(5,1fr);">
+          <!-- populated by JS -->
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-adjustments" aria-hidden="true"></i> Risk parameters</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Min stake ($)</label>
+            <div class="slider-row"><input type="range" min="0.5" max="10" step="0.5" id="cfg-min-stake" oninput="syncSlider(this,'lbl-min-stake')"><span class="slider-val" id="lbl-min-stake">1.00</span></div>
+          </div>
+          <div class="form-group">
+            <label>Max stake ($)</label>
+            <div class="slider-row"><input type="range" min="5" max="200" step="5" id="cfg-max-stake" oninput="syncSlider(this,'lbl-max-stake')"><span class="slider-val" id="lbl-max-stake">40.00</span></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Growth rate (%)</label>
+            <div class="slider-row"><input type="range" min="1" max="20" step="1" id="cfg-growth" oninput="syncSlider(this,'lbl-growth')"><span class="slider-val" id="lbl-growth">5%</span></div>
+          </div>
+          <div class="form-group">
+            <label>Martingale factor (×)</label>
+            <div class="slider-row"><input type="range" min="2" max="50" step="1" id="cfg-martin" oninput="syncSlider(this,'lbl-martin')"><span class="slider-val" id="lbl-martin">22×</span></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Max consecutive losses</label>
+            <div class="slider-row"><input type="range" min="1" max="5" step="1" id="cfg-maxloss" oninput="syncSlider(this,'lbl-maxloss')"><span class="slider-val" id="lbl-maxloss">2</span></div>
+          </div>
+          <div class="form-group">
+            <label>Exit profit threshold ($)</label>
+            <div class="slider-row"><input type="range" min="0.01" max="1" step="0.01" id="cfg-exit" oninput="syncSlider(this,'lbl-exit')"><span class="slider-val" id="lbl-exit">$0.05</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-clock-hour-4" aria-hidden="true"></i> Frequency &amp; stability</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Max trades per 24h</label>
+            <div class="slider-row"><input type="range" min="1" max="10" step="1" id="cfg-freq" oninput="syncSlider(this,'lbl-freq')"><span class="slider-val" id="lbl-freq">2</span></div>
+          </div>
+          <div class="form-group">
+            <label>Trade interval (hours)</label>
+            <div class="slider-row"><input type="range" min="0.5" max="24" step="0.5" id="cfg-interval" oninput="syncSlider(this,'lbl-interval')"><span class="slider-val" id="lbl-interval">6h</span></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Stability window (candles)</label>
+            <div class="slider-row"><input type="range" min="3" max="20" step="1" id="cfg-window" oninput="syncSlider(this,'lbl-window')"><span class="slider-val" id="lbl-window">5</span></div>
+          </div>
+          <div class="form-group">
+            <label>Min tick gap (USD)</label>
+            <div class="slider-row"><input type="range" min="0.1" max="5" step="0.1" id="cfg-gap" oninput="syncSlider(this,'lbl-gap')"><span class="slider-val" id="lbl-gap">1.0</span></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Volatility threshold (%)</label>
+            <div class="slider-row"><input type="range" min="0.5" max="10" step="0.5" id="cfg-vol" oninput="syncSlider(this,'lbl-vol')"><span class="slider-val" id="lbl-vol">2.0%</span></div>
+          </div>
+          <div class="form-group">
+            <label>Accumulator max ($)</label>
+            <div class="slider-row"><input type="range" min="100" max="5000" step="100" id="cfg-accum" oninput="syncSlider(this,'lbl-accum')"><span class="slider-val" id="lbl-accum">$1000</span></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="applyConfig()"><i class="ti ti-check"></i> Apply configuration</button>
+      </div>
+    </div><!-- /config -->
 
-</main>
+    <!-- ── HISTORY PANEL ── -->
+    <div id="panel-history" class="panel">
+      <div class="metrics" style="grid-template-columns:repeat(3,1fr);">
+        <div class="metric">
+          <div class="metric-label">Total P&amp;L</div>
+          <div class="metric-value" id="h-total-pnl">$0.00</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Total trades</div>
+          <div class="metric-value" id="h-total-trades">0</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Win / Loss</div>
+          <div class="metric-value" id="h-wl">0 / 0</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-bar" aria-hidden="true"></i> P&amp;L over trades</div>
+        <div class="chart-wrap" style="height:200px;">
+          <canvas id="pnlChart" role="img" aria-label="Cumulative P&L chart">Cumulative P&L over trades.</canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-list" aria-hidden="true"></i> Trade history</div>
+        <div style="overflow-x:auto;">
+          <table id="history-table" style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead>
+              <tr style="border-bottom:0.5px solid var(--border2);">
+                <th style="text-align:left;padding:6px 8px;color:var(--text3);font-weight:500;">#</th>
+                <th style="text-align:left;padding:6px 8px;color:var(--text3);font-weight:500;">Time</th>
+                <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:500;">Entry</th>
+                <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:500;">Exit</th>
+                <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:500;">Stake</th>
+                <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:500;">P&amp;L</th>
+                <th style="text-align:center;padding:6px 8px;color:var(--text3);font-weight:500;">Result</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody">
+              <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3);">No trades recorded yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /history -->
+
+    <!-- ── LOGS PANEL ── -->
+    <div id="panel-logs" class="panel">
+      <div class="card" style="flex:1;">
+        <div class="card-title" style="justify-content:space-between;">
+          <span><i class="ti ti-terminal-2" aria-hidden="true"></i> Live activity log</span>
+          <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="clearLogs()"><i class="ti ti-trash"></i> Clear</button>
+        </div>
+        <div class="trade-log" id="log-container" style="max-height:520px;"></div>
+      </div>
+    </div><!-- /logs -->
+
+  </main>
 </div>
 
 <script>
 'use strict';
 
-// ─── State ────────────────────────────────────────────────────────────────────
+// ─── State ───────────────────────────────────────────────────────────────────
 const state = {
   bot: {
-    running: false,       // continuous run flag
-    state: 'stopped',     // stopped|idle|trading|paused|closed
+    state: 'idle', // idle | monitoring | waiting | trading | closed
     currentStake: 1.0,
-    profitTarget: 20.0,
-    lossLimit: 50.0,
+    targetProfit: 20.0,
     consecutiveLosses: 0,
     totalTrades: 0,
     wins: 0,
     losses: 0,
     sessionPnl: 0.0,
     totalPnl: 0.0,
-    activePosition: null, // { entryPrice, stake, entryTick, tickCount }
+    activePosition: null,
     positions: [],
     priceHistory: [],
     lastTradeTime: null,
     todayTrades: 0,
-    pendingNextTrade: false,
-    tradeDelay: null,     // setTimeout handle
   },
   cfg: {
-    minStake: 1.0,
-    maxStake: 40.0,
-    accumulatorMax: 1000.0,
-    growthRate: 0.05,
-    martingaleFactor: 2.0,
-    maxConsecutiveLosses: 3,
-    maxTradesPerDay: 0,   // 0 = unlimited
-    tradeDelaySecs: 0,
-    stabilityWindow: 5,
-    minTickGap: 0.0,
-    volatilityThreshold: 0.0,
+    minStake: 1.0, maxStake: 40.0, accumulatorMax: 1000.0,
+    growthRate: 0.05, martingaleFactor: 22.0, exitThreshold: 0.05,
+    maxConsecutiveLosses: 2, maxTradesPerDay: 2, tradeIntervalHours: 6,
+    stabilityWindow: 5, minTickGap: 1.0, volatilityThreshold: 0.02,
   },
   market: { symbol: null, label: null },
   sim: { running: false, interval: null, price: 100.0, trend: 0 },
-  conn: { connected: false, ws: null, pingInterval: null, balance: null, currency: 'USD' },
+  conn: { connected: false, ws: null, pingInterval: null },
   logs: [],
 };
 
-// ─── Only Deriv Volatility Indices ───────────────────────────────────────────
+// ─── Markets ─────────────────────────────────────────────────────────────────
 const MARKETS = [
-  { id:'R_10',   name:'Volatility 10',     desc:'V10 — 10% vol',    start:800  },
-  { id:'R_25',   name:'Volatility 25',     desc:'V25 — 25% vol',    start:900  },
-  { id:'R_50',   name:'Volatility 50',     desc:'V50 — 50% vol',    start:1000 },
-  { id:'R_75',   name:'Volatility 75',     desc:'V75 — 75% vol',    start:700  },
-  { id:'R_100',  name:'Volatility 100',    desc:'V100 — 100% vol',  start:1200 },
-  { id:'1HZ10V', name:'Volatility 10 (1s)',desc:'1s ticks, 10% vol',start:850  },
-  { id:'1HZ25V', name:'Volatility 25 (1s)',desc:'1s ticks, 25% vol',start:950  },
-  { id:'1HZ50V', name:'Volatility 50 (1s)',desc:'1s ticks, 50% vol',start:1050 },
-  { id:'1HZ75V', name:'Volatility 75 (1s)',desc:'1s ticks, 75% vol',start:750  },
-  { id:'1HZ100V',name:'Volatility 100 (1s)',desc:'1s ticks, 100% vol',start:1250},
-  { id:'JD10',   name:'Jump 10',           desc:'Jump index 10%',   start:4100 },
-  { id:'JD25',   name:'Jump 25',           desc:'Jump index 25%',   start:4200 },
-  { id:'JD50',   name:'Jump 50',           desc:'Jump index 50%',   start:4300 },
-  { id:'JD75',   name:'Jump 75',           desc:'Jump index 75%',   start:4400 },
-  { id:'JD100',  name:'Jump 100',          desc:'Jump index 100%',  start:4500 },
+  { id:'R_10', name:'Volatility 10', cat:'volatility', start:800 },
+  { id:'R_25', name:'Volatility 25', cat:'volatility', start:900 },
+  { id:'R_50', name:'Volatility 50', cat:'volatility', start:1000 },
+  { id:'R_75', name:'Volatility 75', cat:'volatility', start:700 },
+  { id:'R_100', name:'Volatility 100', cat:'volatility', start:1200 },
+  { id:'1HZ10V', name:'Volatility 10(1s)', cat:'volatility', start:850 },
+  { id:'BTCUSD', name:'Bitcoin/USD', cat:'crypto', start:30000 },
+  { id:'ETHUSD', name:'Ethereum/USD', cat:'crypto', start:2000 },
+  { id:'frxEURUSD', name:'EUR/USD', cat:'forex', start:1.08 },
+  { id:'frxGBPUSD', name:'GBP/USD', cat:'forex', start:1.26 },
+  { id:'frxUSDJPY', name:'USD/JPY', cat:'forex', start:148 },
+  { id:'frxXAUUSD', name:'Gold/USD', cat:'commodities', start:1900 },
 ];
 
 // ─── Presets ──────────────────────────────────────────────────────────────────
 const PRESETS = {
-  conservative: { minStake:0.35, maxStake:10,  growthRate:0.02, martingaleFactor:1.5, maxConsecutiveLosses:5, maxTradesPerDay:0, tradeDelaySecs:2, stabilityWindow:5, minTickGap:0, volatilityThreshold:0, accumulatorMax:500  },
-  balanced:     { minStake:1,    maxStake:40,  growthRate:0.05, martingaleFactor:2.0, maxConsecutiveLosses:3, maxTradesPerDay:0, tradeDelaySecs:0, stabilityWindow:5, minTickGap:0, volatilityThreshold:0, accumulatorMax:1000 },
-  aggressive:   { minStake:5,    maxStake:200, growthRate:0.10, martingaleFactor:3.0, maxConsecutiveLosses:2, maxTradesPerDay:0, tradeDelaySecs:0, stabilityWindow:3, minTickGap:0, volatilityThreshold:0, accumulatorMax:5000 },
-  scalping:     { minStake:0.35, maxStake:20,  growthRate:0.01, martingaleFactor:1.8, maxConsecutiveLosses:5, maxTradesPerDay:0, tradeDelaySecs:0, stabilityWindow:2, minTickGap:0, volatilityThreshold:0, accumulatorMax:500  },
-  recovery:     { minStake:1,    maxStake:40,  growthRate:0.05, martingaleFactor:2.2, maxConsecutiveLosses:3, maxTradesPerDay:0, tradeDelaySecs:1, stabilityWindow:5, minTickGap:0, volatilityThreshold:0, accumulatorMax:1000 },
+  conservative: { minStake:1, maxStake:10, growthRate:0.02, martingaleFactor:5, exitThreshold:0.05, maxConsecutiveLosses:3, maxTradesPerDay:1, tradeIntervalHours:24, stabilityWindow:10, minTickGap:1, volatilityThreshold:0.01, accumulatorMax:1000 },
+  balanced:     { minStake:1, maxStake:40, growthRate:0.05, martingaleFactor:22, exitThreshold:0.05, maxConsecutiveLosses:2, maxTradesPerDay:2, tradeIntervalHours:6, stabilityWindow:5, minTickGap:1, volatilityThreshold:0.02, accumulatorMax:1000 },
+  aggressive:   { minStake:5, maxStake:100, growthRate:0.10, martingaleFactor:30, exitThreshold:0.10, maxConsecutiveLosses:1, maxTradesPerDay:4, tradeIntervalHours:3, stabilityWindow:3, minTickGap:0.5, volatilityThreshold:0.03, accumulatorMax:2000 },
+  scalping:     { minStake:0.5, maxStake:20, growthRate:0.01, martingaleFactor:10, exitThreshold:0.02, maxConsecutiveLosses:5, maxTradesPerDay:10, tradeIntervalHours:0.5, stabilityWindow:3, minTickGap:0.5, volatilityThreshold:0.05, accumulatorMax:500 },
+  recovery:     { minStake:1, maxStake:40, growthRate:0.05, martingaleFactor:22, exitThreshold:0.05, maxConsecutiveLosses:2, maxTradesPerDay:2, tradeIntervalHours:6, stabilityWindow:5, minTickGap:1, volatilityThreshold:0.02, accumulatorMax:1000 },
 };
-
-// ─── Persist session across refresh ──────────────────────────────────────────
-function persistSession() {
-  try {
-    sessionStorage.setItem('derivbot_token',  document.getElementById('api-token').value.trim());
-    sessionStorage.setItem('derivbot_cfg',    JSON.stringify(state.cfg));
-    sessionStorage.setItem('derivbot_market', JSON.stringify(state.market));
-    sessionStorage.setItem('derivbot_appid',  document.getElementById('app-id').value);
-    sessionStorage.setItem('derivbot_server', document.getElementById('deriv-server').value);
-  } catch(e) {}
-}
-function restoreSession() {
-  try {
-    const t   = sessionStorage.getItem('derivbot_token');
-    if (t)  document.getElementById('api-token').value = t;
-    const c   = sessionStorage.getItem('derivbot_cfg');
-    if (c)  Object.assign(state.cfg, JSON.parse(c));
-    const mk  = sessionStorage.getItem('derivbot_market');
-    if (mk) Object.assign(state.market, JSON.parse(mk));
-    const aid = sessionStorage.getItem('derivbot_appid');
-    if (aid) document.getElementById('app-id').value = aid;
-    const srv = sessionStorage.getItem('derivbot_server');
-    if (srv) document.getElementById('deriv-server').value = srv;
-  } catch(e) {}
-}
 
 // ─── Charts ───────────────────────────────────────────────────────────────────
 let priceChart, pnlChart;
@@ -599,137 +703,199 @@ const priceData = { labels:[], data:[] };
 const pnlData   = { labels:[], data:[] };
 
 function initCharts() {
-  const pc = document.getElementById('priceChart').getContext('2d');
-  priceChart = new Chart(pc, {
-    type:'line',
-    data:{ labels:priceData.labels, datasets:[{ data:priceData.data, borderColor:'#6c63ff', borderWidth:1.5, pointRadius:0, tension:0.3, fill:true, backgroundColor:'rgba(108,99,255,0.07)' }] },
-    options:{ responsive:true, maintainAspectRatio:false, animation:false,
-      plugins:{ legend:{ display:false } },
-      scales:{ x:{ display:false }, y:{ grid:{ color:'rgba(255,255,255,0.05)' }, ticks:{ color:'#555a6e', font:{ size:11 } } } }
+  const priceCtx = document.getElementById('priceChart').getContext('2d');
+  priceChart = new Chart(priceCtx, {
+    type: 'line',
+    data: {
+      labels: priceData.labels,
+      datasets: [{
+        data: priceData.data,
+        borderColor: '#6c63ff',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: true,
+        backgroundColor: 'rgba(108,99,255,0.08)',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      plugins: { legend: { display:false } },
+      scales: {
+        x: { display:false },
+        y: { grid: { color:'rgba(255,255,255,0.05)' }, ticks: { color:'#555a6e', font:{size:11} } }
+      }
     }
   });
-  const lc = document.getElementById('pnlChart').getContext('2d');
-  pnlChart = new Chart(lc, {
-    type:'line',
-    data:{ labels:pnlData.labels, datasets:[{ data:pnlData.data, borderColor:'#22c55e', borderWidth:2, pointRadius:3, pointBackgroundColor:'#22c55e', tension:0.2, fill:true, backgroundColor:'rgba(34,197,94,0.06)' }] },
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ display:false } },
-      scales:{ x:{ ticks:{ color:'#555a6e', font:{ size:10 } } }, y:{ grid:{ color:'rgba(255,255,255,0.05)' }, ticks:{ color:'#555a6e', font:{ size:10 }, callback: v=>'$'+v.toFixed(2) } } }
+
+  const pnlCtx = document.getElementById('pnlChart').getContext('2d');
+  pnlChart = new Chart(pnlCtx, {
+    type: 'line',
+    data: {
+      labels: pnlData.labels,
+      datasets: [{
+        label: 'Cumulative P&L',
+        data: pnlData.data,
+        borderColor: '#22c55e',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#22c55e',
+        tension: 0.2,
+        fill: true,
+        backgroundColor: 'rgba(34,197,94,0.06)',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display:false } },
+      scales: {
+        x: { ticks: { color:'#555a6e', font:{size:11} } },
+        y: { grid: { color:'rgba(255,255,255,0.05)' }, ticks: { color:'#555a6e', font:{size:11}, callback: v => '$'+v.toFixed(2) } }
+      }
     }
   });
 }
 
-// ─── Nav ──────────────────────────────────────────────────────────────────────
-function showPanel(id, btn) {
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+// ─── Navigation ───────────────────────────────────────────────────────────────
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
-  if (btn) btn.classList.add('active');
+  event.currentTarget.classList.add('active');
 }
 
-// ─── Market grid ──────────────────────────────────────────────────────────────
-let selectedMarketId = null;
-function buildMarketGrid() {
-  const grid = document.getElementById('market-grid');
-  grid.innerHTML = '';
-  MARKETS.forEach(m => {
-    const d = document.createElement('div');
-    d.className = 'market-card' + (selectedMarketId===m.id?' selected':'');
-    d.innerHTML = `<div class="market-name">${m.name}</div><div class="market-desc">${m.desc}</div>`;
-    d.onclick = () => { selectedMarketId = m.id; buildMarketGrid(); };
-    grid.appendChild(d);
-  });
+// ─── Slider sync ──────────────────────────────────────────────────────────────
+function syncSlider(el, lblId) {
+  const v = parseFloat(el.value);
+  const lbl = document.getElementById(lblId);
+  if (el.id==='cfg-growth') lbl.textContent = v+'%';
+  else if (el.id==='cfg-martin') lbl.textContent = v+'×';
+  else if (el.id==='cfg-exit') lbl.textContent = '$'+v.toFixed(2);
+  else if (el.id==='cfg-interval') lbl.textContent = v+'h';
+  else if (el.id==='cfg-vol') lbl.textContent = v+'%';
+  else if (el.id==='cfg-accum') lbl.textContent = '$'+v;
+  else if (el.id==='cfg-min-stake' || el.id==='cfg-max-stake') lbl.textContent = '$'+parseFloat(v).toFixed(2);
+  else lbl.textContent = v;
 }
-function applyMarket() {
-  if (!selectedMarketId) { addLog('warn','Market','Select a market first'); return; }
-  const found = MARKETS.find(m=>m.id===selectedMarketId);
-  state.market.symbol = selectedMarketId;
-  state.market.label  = found ? found.name : selectedMarketId;
-  state.sim.price     = found ? found.start : 100;
-  document.getElementById('market-label').textContent = state.market.label + ' — ' + selectedMarketId;
-  document.getElementById('market-applied').textContent = '✓ ' + state.market.label + ' active';
-  document.getElementById('run-btn').disabled = false;
-  addLog('info','Market','Market: '+state.market.label+' ('+selectedMarketId+')');
-  persistSession();
-  if (state.conn.connected && state.conn.ws && state.conn.ws.readyState===1) {
-    state.conn.ws.send(JSON.stringify({ forget_all:'ticks' }));
-    subscribeToTicks(selectedMarketId);
-  }
+
+function loadConfigToUI(cfg) {
+  const set = (id, val) => { const el=document.getElementById(id); if(el){el.value=val;} };
+  set('cfg-min-stake', cfg.minStake); syncSlider(document.getElementById('cfg-min-stake'),'lbl-min-stake');
+  set('cfg-max-stake', cfg.maxStake); syncSlider(document.getElementById('cfg-max-stake'),'lbl-max-stake');
+  set('cfg-growth', cfg.growthRate*100); syncSlider(document.getElementById('cfg-growth'),'lbl-growth');
+  set('cfg-martin', cfg.martingaleFactor); syncSlider(document.getElementById('cfg-martin'),'lbl-martin');
+  set('cfg-maxloss', cfg.maxConsecutiveLosses); syncSlider(document.getElementById('cfg-maxloss'),'lbl-maxloss');
+  set('cfg-exit', cfg.exitThreshold); syncSlider(document.getElementById('cfg-exit'),'lbl-exit');
+  set('cfg-freq', cfg.maxTradesPerDay); syncSlider(document.getElementById('cfg-freq'),'lbl-freq');
+  set('cfg-interval', cfg.tradeIntervalHours); syncSlider(document.getElementById('cfg-interval'),'lbl-interval');
+  set('cfg-window', cfg.stabilityWindow); syncSlider(document.getElementById('cfg-window'),'lbl-window');
+  set('cfg-gap', cfg.minTickGap); syncSlider(document.getElementById('cfg-gap'),'lbl-gap');
+  set('cfg-vol', cfg.volatilityThreshold*100); syncSlider(document.getElementById('cfg-vol'),'lbl-vol');
+  set('cfg-accum', cfg.accumulatorMax); syncSlider(document.getElementById('cfg-accum'),'lbl-accum');
+}
+
+function applyConfig() {
+  state.cfg.minStake = parseFloat(document.getElementById('cfg-min-stake').value);
+  state.cfg.maxStake = parseFloat(document.getElementById('cfg-max-stake').value);
+  state.cfg.growthRate = parseFloat(document.getElementById('cfg-growth').value)/100;
+  state.cfg.martingaleFactor = parseFloat(document.getElementById('cfg-martin').value);
+  state.cfg.maxConsecutiveLosses = parseInt(document.getElementById('cfg-maxloss').value);
+  state.cfg.exitThreshold = parseFloat(document.getElementById('cfg-exit').value);
+  state.cfg.maxTradesPerDay = parseInt(document.getElementById('cfg-freq').value);
+  state.cfg.tradeIntervalHours = parseFloat(document.getElementById('cfg-interval').value);
+  state.cfg.stabilityWindow = parseInt(document.getElementById('cfg-window').value);
+  state.cfg.minTickGap = parseFloat(document.getElementById('cfg-gap').value);
+  state.cfg.volatilityThreshold = parseFloat(document.getElementById('cfg-vol').value)/100;
+  state.cfg.accumulatorMax = parseFloat(document.getElementById('cfg-accum').value);
+  addLog('info','Config','Configuration updated successfully');
+  state.bot.currentStake = state.cfg.minStake;
   updateDashboard();
 }
 
-// ─── Presets + Config ─────────────────────────────────────────────────────────
+// ─── Market ───────────────────────────────────────────────────────────────────
+let selectedMarketId = null;
+let currentMarketCat = 'all';
+
+function buildMarketGrid(cat) {
+  const grid = document.getElementById('market-grid');
+  grid.innerHTML = '';
+  MARKETS.filter(m => cat==='all'||m.cat===cat).forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'market-card' + (selectedMarketId===m.id?' selected':'');
+    d.innerHTML = `<div class="market-name">${m.name}</div><div class="market-desc">${m.id}</div>`;
+    d.onclick = () => { selectedMarketId = m.id; buildMarketGrid(currentMarketCat); };
+    grid.appendChild(d);
+  });
+}
+
+function filterMarkets() {
+  currentMarketCat = document.getElementById('market-cat').value;
+  buildMarketGrid(currentMarketCat);
+}
+
+function applyMarket() {
+  const custom = document.getElementById('custom-symbol').value.trim();
+  const id = custom || selectedMarketId;
+  if (!id) { addLog('warn','Market','Please select a market or enter a custom symbol'); return; }
+  const found = MARKETS.find(m=>m.id===id);
+  state.market.symbol = id;
+  state.market.label = found ? found.name : id;
+  state.sim.price = found ? found.start : 100;
+  document.getElementById('market-label').textContent = state.market.label + ' — ' + id;
+  addLog('info','Market','Market set to '+state.market.label+' ('+id+')');
+  document.getElementById('trade-btn').disabled = false;
+  updateDashboard();
+  // If already connected via WebSocket, start live ticks
+  if (state.conn.connected && state.conn.ws && state.conn.ws.readyState === 1) {
+    // Unsubscribe from previous ticks first
+    state.conn.ws.send(JSON.stringify({ forget_all: 'ticks' }));
+    subscribeToTicks(id);
+  }
+}
+
+// ─── Presets UI ───────────────────────────────────────────────────────────────
 function buildPresetGrid() {
   const grid = document.getElementById('preset-grid');
-  const list = [
+  const presets = [
     { key:'conservative', label:'Conservative', icon:'ti-shield' },
-    { key:'balanced',     label:'Balanced',     icon:'ti-scale'  },
-    { key:'aggressive',   label:'Aggressive',   icon:'ti-rocket' },
-    { key:'scalping',     label:'Scalping',     icon:'ti-bolt'   },
-    { key:'recovery',     label:'Recovery',     icon:'ti-refresh'},
+    { key:'balanced', label:'Balanced', icon:'ti-scale' },
+    { key:'aggressive', label:'Aggressive', icon:'ti-rocket' },
+    { key:'scalping', label:'Scalping', icon:'ti-bolt' },
+    { key:'recovery', label:'Recovery', icon:'ti-refresh' },
   ];
   grid.innerHTML = '';
-  list.forEach(p => {
+  presets.forEach(p => {
     const d = document.createElement('div');
     d.className = 'market-card';
-    d.innerHTML = `<div style="text-align:center;"><i class="ti ${p.icon}" style="font-size:18px;color:var(--accent2);margin-bottom:3px;" aria-hidden="true"></i><div class="market-name">${p.label}</div></div>`;
+    d.innerHTML = `<div style="text-align:center;"><i class="ti ${p.icon}" style="font-size:20px;color:var(--accent2);margin-bottom:4px;" aria-hidden="true"></i><div class="market-name">${p.label}</div></div>`;
     d.onclick = () => {
       document.querySelectorAll('#preset-grid .market-card').forEach(c=>c.classList.remove('selected'));
       d.classList.add('selected');
-      Object.assign(state.cfg, PRESETS[p.key]);
-      loadConfigToUI(state.cfg);
-      addLog('info','Config','Preset: '+p.label);
+      loadConfigToUI(PRESETS[p.key]);
+      addLog('info','Config','Loaded preset: '+p.label);
     };
     grid.appendChild(d);
   });
 }
 
-function syncSlider(el, lblId) {
-  const v = parseFloat(el.value);
-  const lbl = document.getElementById(lblId);
-  if (el.id==='cfg-growth')     lbl.textContent = v+'%';
-  else if (el.id==='cfg-martin') lbl.textContent = v.toFixed(1)+'×';
-  else if (el.id==='cfg-interval') lbl.textContent = v+'h';
-  else if (el.id==='cfg-vol')   lbl.textContent = v+'%';
-  else if (el.id==='cfg-accum') lbl.textContent = '$'+v;
-  else if (el.id==='cfg-delay') lbl.textContent = v+'s';
-  else if (el.id.includes('stake')) lbl.textContent = '$'+parseFloat(v).toFixed(2);
-  else lbl.textContent = v;
+// ─── Bot logic ────────────────────────────────────────────────────────────────
+function canTradeNow() {
+  if (state.bot.todayTrades >= state.cfg.maxTradesPerDay) return false;
+  if (!state.bot.lastTradeTime) return true;
+  const hoursAgo = (Date.now() - state.bot.lastTradeTime) / 3600000;
+  return hoursAgo >= state.cfg.tradeIntervalHours;
 }
 
-function loadConfigToUI(cfg) {
-  const s = (id, val) => { const el=document.getElementById(id); if(el) el.value=val; };
-  s('cfg-min-stake', cfg.minStake);  syncSlider(document.getElementById('cfg-min-stake'),'lbl-min-stake');
-  s('cfg-max-stake', cfg.maxStake);  syncSlider(document.getElementById('cfg-max-stake'),'lbl-max-stake');
-  s('cfg-growth', cfg.growthRate*100); syncSlider(document.getElementById('cfg-growth'),'lbl-growth');
-  s('cfg-martin', cfg.martingaleFactor); syncSlider(document.getElementById('cfg-martin'),'lbl-martin');
-  s('cfg-maxloss', cfg.maxConsecutiveLosses); syncSlider(document.getElementById('cfg-maxloss'),'lbl-maxloss');
-  s('cfg-accum',  cfg.accumulatorMax); syncSlider(document.getElementById('cfg-accum'),'lbl-accum');
-  s('cfg-freq',   cfg.maxTradesPerDay); syncSlider(document.getElementById('cfg-freq'),'lbl-freq');
-  s('cfg-delay',  cfg.tradeDelaySecs); syncSlider(document.getElementById('cfg-delay'),'lbl-delay');
-  s('cfg-window', cfg.stabilityWindow); syncSlider(document.getElementById('cfg-window'),'lbl-window');
-  s('cfg-gap',    cfg.minTickGap);    syncSlider(document.getElementById('cfg-gap'),'lbl-gap');
-  s('cfg-vol',    cfg.volatilityThreshold*100); syncSlider(document.getElementById('cfg-vol'),'lbl-vol');
+function assessStability() {
+  const h = state.bot.priceHistory;
+  if (h.length < state.cfg.stabilityWindow) return { stable:false, volatility:999 };
+  const recent = h.slice(-state.cfg.stabilityWindow);
+  const hi = Math.max(...recent), lo = Math.min(...recent);
+  const avg = recent.reduce((a,b)=>a+b,0)/recent.length;
+  const vol = ((hi-lo)/avg)*100;
+  return { stable: vol < state.cfg.volatilityThreshold*100, volatility: vol };
 }
 
-function applyConfig() {
-  state.cfg.minStake            = parseFloat(document.getElementById('cfg-min-stake').value);
-  state.cfg.maxStake            = parseFloat(document.getElementById('cfg-max-stake').value);
-  state.cfg.growthRate          = parseFloat(document.getElementById('cfg-growth').value)/100;
-  state.cfg.martingaleFactor    = parseFloat(document.getElementById('cfg-martin').value);
-  state.cfg.maxConsecutiveLosses= parseInt(document.getElementById('cfg-maxloss').value);
-  state.cfg.accumulatorMax      = parseFloat(document.getElementById('cfg-accum').value);
-  state.cfg.maxTradesPerDay     = parseInt(document.getElementById('cfg-freq').value);
-  state.cfg.tradeDelaySecs      = parseFloat(document.getElementById('cfg-delay').value);
-  state.cfg.stabilityWindow     = parseInt(document.getElementById('cfg-window').value);
-  state.cfg.minTickGap          = parseFloat(document.getElementById('cfg-gap').value);
-  state.cfg.volatilityThreshold = parseFloat(document.getElementById('cfg-vol').value)/100;
-  addLog('info','Config','Config saved');
-  persistSession();
-  updateDashboard();
-}
-
-// ─── Stake calc ────────────────────────────────────────────────────────────────
 function calculateNextStake() {
   let s;
   if (state.bot.consecutiveLosses === 0) {
@@ -737,117 +903,28 @@ function calculateNextStake() {
   } else {
     s = state.bot.currentStake * state.cfg.martingaleFactor;
   }
-  s = Math.min(Math.max(s, state.cfg.minStake), state.cfg.maxStake);
+  s = Math.min(s, state.cfg.maxStake);
+  s = Math.max(s, state.cfg.minStake);
   return parseFloat(s.toFixed(2));
 }
 
-// ─── Stability ────────────────────────────────────────────────────────────────
-function assessStability() {
-  const h = state.bot.priceHistory;
-  if (h.length < state.cfg.stabilityWindow) return { stable:true, volatility:0 }; // don't block if no data
-  const recent = h.slice(-state.cfg.stabilityWindow);
-  const hi=Math.max(...recent), lo=Math.min(...recent);
-  const avg=recent.reduce((a,b)=>a+b,0)/recent.length;
-  const vol=avg>0 ? ((hi-lo)/avg)*100 : 0;
-  const thres = state.cfg.volatilityThreshold*100;
-  return { stable: thres===0 || vol<=thres, volatility:vol };
-}
-
-function canTradeNow() {
-  const b = state.bot;
-  const cfg = state.cfg;
-  if (cfg.maxTradesPerDay > 0 && b.todayTrades >= cfg.maxTradesPerDay) return false;
-  return true;
-}
-
-// ─── Continuous bot run ───────────────────────────────────────────────────────
-function startBot() {
-  if (!state.market.symbol) { addLog('warn','Bot','Select and apply a market first.'); return; }
-  if (state.bot.running) return;
-
-  state.bot.running = true;
-  state.bot.state = 'idle';
-  setBotState('running');
-  document.getElementById('run-btn').disabled = true;
-  document.getElementById('stop-btn').disabled = false;
-  document.getElementById('run-indicator').className = 'run-indicator running';
-  document.getElementById('run-indicator').innerHTML = '<span class="dot" style="background:var(--green);animation:pulse 1.5s infinite;"></span> Bot running';
-
-  addLog('info','Bot','Bot started — continuous mode, 1-tick auto-exit');
-
-  // If not connected, use simulation automatically
-  if (!state.conn.connected && !state.sim.running) {
-    state.sim.running = true;
-    document.getElementById('sim-btn').innerHTML = '<i class="ti ti-player-pause"></i> Simulating';
-    state.sim.interval = setInterval(simTick, 800);
-    addLog('info','Sim','Simulation started (no live connection)');
-  }
-
-  // Place first trade immediately
-  placeNextTrade();
-}
-
-function stopBot() {
-  state.bot.running = false;
-  if (state.bot.tradeDelay) { clearTimeout(state.bot.tradeDelay); state.bot.tradeDelay = null; }
-  state.bot.state = 'stopped';
-  setBotState('stopped');
-  document.getElementById('run-btn').disabled = !state.market.symbol;
-  document.getElementById('stop-btn').disabled = true;
-  document.getElementById('run-indicator').className = 'run-indicator stopped';
-  document.getElementById('run-indicator').innerHTML = '<span class="dot" style="background:var(--text3);"></span> Bot stopped';
-  addLog('warn','Bot','Bot stopped by user');
-
-  // Stop sim if no live connection
-  if (!state.conn.connected && state.sim.running) {
-    clearInterval(state.sim.interval);
-    state.sim.running = false;
-    document.getElementById('sim-btn').innerHTML = '<i class="ti ti-player-play"></i> Simulate';
-  }
-  updateDashboard();
-}
-
-function placeNextTrade() {
-  if (!state.bot.running) return;
-
-  // Check stop conditions
-  if (state.bot.sessionPnl >= state.bot.profitTarget) {
-    addLog('win','Bot','🎯 Profit target $'+state.bot.profitTarget.toFixed(2)+' reached. Bot stopped.');
-    stopBot();
-    return;
-  }
-  if (Math.abs(Math.min(0, state.bot.sessionPnl)) >= state.bot.lossLimit) {
-    addLog('warn','Bot','⛔ Loss limit $'+state.bot.lossLimit.toFixed(2)+' reached. Bot stopped.');
-    stopBot();
-    return;
-  }
-  if (!canTradeNow()) {
-    addLog('warn','Bot','Daily trade limit reached. Bot paused until tomorrow.');
-    state.bot.state = 'paused';
-    setBotState('paused');
-    return;
-  }
-  if (state.bot.consecutiveLosses >= state.cfg.maxConsecutiveLosses && state.cfg.maxConsecutiveLosses > 0) {
-    addLog('warn','Bot','Max consecutive losses ('+state.cfg.maxConsecutiveLosses+') reached. Bot paused — reset session to resume.');
-    state.bot.state = 'paused';
-    setBotState('paused');
-    document.getElementById('run-btn').disabled = false;
-    document.getElementById('stop-btn').disabled = true;
+function placeTrade() {
+  if (state.bot.state === 'closed') { addLog('warn','Bot','Bot is closed. Reset session first.'); return; }
+  if (state.bot.activePosition) { addLog('warn','Bot','Already in a position.'); return; }
+  if (!state.market.symbol) { addLog('warn','Bot','Select a market first.'); return; }
+  if (!canTradeNow()) { addLog('warn','Bot','Frequency limit — wait before next trade.'); return; }
+  if (state.bot.consecutiveLosses >= state.cfg.maxConsecutiveLosses) {
+    state.bot.state = 'closed';
+    setBotState('closed');
+    addLog('warn','Bot','Max consecutive losses reached. Bot closed.');
     return;
   }
 
-  const stab = assessStability();
-  if (!stab.stable) {
-    addLog('info','Bot','Market unstable (vol '+stab.volatility.toFixed(2)+'%), retrying next tick…');
-    // Will retry on next tick via onTick()
-    state.bot.state = 'idle';
-    setBotState('running');
-    return;
-  }
-
-  const price = state.sim.price;
+  const manual = parseFloat(document.getElementById('manual-price').value);
+  const price = isNaN(manual) ? state.sim.price : manual;
   const stake = calculateNextStake();
-  state.bot.activePosition = { entryPrice: price, stake, entryTime: Date.now(), tickCount: 0 };
+
+  state.bot.activePosition = { entryPrice: price, stake, entryTime: Date.now() };
   state.bot.currentStake = stake;
   state.bot.lastTradeTime = Date.now();
   state.bot.todayTrades++;
@@ -855,195 +932,209 @@ function placeNextTrade() {
   state.bot.state = 'trading';
   setBotState('trading');
 
-  document.getElementById('no-position').style.display = 'none';
-  document.getElementById('active-position').style.display = 'block';
-  document.getElementById('pos-entry').textContent = '$'+price.toFixed(4);
-  document.getElementById('pos-stake').textContent = '$'+stake.toFixed(2);
-  document.getElementById('pos-dur').textContent = '0';
-
-  addLog('info','Trade','▶ Entry $'+price.toFixed(4)+' | Stake $'+stake.toFixed(2)+' | Loss streak: '+state.bot.consecutiveLosses);
+  document.getElementById('close-btn').disabled = false;
+  addLog('info','Trade','Opened @ $'+price.toFixed(2)+' | Stake $'+stake.toFixed(2)+' | Loss streak: '+state.bot.consecutiveLosses);
   updateDashboard();
 }
 
-// Called on every tick (sim or live)
-function onTick(price) {
-  const b = state.bot;
-
-  // Update price history
-  b.priceHistory.push(price);
-  if (b.priceHistory.length > 200) b.priceHistory.shift();
-
-  // If in active position — 1-tick exit
-  if (b.activePosition) {
-    b.activePosition.tickCount++;
-    const pos = b.activePosition;
-
-    // Update unrealised display
-    const upnl = (price - pos.entryPrice) * pos.stake;
-    const upnlEl = document.getElementById('pos-upnl');
-    if (upnlEl) {
-      upnlEl.textContent = (upnl>=0?'+':'')+upnl.toFixed(4);
-      upnlEl.style.color = upnl>=0?'var(--green)':'var(--red)';
-    }
-    const durEl = document.getElementById('pos-dur');
-    if (durEl) durEl.textContent = pos.tickCount;
-
-    // Exit after 1 tick
-    if (pos.tickCount >= 1) {
-      closeTrade(price);
-    }
-    return;
-  }
-
-  // If bot running but no open position, try to place next trade
-  if (b.running && b.state !== 'paused') {
-    placeNextTrade();
-  }
-
-  updateConditionIndicators();
-}
-
-function closeTrade(exitPrice) {
-  const b = state.bot;
-  const pos = b.activePosition;
-  if (!pos) return;
-
-  const pnl = parseFloat(((exitPrice - pos.entryPrice) * pos.stake).toFixed(4));
+function closePosition(exitPrice) {
+  if (!state.bot.activePosition) return;
+  const pos = state.bot.activePosition;
+  const ep = exitPrice !== undefined ? exitPrice : state.sim.price;
+  const pnl = parseFloat(((ep - pos.entryPrice) * pos.stake).toFixed(4));
 
   if (pnl > 0) {
-    b.wins++;
-    b.consecutiveLosses = 0;
-    b.currentStake = state.cfg.minStake; // reset stake after win
-    addLog('win','Trade','✓ WIN +$'+pnl.toFixed(4)+' | Exit $'+exitPrice.toFixed(4));
+    state.bot.wins++;
+    state.bot.consecutiveLosses = 0;
+    state.bot.currentStake = state.cfg.minStake;
+    state.bot.state = 'idle';
+    setBotState('idle');
+    addLog('win','Trade','WIN +$'+pnl.toFixed(4)+' | Exit $'+ep.toFixed(2));
   } else {
-    b.losses++;
-    b.consecutiveLosses++;
-    addLog('loss','Trade','✗ LOSS $'+pnl.toFixed(4)+' | Streak: '+b.consecutiveLosses);
-  }
-
-  b.sessionPnl += pnl;
-  b.totalPnl   += pnl;
-  b.positions.push({ ...pos, exitPrice, exitTime: Date.now(), pnl });
-  b.activePosition = null;
-
-  pnlData.labels.push('#'+b.positions.length);
-  pnlData.data.push(parseFloat(b.totalPnl.toFixed(4)));
-  if (pnlChart) pnlChart.update('none');
-
-  document.getElementById('no-position').style.display = 'block';
-  document.getElementById('active-position').style.display = 'none';
-
-  // Update live balance display
-  if (state.conn.balance !== null) {
-    state.conn.balance += pnl;
-    updateBalanceDisplay(state.conn.balance, state.conn.currency);
-    // Also request fresh balance from Deriv
-    if (state.conn.ws && state.conn.ws.readyState===1) {
-      state.conn.ws.send(JSON.stringify({ balance:1, subscribe:0 }));
+    state.bot.losses++;
+    state.bot.consecutiveLosses++;
+    if (state.bot.consecutiveLosses >= state.cfg.maxConsecutiveLosses) {
+      state.bot.state = 'closed';
+      setBotState('closed');
+      addLog('warn','Bot','Max consecutive losses reached. Bot closed.');
+    } else {
+      state.bot.state = 'monitoring';
+      setBotState('monitoring');
+      addLog('loss','Trade','LOSS $'+pnl.toFixed(4)+' | Loss streak: '+state.bot.consecutiveLosses+'. Waiting for recovery conditions...');
     }
   }
 
+  state.bot.sessionPnl += pnl;
+  state.bot.totalPnl += pnl;
+
+  const trade = { ...pos, exitPrice: ep, exitTime: Date.now(), pnl };
+  state.bot.positions.push(trade);
+  state.bot.activePosition = null;
+
+  pnlData.labels.push('#'+state.bot.positions.length);
+  pnlData.data.push(parseFloat(state.bot.totalPnl.toFixed(4)));
+  if (pnlChart) pnlChart.update();
+
+  document.getElementById('close-btn').disabled = true;
   updateDashboard();
   updateHistory();
 
-  if (!b.running) return;
-
-  // Schedule next trade (with optional delay)
-  const delay = (state.cfg.tradeDelaySecs || 0) * 1000;
-  if (delay > 0) {
-    addLog('info','Bot','Waiting '+state.cfg.tradeDelaySecs+'s before next trade…');
-    b.state = 'idle';
-    setBotState('running');
-    b.tradeDelay = setTimeout(() => { b.tradeDelay = null; placeNextTrade(); }, delay);
+  if (state.bot.sessionPnl >= state.bot.targetProfit) {
+    addLog('win','Bot','🎯 Profit target $'+state.bot.targetProfit.toFixed(2)+' reached!');
+    state.bot.state = 'idle';
+    setBotState('idle');
   }
-  // If no delay, next trade is triggered by the very next tick arriving in onTick()
 }
 
-// ─── Bot state display ────────────────────────────────────────────────────────
 function setBotState(s) {
   const dot = document.getElementById('state-dot');
   const txt = document.getElementById('state-text');
-  const map = { stopped:'#555a6e', running:'#22c55e', trading:'#22c55e', paused:'#f59e0b', closed:'#ef4444' };
-  dot.style.background = map[s]||'#555a6e';
-  dot.style.boxShadow  = (s==='trading'||s==='running') ? '0 0 5px '+map[s] : 'none';
-  dot.style.animation  = (s==='trading'||s==='running') ? 'pulse 1.5s infinite' : 'none';
-  const labels = { stopped:'Stopped', running:'Running', trading:'Trading', paused:'Paused', closed:'Closed' };
-  txt.textContent = labels[s] || s;
+  const colors = { idle:'#555a6e', monitoring:'#14b8a6', waiting:'#f59e0b', trading:'#22c55e', closed:'#ef4444' };
+  dot.style.background = colors[s]||'#555a6e';
+  dot.style.animation = s==='trading'?'pulse 1.5s infinite':'none';
+  txt.textContent = s.charAt(0).toUpperCase()+s.slice(1);
 }
 
-function setLimits() {
+function setTarget() {
   const t = parseFloat(document.getElementById('profit-target').value);
-  const l = parseFloat(document.getElementById('loss-limit').value);
-  if (!isNaN(t) && t>0) { state.bot.profitTarget = t; addLog('info','Bot','Profit target: $'+t.toFixed(2)); }
-  if (!isNaN(l) && l>0) { state.bot.lossLimit    = l; addLog('info','Bot','Loss limit: $'+l.toFixed(2)); }
+  if (isNaN(t)||t<=0) return;
+  state.bot.targetProfit = t;
+  addLog('info','Bot','Profit target set to $'+t.toFixed(2));
 }
 
 function resetSession() {
-  if (state.bot.activePosition) { addLog('warn','Bot','Wait for current position to close first.'); return; }
-  if (state.bot.running) stopBot();
+  if (state.bot.activePosition) { addLog('warn','Bot','Close the active position first.'); return; }
   state.bot.consecutiveLosses = 0;
-  state.bot.currentStake      = state.cfg.minStake;
-  state.bot.sessionPnl        = 0;
-  state.bot.todayTrades       = 0;
-  state.bot.lastTradeTime     = null;
-  state.bot.state             = 'stopped';
-  setBotState('stopped');
-  document.getElementById('run-btn').disabled = !state.market.symbol;
-  document.getElementById('stop-btn').disabled = true;
-  document.getElementById('run-indicator').className = 'run-indicator stopped';
-  document.getElementById('run-indicator').innerHTML = '<span class="dot" style="background:var(--text3);"></span> Bot stopped';
-  addLog('info','Bot','Session reset');
+  state.bot.currentStake = state.cfg.minStake;
+  state.bot.sessionPnl = 0;
+  state.bot.todayTrades = 0;
+  state.bot.lastTradeTime = null;
+  state.bot.state = 'idle';
+  setBotState('idle');
+  addLog('info','Bot','Session reset.');
   updateDashboard();
 }
 
-// ─── Condition indicators ─────────────────────────────────────────────────────
+// ─── Simulation ───────────────────────────────────────────────────────────────
+function toggleSim() {
+  if (state.conn.connected) {
+    addLog('warn','Sim','Live connection active — simulation disabled. Use real ticks from Deriv.');
+    return;
+  }
+  if (state.sim.running) {
+    clearInterval(state.sim.interval);
+    state.sim.running = false;
+    document.getElementById('sim-btn').innerHTML = '<i class="ti ti-player-play"></i> Start simulation';
+    addLog('info','Sim','Price simulation stopped');
+  } else {
+    if (!state.market.symbol) { addLog('warn','Sim','Select a market first.'); return; }
+    state.sim.running = true;
+    document.getElementById('sim-btn').innerHTML = '<i class="ti ti-player-pause"></i> Stop simulation';
+    addLog('info','Sim','Price simulation started');
+    state.sim.interval = setInterval(tick, 800);
+  }
+}
+
+let prevPrice = 0;
+function tick() {
+  if (Math.random() < 0.08) state.sim.trend = (Math.random()-0.5)*0.005;
+  const vol = state.sim.price > 1000 ? 0.003 : 0.002;
+  const change = (Math.random()-0.5) * state.sim.price * vol + state.sim.price * state.sim.trend;
+  state.sim.price = Math.max(state.sim.price + change, 0.01);
+
+  state.bot.priceHistory.push(parseFloat(state.sim.price.toFixed(4)));
+  if (state.bot.priceHistory.length > 100) state.bot.priceHistory.shift();
+
+  const now = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  priceData.labels.push(now);
+  priceData.data.push(parseFloat(state.sim.price.toFixed(4)));
+  if (priceData.labels.length > 80) { priceData.labels.shift(); priceData.data.shift(); }
+  if (priceChart) priceChart.update('none');
+
+  // update live price display
+  const chg = state.sim.price - prevPrice;
+  const chgEl = document.getElementById('price-chg');
+  document.getElementById('live-price').textContent = '$'+state.sim.price.toFixed(state.sim.price > 100 ? 2 : 4);
+  chgEl.textContent = (chg>=0?'+':'')+chg.toFixed(4);
+  chgEl.className = 'price-change '+(chg>=0?'up':'dn');
+  prevPrice = state.sim.price;
+
+  updateConditionIndicators();
+
+  if (state.bot.activePosition) {
+    const pos = state.bot.activePosition;
+    const upnl = (state.sim.price - pos.entryPrice) * pos.stake;
+    document.getElementById('pos-upnl').textContent = (upnl>=0?'+':'')+upnl.toFixed(4);
+    document.getElementById('pos-upnl').style.color = upnl>=0?'var(--green)':'var(--red)';
+    const dur = Math.floor((Date.now()-pos.entryTime)/1000);
+    document.getElementById('pos-dur').textContent = dur+'s';
+    if (upnl >= state.cfg.exitThreshold) {
+      addLog('info','Bot','Auto-exit: profit threshold $'+state.cfg.exitThreshold.toFixed(2)+' reached');
+      closePosition();
+    }
+  }
+
+  if (state.bot.state==='monitoring') {
+    const stab = assessStability();
+    if (stab.stable && canTradeNow()) {
+      state.bot.state = 'waiting';
+      setBotState('waiting');
+      addLog('info','Recovery','Conditions met — ready for recovery trade');
+    }
+  }
+}
+
 function updateConditionIndicators() {
-  const h = state.bot.priceHistory;
   const stab = assessStability();
+  const h = state.bot.priceHistory;
   const gap = h.length>1 ? Math.abs(h[h.length-1]-h[h.length-2]) : 0;
-  const gapOk = state.cfg.minTickGap===0 || gap>=state.cfg.minTickGap;
+  const gapOk = gap >= state.cfg.minTickGap;
   const canTrade = canTradeNow();
 
-  const si = document.getElementById('ind-stability');
-  si.textContent = stab.stable?'Stable':'Unstable';
-  si.className = 'badge '+(stab.stable?'green':'red');
+  const stabEl = document.getElementById('ind-stability');
+  stabEl.textContent = stab.stable ? 'Stable' : 'Unstable';
+  stabEl.className = 'badge '+(stab.stable?'green':'red');
 
-  const gi = document.getElementById('ind-gap');
-  gi.textContent = gapOk?'OK ('+gap.toFixed(3)+')':'Small ('+gap.toFixed(3)+')';
-  gi.className = 'badge '+(gapOk?'green':'amber');
+  const gapEl = document.getElementById('ind-gap');
+  gapEl.textContent = gapOk ? 'Wide ('+gap.toFixed(3)+')' : 'Narrow ('+gap.toFixed(3)+')';
+  gapEl.className = 'badge '+(gapOk?'green':'amber');
 
-  const fi = document.getElementById('ind-freq');
-  fi.textContent = canTrade?'Yes':'Limit';
-  fi.className = 'badge '+(canTrade?'green':'red');
+  const freqEl = document.getElementById('ind-freq');
+  freqEl.textContent = canTrade ? 'Yes' : 'No';
+  freqEl.className = 'badge '+(canTrade?'green':'red');
 
-  document.getElementById('ind-vol').textContent = stab.volatility.toFixed(3)+'%';
+  document.getElementById('ind-vol').textContent = stab.volatility===999 ? '—' : stab.volatility.toFixed(3)+'%';
   document.getElementById('ind-lastgap').textContent = gap.toFixed(4);
-  const lim = state.cfg.maxTradesPerDay;
-  document.getElementById('ind-today').textContent = state.bot.todayTrades+(lim>0?' / '+lim:'');
+  document.getElementById('ind-today').textContent = state.bot.todayTrades+' / '+state.cfg.maxTradesPerDay;
 }
 
 // ─── Dashboard update ─────────────────────────────────────────────────────────
 function updateDashboard() {
   const b = state.bot;
-  const pnl = b.sessionPnl;
   const pnlEl = document.getElementById('m-pnl');
+  const pnl = b.sessionPnl;
   pnlEl.textContent = (pnl>=0?'+':'')+'$'+Math.abs(pnl).toFixed(4);
-  pnlEl.className = 'metric-value '+(pnl>0?'green':pnl<0?'red':'');
+  pnlEl.className = 'metric-value '+(pnl>=0?'green':pnl<0?'red':'');
   document.getElementById('m-pnl-sub').textContent = b.positions.length+' closed trades';
 
   const wr = b.totalTrades>0 ? Math.round(b.wins/b.totalTrades*100) : null;
-  document.getElementById('m-wr').textContent = wr!==null?wr+'%':'—';
+  document.getElementById('m-wr').textContent = wr!==null ? wr+'%' : '—';
   document.getElementById('m-trades-sub').textContent = b.totalTrades+' trades total';
 
   document.getElementById('m-stake').textContent = '$'+b.currentStake.toFixed(2);
   document.getElementById('m-streak').textContent = 'Loss streak: '+b.consecutiveLosses;
 
-  const badge = { stopped:'gray', running:'blue', trading:'green', paused:'amber', closed:'red' };
-  const label = { stopped:'Stopped', running:'Running', trading:'Trading', paused:'Paused', closed:'Closed' };
-  document.getElementById('m-state').innerHTML = '<span class="badge '+(badge[b.state]||'gray')+'">'+(label[b.state]||b.state)+'</span>';
-  document.getElementById('m-pos').textContent = b.activePosition ? 'In position @ $'+b.activePosition.entryPrice.toFixed(4) : 'No open position';
+  const badges = {idle:'gray',monitoring:'blue',waiting:'amber',trading:'green',closed:'red'};
+  document.getElementById('m-state').innerHTML = '<span class="badge '+badges[b.state]+'">'+b.state.charAt(0).toUpperCase()+b.state.slice(1)+'</span>';
+  document.getElementById('m-pos').textContent = b.activePosition ? 'Position open @ $'+b.activePosition.entryPrice.toFixed(4) : 'No active position';
 
-  if (!b.activePosition) {
+  // active position card
+  if (b.activePosition) {
+    document.getElementById('no-position').style.display = 'none';
+    document.getElementById('active-position').style.display = 'block';
+    document.getElementById('pos-entry').textContent = '$'+b.activePosition.entryPrice.toFixed(4);
+    document.getElementById('pos-stake').textContent = '$'+b.activePosition.stake.toFixed(2);
+  } else {
     document.getElementById('no-position').style.display = 'block';
     document.getElementById('active-position').style.display = 'none';
   }
@@ -1051,279 +1142,331 @@ function updateDashboard() {
 
 function updateHistory() {
   const b = state.bot;
-  const tpnlEl = document.getElementById('h-total-pnl');
-  tpnlEl.textContent = (b.totalPnl>=0?'+':'')+'$'+Math.abs(b.totalPnl).toFixed(4);
-  tpnlEl.className = 'metric-value '+(b.totalPnl>=0?'green':'red');
+  document.getElementById('h-total-pnl').textContent = (b.totalPnl>=0?'+':'')+'$'+Math.abs(b.totalPnl).toFixed(4);
+  document.getElementById('h-total-pnl').className = 'metric-value '+(b.totalPnl>=0?'green':'red');
   document.getElementById('h-total-trades').textContent = b.totalTrades;
   document.getElementById('h-wl').textContent = b.wins+' / '+b.losses;
 
   const tbody = document.getElementById('history-tbody');
-  if (!b.positions.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3);">No trades yet.</td></tr>'; return; }
+  if (b.positions.length===0) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3);">No trades recorded yet.</td></tr>'; return; }
   tbody.innerHTML = [...b.positions].reverse().map((p,i) => {
-    const n = b.positions.length-i;
-    const win = p.pnl>0;
+    const n = b.positions.length - i;
+    const win = p.pnl > 0;
+    const time = new Date(p.entryTime).toLocaleTimeString();
     return `<tr style="border-bottom:0.5px solid var(--border);">
-      <td style="padding:6px 8px;color:var(--text3);">${n}</td>
-      <td style="padding:6px 8px;color:var(--text2);">${new Date(p.entryTime).toLocaleTimeString()}</td>
-      <td style="padding:6px 8px;text-align:right;">$${parseFloat(p.entryPrice).toFixed(4)}</td>
-      <td style="padding:6px 8px;text-align:right;">$${parseFloat(p.exitPrice).toFixed(4)}</td>
-      <td style="padding:6px 8px;text-align:right;color:var(--amber);">$${parseFloat(p.stake).toFixed(2)}</td>
-      <td style="padding:6px 8px;text-align:right;color:${win?'var(--green)':'var(--red)'};">${(p.pnl>=0?'+':'')+'$'+Math.abs(p.pnl).toFixed(4)}</td>
-      <td style="padding:6px 8px;text-align:center;"><span class="badge ${win?'green':'red'}">${win?'Win':'Loss'}</span></td>
+      <td style="padding:7px 8px;color:var(--text3);">${n}</td>
+      <td style="padding:7px 8px;color:var(--text2);">${time}</td>
+      <td style="padding:7px 8px;text-align:right;">$${parseFloat(p.entryPrice).toFixed(4)}</td>
+      <td style="padding:7px 8px;text-align:right;">$${parseFloat(p.exitPrice).toFixed(4)}</td>
+      <td style="padding:7px 8px;text-align:right;color:var(--amber);">$${parseFloat(p.stake).toFixed(2)}</td>
+      <td style="padding:7px 8px;text-align:right;color:${win?'var(--green)':'var(--red)'};">${(p.pnl>=0?'+':'')+'$'+Math.abs(p.pnl).toFixed(4)}</td>
+      <td style="padding:7px 8px;text-align:center;"><span class="badge ${win?'green':'red'}">${win?'Win':'Loss'}</span></td>
     </tr>`;
   }).join('');
 }
 
-function exportCSV() {
-  const rows = [['#','Time','Entry','Exit','Stake','PnL','Result']];
-  state.bot.positions.forEach((p,i) => {
-    rows.push([i+1, new Date(p.entryTime).toISOString(), p.entryPrice.toFixed(4), p.exitPrice.toFixed(4), p.stake.toFixed(2), p.pnl.toFixed(4), p.pnl>0?'Win':'Loss']);
-  });
-  const csv = rows.map(r=>r.join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-  a.download = 'deriv_bot_trades.csv';
-  a.click();
-}
-
-// ─── Simulation ───────────────────────────────────────────────────────────────
-function toggleSim() {
-  if (state.conn.connected) { addLog('warn','Sim','Live connection active — using real ticks.'); return; }
-  if (state.sim.running) {
-    clearInterval(state.sim.interval);
-    state.sim.running = false;
-    document.getElementById('sim-btn').innerHTML = '<i class="ti ti-player-play"></i> Simulate';
-    addLog('info','Sim','Simulation stopped');
-  } else {
-    if (!state.market.symbol) { addLog('warn','Sim','Select a market first.'); return; }
-    state.sim.running = true;
-    document.getElementById('sim-btn').innerHTML = '<i class="ti ti-player-pause"></i> Simulating';
-    state.sim.interval = setInterval(simTick, 800);
-    addLog('info','Sim','Simulation running');
-  }
-}
-
-let prevPrice = 0;
-function simTick() {
-  if (Math.random()<0.07) state.sim.trend = (Math.random()-0.5)*0.004;
-  const vol = state.sim.price > 500 ? 0.003 : 0.002;
-  const chg = (Math.random()-0.5)*state.sim.price*vol + state.sim.price*state.sim.trend;
-  state.sim.price = Math.max(state.sim.price+chg, 0.01);
-
-  const now = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  priceData.labels.push(now);
-  priceData.data.push(parseFloat(state.sim.price.toFixed(4)));
-  if (priceData.labels.length>80) { priceData.labels.shift(); priceData.data.shift(); }
-  if (priceChart) priceChart.update('none');
-
-  const chgVal = state.sim.price - prevPrice;
-  const chgEl = document.getElementById('price-chg');
-  document.getElementById('live-price').textContent = '$'+state.sim.price.toFixed(state.sim.price>100?2:4);
-  if (chgEl) { chgEl.textContent=(chgVal>=0?'+':'')+chgVal.toFixed(4); chgEl.className='price-change '+(chgVal>=0?'up':'dn'); }
-  prevPrice = state.sim.price;
-
-  onTick(state.sim.price);
-}
-
-// ─── Live tick handler ────────────────────────────────────────────────────────
-function handleLiveTick(tick) {
-  if (!tick) return;
-  const price = parseFloat(tick.quote);
-  state.sim.price = price;
-
-  const now = new Date(tick.epoch*1000).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  priceData.labels.push(now);
-  priceData.data.push(price);
-  if (priceData.labels.length>80) { priceData.labels.shift(); priceData.data.shift(); }
-  if (priceChart) priceChart.update('none');
-
-  const chg = price - prevPrice;
-  document.getElementById('live-price').textContent = '$'+price.toFixed(tick.pip_size||4);
-  const chgEl = document.getElementById('price-chg');
-  if (chgEl) { chgEl.textContent=(chg>=0?'+':'')+chg.toFixed(tick.pip_size||4); chgEl.className='price-change '+(chg>=0?'up':'dn'); }
-  prevPrice = price;
-
-  onTick(price);
-}
-
-function subscribeToTicks(symbol) {
-  const ws = state.conn.ws;
-  if (!ws || ws.readyState!==1) return;
-  ws.send(JSON.stringify({ ticks: symbol, subscribe: 1 }));
-  addLog('info','Ticks','Subscribed: '+symbol);
-}
-
-// ─── Balance display ──────────────────────────────────────────────────────────
-function updateBalanceDisplay(bal, cur) {
-  const fmt = isNaN(parseFloat(bal)) ? bal : parseFloat(bal).toFixed(2);
-  document.getElementById('topbar-balance').textContent = fmt;
-  document.getElementById('topbar-currency').textContent = cur||'';
-  document.getElementById('m-balance').textContent = fmt;
-  document.getElementById('m-balance-mode').textContent = 'Connected account';
-  if (document.getElementById('ai-balance')) document.getElementById('ai-balance').textContent = fmt;
-}
-
-// ─── Logs ─────────────────────────────────────────────────────────────────────
+// ─── Logging ──────────────────────────────────────────────────────────────────
 function addLog(type, tag, msg) {
   const time = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  state.logs.unshift({ type, tag, msg, time });
-  if (state.logs.length>300) state.logs.pop();
-  const c = document.getElementById('log-container');
-  if (!c) return;
-  const el = document.createElement('div');
-  el.className = 'log-entry';
-  el.innerHTML = `<span class="log-time">${time}</span><span class="log-type ${type}">[${tag}]</span><span class="log-msg">${msg}</span>`;
-  c.prepend(el);
-  if (c.children.length>150) c.lastChild.remove();
+  state.logs.unshift({type,tag,msg,time});
+  if (state.logs.length>200) state.logs.pop();
+  renderLogs();
 }
-function clearLogs() { state.logs=[]; document.getElementById('log-container').innerHTML=''; }
 
-// ─── Deriv connection ─────────────────────────────────────────────────────────
-function connectDeriv() {
+function renderLogs() {
+  const c = document.getElementById('log-container');
+  c.innerHTML = state.logs.slice(0,60).map(l => `
+    <div class="log-entry">
+      <span class="log-time">${l.time}</span>
+      <span class="log-type ${l.type==='win'?'win':l.type==='loss'?'loss':l.type==='warn'?'warn':'info'}">[${l.tag}]</span>
+      <span class="log-msg">${l.msg}</span>
+    </div>`).join('');
+}
+
+function clearLogs() {
+  state.logs = [];
+  document.getElementById('log-container').innerHTML = '';
+}
+
+// ─── Account / Deriv auth ─────────────────────────────────────────────────────
+// ─── Auth tab switcher ────────────────────────────────────────────────────────
+function switchAuthTab(tab) {
+  document.getElementById('auth-legacy').style.display = tab==='legacy' ? 'block' : 'none';
+  document.getElementById('auth-new').style.display    = tab==='new'    ? 'block' : 'none';
+  document.getElementById('tab-legacy').className = tab==='legacy' ? 'btn btn-primary' : 'btn btn-ghost';
+  document.getElementById('tab-new').className    = tab==='new'    ? 'btn btn-primary' : 'btn btn-ghost';
+  document.getElementById('tab-legacy').style.cssText = 'border-radius:8px 8px 0 0;border-bottom:none;';
+  document.getElementById('tab-new').style.cssText    = 'border-radius:8px 8px 0 0;border-bottom:none;';
+}
+
+// ─── Legacy v3 WebSocket auth ─────────────────────────────────────────────────
+// The legacy API (wss://ws.derivws.com/websockets/v3) still works.
+// The ONLY reason you got "token is invalid" before was App ID 1089
+// — that's Deriv's own app and they reject third-party tokens.
+// Using App ID 36544 (a community testing app) fixes this immediately.
+function connectLegacy() {
   const token  = document.getElementById('api-token').value.trim();
   const appId  = document.getElementById('app-id').value.trim() || '36544';
   const server = document.getElementById('deriv-server').value;
-  if (!token) { showAuthResult('danger', 'Please enter your Deriv API token.'); return; }
 
-  persistSession();
-  showAuthResult('info', 'Connecting…');
-  addLog('info','Auth','Connecting → '+server+' (App ID '+appId+')');
+  if (!token) { showAuthResult('danger', 'Please paste your API token.'); return; }
+
+  showAuthResult('info', 'Opening WebSocket connection…');
+  addLog('info','Auth','Connecting to '+server+' with App ID '+appId);
 
   let authed = false;
   let ws;
-  try { ws = new WebSocket(server+'?app_id='+appId); }
-  catch(e) { showAuthResult('danger','WebSocket failed: '+e.message); return; }
+  try {
+    ws = new WebSocket(`${server}?app_id=${appId}`);
+  } catch(e) {
+    showAuthResult('danger', 'WebSocket creation failed: '+e.message);
+    return;
+  }
 
-  const timeout = setTimeout(()=>{ if(!authed){ showAuthResult('danger','Timeout. Check network or try the other endpoint.'); ws.close(); } }, 12000);
+  const timeout = setTimeout(() => {
+    if (!authed) {
+      showAuthResult('danger', 'Connection timed out after 10s. Check your network or try the other endpoint.');
+      addLog('warn','Auth','Connection timeout');
+      ws.close();
+    }
+  }, 10000);
 
   ws.onopen = () => {
-    addLog('info','Auth','WS open — authorising…');
+    addLog('info','Auth','WebSocket open — sending authorize…');
     ws.send(JSON.stringify({ authorize: token }));
   };
 
   ws.onmessage = (e) => {
-    let d; try { d=JSON.parse(e.data); } catch { return; }
+    let d;
+    try { d = JSON.parse(e.data); } catch { return; }
+
     if (d.error) {
       clearTimeout(timeout);
-      const code = d.error.code||'';
+      const code = d.error.code || '';
       let hint = '';
-      if (code==='InvalidToken') hint = ' — Check token scopes (Read + Trade). Make sure your App ID matches the token (try 36544).';
-      if (code==='RateLimit')    hint = ' — Too many attempts, wait 60s.';
-      showAuthResult('danger','Auth failed ['+code+']: '+d.error.message+hint);
-      addLog('warn','Auth',d.error.message+' ('+code+')');
-      ws.close(); return;
+      if (code === 'InvalidToken') hint = ' — Token may be expired, have wrong scopes (need Read + Trade), or belong to a different environment (real vs demo).';
+      if (code === 'RateLimit') hint = ' — Too many connection attempts. Wait 60 seconds.';
+      showAuthResult('danger', `Auth failed [${code}]: ${d.error.message}${hint}`);
+      addLog('warn','Auth','Error: '+d.error.message+' ('+code+')');
+      ws.close();
+      return;
     }
-    if (d.msg_type==='authorize') {
+
+    if (d.msg_type === 'authorize') {
       authed = true;
       clearTimeout(timeout);
       const acc = d.authorize;
       state.conn.ws = ws;
       state.conn.connected = true;
-      state.conn.balance   = parseFloat(acc.balance);
-      state.conn.currency  = acc.currency;
-      updateBalanceDisplay(acc.balance, acc.currency);
-      ws.send(JSON.stringify({ balance:1, subscribe:1 }));
-      onAuthSuccess({ loginid:acc.loginid, balance:acc.balance, currency:acc.currency, isVirtual:acc.is_virtual });
-      state.conn.pingInterval = setInterval(()=>{ if(ws.readyState===1) ws.send(JSON.stringify({ping:1})); }, 25000);
+      onAuthSuccess({
+        loginid: acc.loginid,
+        balance: acc.balance,
+        currency: acc.currency,
+        isVirtual: acc.is_virtual,
+      });
+      // Keep WS alive for ticks — send ping every 30s
+      state.conn.pingInterval = setInterval(() => {
+        if (ws.readyState === 1) ws.send(JSON.stringify({ ping: 1 }));
+      }, 30000);
+      // Route incoming messages to tick handler
       ws.onmessage = (ev) => {
-        let msg; try { msg=JSON.parse(ev.data); } catch { return; }
-        if (msg.msg_type==='tick')    handleLiveTick(msg.tick);
-        if (msg.msg_type==='balance') {
-          const bal = parseFloat(msg.balance.balance);
-          state.conn.balance = bal;
-          updateBalanceDisplay(bal, msg.balance.currency);
+        let msg;
+        try { msg = JSON.parse(ev.data); } catch { return; }
+        if (msg.msg_type === 'tick') handleLiveTick(msg.tick);
+        if (msg.msg_type === 'balance') {
+          document.getElementById('ai-balance').textContent = parseFloat(msg.balance.balance).toFixed(2);
         }
       };
     }
   };
 
-  ws.onerror = () => { clearTimeout(timeout); if(!authed) showAuthResult('danger','WS error — check network.'); };
+  ws.onerror = () => {
+    clearTimeout(timeout);
+    if (!authed) {
+      showAuthResult('danger', 'WebSocket error — could not reach '+server+'. Check your internet connection.');
+      addLog('warn','Auth','WebSocket onerror fired');
+    }
+  };
+
   ws.onclose = (ev) => {
     clearTimeout(timeout);
     if (!authed) {
-      showAuthResult('danger','Connection closed (code '+ev.code+'). Try the other endpoint.');
+      showAuthResult('danger', `Connection closed before auth completed (code ${ev.code}). Try a different endpoint.`);
     } else {
-      addLog('warn','Auth','WS closed ('+ev.code+') — reconnecting in 5s…');
-      state.conn.connected = false;
+      addLog('warn','Auth','WebSocket closed (code '+ev.code+')');
       document.getElementById('conn-dot').style.background = 'var(--amber)';
-      document.getElementById('conn-text').textContent = 'Reconnecting…';
-      setTimeout(()=>{ if(!state.conn.connected) connectDeriv(); }, 5000);
+      document.getElementById('conn-text').textContent = 'Disconnected';
+      state.conn.connected = false;
     }
   };
 }
 
-function disconnectDeriv() {
-  if (state.conn.ws) { try { state.conn.ws.close(); } catch {} state.conn.ws=null; }
-  if (state.conn.pingInterval) { clearInterval(state.conn.pingInterval); state.conn.pingInterval=null; }
-  state.conn.connected = false;
-  state.conn.balance   = null;
-  document.getElementById('conn-dot').style.background = 'var(--text3)';
-  document.getElementById('conn-dot').style.boxShadow  = 'none';
-  document.getElementById('conn-text').textContent = 'Disconnected';
-  document.getElementById('disconnect-btn').disabled = true;
-  document.getElementById('account-info-card').style.display = 'none';
-  document.getElementById('topbar-balance').textContent = '—';
-  showAuthResult('info','Disconnected.');
-  addLog('info','Auth','Disconnected');
+// ─── Live tick handler (called when connected via legacy WS) ──────────────────
+function subscribeToTicks(symbol) {
+  const ws = state.conn.ws;
+  if (!ws || ws.readyState !== 1) return;
+  ws.send(JSON.stringify({ ticks: symbol, subscribe: 1 }));
+  addLog('info','Ticks','Subscribed to live ticks for '+symbol);
 }
 
+function handleLiveTick(tick) {
+  if (!tick) return;
+  const price = parseFloat(tick.quote);
+  state.sim.price = price;
+  state.bot.priceHistory.push(price);
+  if (state.bot.priceHistory.length > 100) state.bot.priceHistory.shift();
+  const now = new Date(tick.epoch*1000).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  priceData.labels.push(now);
+  priceData.data.push(price);
+  if (priceData.labels.length > 80) { priceData.labels.shift(); priceData.data.shift(); }
+  if (priceChart) priceChart.update('none');
+
+  const chg = price - prevPrice;
+  const chgEl = document.getElementById('price-chg');
+  document.getElementById('live-price').textContent = '$'+price.toFixed(tick.pip_size||2);
+  chgEl.textContent = (chg>=0?'+':'')+chg.toFixed(tick.pip_size||4);
+  chgEl.className = 'price-change '+(chg>=0?'up':'dn');
+  prevPrice = price;
+  updateConditionIndicators();
+
+  if (state.bot.activePosition) {
+    const pos = state.bot.activePosition;
+    const upnl = (price - pos.entryPrice) * pos.stake;
+    document.getElementById('pos-upnl').textContent = (upnl>=0?'+':'')+upnl.toFixed(4);
+    document.getElementById('pos-upnl').style.color = upnl>=0?'var(--green)':'var(--red)';
+    const dur = Math.floor((Date.now()-pos.entryTime)/1000);
+    document.getElementById('pos-dur').textContent = dur+'s';
+    if (upnl >= state.cfg.exitThreshold) {
+      addLog('info','Bot','Auto-exit: profit threshold $'+state.cfg.exitThreshold.toFixed(2)+' reached');
+      closePosition();
+    }
+  }
+}
+
+// ─── New REST + OTP API ───────────────────────────────────────────────────────
+async function fetchNewAccounts() {
+  const token = document.getElementById('new-api-token').value.trim();
+  const appId = document.getElementById('new-app-id').value.trim();
+  if (!token || !appId) { showAuthResultNew('danger', 'Enter your PAT token and App ID first.'); return; }
+  showAuthResultNew('info', 'Fetching accounts…');
+  try {
+    const res = await fetch('https://api.derivws.com/trading/v1/options/accounts', {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer '+token, 'Deriv-App-ID': appId }
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      showAuthResultNew('danger', 'Failed: '+(body.errors?.[0]?.message || res.statusText));
+      return;
+    }
+    const accounts = body.data || body.accounts || [];
+    if (!accounts.length) { showAuthResultNew('info', 'No accounts found. The account may not exist yet.'); return; }
+    const first = accounts[0];
+    document.getElementById('new-account-id').value = first.account_id || first.id || '';
+    showAuthResultNew('success', `Found ${accounts.length} account(s). Account ID auto-filled: ${first.account_id || first.id}`);
+    addLog('info','Auth (New)','Accounts fetched: '+accounts.map(a=>a.account_id||a.id).join(', '));
+  } catch(e) {
+    showAuthResultNew('danger', 'Request failed: '+e.message+'. This may be a CORS issue — the new REST API may need a backend proxy.');
+    addLog('warn','Auth (New)','Fetch error: '+e.message);
+  }
+}
+
+async function connectNewAPI() {
+  const token = document.getElementById('new-api-token').value.trim();
+  const appId = document.getElementById('new-app-id').value.trim();
+  const accountId = document.getElementById('new-account-id').value.trim();
+  if (!token||!appId||!accountId) { showAuthResultNew('danger', 'Fill in token, App ID, and Account ID.'); return; }
+  showAuthResultNew('info', 'Requesting one-time WebSocket URL…');
+  try {
+    const res = await fetch(`https://api.derivws.com/trading/v1/options/accounts/${accountId}/otp`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer '+token, 'Deriv-App-ID': appId, 'Content-Type': 'application/json' }
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      showAuthResultNew('danger', 'OTP request failed: '+(body.errors?.[0]?.message || res.statusText));
+      return;
+    }
+    const wsUrl = body.data?.url || body.url;
+    if (!wsUrl) { showAuthResultNew('danger', 'No WebSocket URL in response: '+JSON.stringify(body)); return; }
+    showAuthResultNew('info', 'OTP received — opening WebSocket…');
+    addLog('info','Auth (New)','Connecting to '+wsUrl.slice(0,60)+'…');
+    const ws = new WebSocket(wsUrl);
+    ws.onopen = () => {
+      state.conn.ws = ws;
+      state.conn.connected = true;
+      onAuthSuccess({ loginid: accountId, balance: '—', currency: 'USD', isVirtual: accountId.startsWith('D') });
+      showAuthResultNew('success', 'Connected via new OTP API!');
+    };
+    ws.onerror = () => showAuthResultNew('danger', 'WebSocket error after OTP. Token may have expired.');
+    ws.onclose = () => { state.conn.connected = false; };
+  } catch(e) {
+    showAuthResultNew('danger', 'Failed: '+e.message+'. Note: the new REST API may block direct browser calls due to CORS.');
+    addLog('warn','Auth (New)','Error: '+e.message);
+  }
+}
+
+// ─── Shared auth success handler ──────────────────────────────────────────────
 function onAuthSuccess(acc) {
   document.getElementById('conn-dot').style.background = 'var(--green)';
-  document.getElementById('conn-dot').style.boxShadow  = '0 0 5px var(--green)';
+  document.getElementById('conn-dot').style.boxShadow = '0 0 6px var(--green)';
   document.getElementById('conn-text').textContent = 'Connected';
-  document.getElementById('disconnect-btn').disabled = false;
+  try { document.getElementById('disconnect-btn').disabled = false; } catch {}
+  try { document.getElementById('disconnect-btn-new').disabled = false; } catch {}
   document.getElementById('account-info-card').style.display = 'block';
-  document.getElementById('ai-balance').textContent  = isNaN(parseFloat(acc.balance)) ? acc.balance : parseFloat(acc.balance).toFixed(2);
-  document.getElementById('ai-currency').textContent = acc.currency||'USD';
-  document.getElementById('ai-type').textContent     = acc.isVirtual ? 'Demo' : 'Real';
-  document.getElementById('ai-loginid').textContent  = acc.loginid;
-  const badgeEl = document.getElementById('active-mode-badge');
-  if (badgeEl) badgeEl.innerHTML = acc.isVirtual
-    ? '<span class="badge blue"><i class="ti ti-test-pipe" aria-hidden="true"></i> Demo</span>'
-    : '<span class="badge green"><i class="ti ti-cash" aria-hidden="true"></i> Real</span>';
-  showAuthResult('success','Authorised as '+acc.loginid+' — Balance: '+acc.balance+' '+(acc.currency||''));
-  addLog('win','Auth','Connected: '+acc.loginid+' ('+(acc.isVirtual?'Demo':'Real')+')');
+  document.getElementById('ai-balance').textContent = isNaN(parseFloat(acc.balance)) ? acc.balance : parseFloat(acc.balance).toFixed(2);
+  document.getElementById('ai-currency').textContent = acc.currency || 'USD';
+  document.getElementById('ai-type').textContent = acc.isVirtual ? 'Demo' : 'Real';
+  document.getElementById('ai-loginid').textContent = acc.loginid;
+  showAuthResult('success', `Authorised as ${acc.loginid} — Balance: ${acc.balance} ${acc.currency||''}`);
+  addLog('win','Auth','Connected: '+acc.loginid);
+  // If a market is already selected, subscribe to live ticks
   if (state.market.symbol) subscribeToTicks(state.market.symbol);
-  if (state.market.symbol) document.getElementById('run-btn').disabled = false;
 }
 
-function toggleVis(id, iconId) {
-  const el=document.getElementById(id); const ic=document.getElementById(iconId);
-  el.type = el.type==='password' ? 'text' : 'password';
-  ic.className = el.type==='password' ? 'ti ti-eye' : 'ti ti-eye-off';
+function disconnectDeriv() {
+  if (state.conn.ws) { try { state.conn.ws.close(); } catch {} state.conn.ws = null; }
+  if (state.conn.pingInterval) { clearInterval(state.conn.pingInterval); state.conn.pingInterval = null; }
+  state.conn.connected = false;
+  document.getElementById('conn-dot').style.background = 'var(--text3)';
+  document.getElementById('conn-dot').style.boxShadow = 'none';
+  document.getElementById('conn-text').textContent = 'Disconnected';
+  try { document.getElementById('disconnect-btn').disabled = true; } catch {}
+  try { document.getElementById('disconnect-btn-new').disabled = true; } catch {}
+  document.getElementById('account-info-card').style.display = 'none';
+  showAuthResult('info', 'Disconnected.');
+  showAuthResultNew('info', 'Disconnected.');
+  addLog('info','Auth','Disconnected from Deriv API');
 }
 
 function showAuthResult(type, msg) {
-  const el=document.getElementById('auth-result'); if(!el) return;
-  const icons={danger:'ti-alert-circle',success:'ti-circle-check',info:'ti-info-circle'};
-  el.innerHTML=`<div class="alert ${type}"><i class="ti ${icons[type]||'ti-info-circle'}" style="font-size:15px;flex-shrink:0;" aria-hidden="true"></i><span>${msg}</span></div>`;
+  const el = document.getElementById('auth-result');
+  if (!el) return;
+  const icons = { danger:'ti-alert-circle', success:'ti-circle-check', info:'ti-info-circle' };
+  el.innerHTML = `<div class="alert ${type}"><i class="ti ${icons[type]||'ti-info-circle'}" style="font-size:16px;flex-shrink:0;" aria-hidden="true"></i><span>${msg}</span></div>`;
+}
+
+function showAuthResultNew(type, msg) {
+  const el = document.getElementById('auth-result-new');
+  if (!el) return;
+  const icons = { danger:'ti-alert-circle', success:'ti-circle-check', info:'ti-info-circle' };
+  el.innerHTML = `<div class="alert ${type}"><i class="ti ${icons[type]||'ti-info-circle'}" style="font-size:16px;flex-shrink:0;" aria-hidden="true"></i><span>${msg}</span></div>`;
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  restoreSession();
   initCharts();
-  buildMarketGrid();
+  buildMarketGrid('all');
   buildPresetGrid();
   loadConfigToUI(state.cfg);
-
-  // Restore market label if saved
-  if (state.market.symbol) {
-    selectedMarketId = state.market.symbol;
-    buildMarketGrid();
-    document.getElementById('market-label').textContent = state.market.label + ' — ' + state.market.symbol;
-    document.getElementById('market-applied').textContent = '✓ '+state.market.label+' active';
-    document.getElementById('run-btn').disabled = false;
-  }
-
-  // Auto-reconnect if token was saved
-  if (document.getElementById('api-token').value.trim()) {
-    setTimeout(connectDeriv, 800);
-  }
-
-  addLog('info','Bot','Deriv Bot ready. Enter your API token in Account & Auth and connect.');
-  addLog('info','Bot','Bot runs continuously — exits after 1 tick, then immediately enters the next trade.');
+  switchAuthTab('legacy');
+  addLog('info','Bot','Deriv Bot GUI ready. Go to Account & Auth → enter your token and App ID 36544.');
+  addLog('info','Auth','The previous "invalid token" error was caused by App ID 1089 (Deriv\'s own app). App ID 36544 fixes this.');
   updateDashboard();
+  // tick the condition indicators even without sim running
+  setInterval(() => {
+    if (!state.sim.running) updateConditionIndicators();
+  }, 2000);
 });
 </script>
 </body>
