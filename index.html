@@ -331,13 +331,16 @@
       <!-- Auth tabs -->
       <div style="display:flex;gap:8px;margin-bottom:0;">
         <button class="btn btn-primary" id="tab-legacy" onclick="switchAuthTab('legacy')" style="border-radius:8px 8px 0 0;border-bottom:none;">
-          <i class="ti ti-plug"></i> Legacy WebSocket
+          <i class="ti ti-plug"></i> Legacy WebSocket (API v3)
+        </button>
+        <button class="btn btn-ghost" id="tab-new" onclick="switchAuthTab('new')" style="border-radius:8px 8px 0 0;border-bottom:none;">
+          <i class="ti ti-api"></i> New REST + OTP API
         </button>
       </div>
 
       <!-- Legacy auth panel -->
       <div id="auth-legacy" class="card" style="border-radius:0 8px 8px 8px;">
-        <div class="card-title"><i class="ti ti-terminal" aria-hidden="true"></i> Deriv API Connection</div>
+        <div class="card-title"><i class="ti ti-terminal" aria-hidden="true"></i> Legacy Deriv WebSocket API (v3)</div>
         <div class="auth-notice">
           <i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0;margin-top:1px;" aria-hidden="true"></i>
           <div>
@@ -360,6 +363,37 @@
           <a href="https://app.deriv.com/account/api-token" target="_blank" class="btn btn-ghost"><i class="ti ti-external-link"></i> Get token</a>
         </div>
         <div id="auth-result" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- New API auth panel -->
+      <div id="auth-new" class="card" style="border-radius:0 8px 8px 8px;display:none;">
+        <div class="card-title"><i class="ti ti-api" aria-hidden="true"></i> New Deriv REST + OTP WebSocket API</div>
+        <div class="auth-notice">
+          <i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0;margin-top:1px;" aria-hidden="true"></i>
+          <div>
+            <strong>New API:</strong> Step 1) Enter PAT token → Step 2) Fetch accounts → Step 3) Connect via OTP. Register your app at <a href="https://app.deriv.com/account/api-token" target="_blank">app.deriv.com</a>.
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Personal Access Token (PAT)</label>
+            <input type="password" id="new-api-token" placeholder="Your PAT token…" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label>App ID</label>
+            <input type="text" id="new-app-id" placeholder="Your registered App ID">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Account ID</label>
+          <input type="text" id="new-account-id" placeholder="e.g. DOT12345678 — click 'Fetch accounts' to auto-fill">
+        </div>
+        <div class="btn-row" style="margin-bottom:8px;">
+          <button class="btn btn-ghost" onclick="fetchNewAccounts()"><i class="ti ti-download"></i> 1. Fetch accounts</button>
+          <button class="btn btn-primary" onclick="connectNewAPI()"><i class="ti ti-plug"></i> 2. Connect via OTP</button>
+          <button class="btn btn-ghost" onclick="disconnectDeriv()" id="disconnect-btn-new" disabled><i class="ti ti-plug-x"></i> Disconnect</button>
+        </div>
+        <div id="auth-result-new" style="margin-top:4px;"></div>
       </div>
 
       <!-- Account info card -->
@@ -926,7 +960,86 @@ function disconnectDeriv() {
 
 function switchAuthTab(tab) {
   document.getElementById('auth-legacy').style.display = tab === 'legacy' ? 'block' : 'none';
+  document.getElementById('auth-new').style.display = tab === 'new' ? 'block' : 'none';
   document.getElementById('tab-legacy').className = tab === 'legacy' ? 'btn btn-primary' : 'btn btn-ghost';
+  document.getElementById('tab-new').className = tab === 'new' ? 'btn btn-primary' : 'btn btn-ghost';
+  document.getElementById('tab-legacy').style.cssText = 'border-radius:8px 8px 0 0;border-bottom:none;';
+  document.getElementById('tab-new').style.cssText = 'border-radius:8px 8px 0 0;border-bottom:none;';
+}
+
+// ─── New REST + OTP API ───────────────────────────────────────────────────────
+
+async function fetchNewAccounts() {
+  const token = document.getElementById('new-api-token').value.trim();
+  const appId = document.getElementById('new-app-id').value.trim();
+  if (!token || !appId) { showAuthResultNew('danger', 'Enter your PAT token and App ID first.'); return; }
+  showAuthResultNew('info', 'Fetching accounts…');
+  try {
+    const res = await fetch('https://api.derivws.com/trading/v1/options/accounts', {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Deriv-App-ID': appId
+      }
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      showAuthResultNew('danger', 'Failed: '+(body.errors?.[0]?.message || res.statusText));
+      return;
+    }
+    const accounts = body.data || body.accounts || [];
+    if (!accounts.length) { showAuthResultNew('info', 'No accounts found.'); return; }
+    const first = accounts[0];
+    document.getElementById('new-account-id').value = first.account_id || first.id || '';
+    showAuthResultNew('success', `Found ${accounts.length} account(s). Account ID auto-filled.`);
+    addLog('info','Auth (New)','Accounts fetched: '+accounts.map(a=>a.account_id||a.id).join(', '));
+  } catch(e) {
+    showAuthResultNew('danger', 'Request failed: '+e.message+'. CORS may be blocking the request.');
+    addLog('warn','Auth (New)','Fetch error: '+e.message);
+  }
+}
+
+async function connectNewAPI() {
+  const token = document.getElementById('new-api-token').value.trim();
+  const appId = document.getElementById('new-app-id').value.trim();
+  const accountId = document.getElementById('new-account-id').value.trim();
+  if (!token||!appId||!accountId) { showAuthResultNew('danger', 'Fill in token, App ID, and Account ID.'); return; }
+  showAuthResultNew('info', 'Requesting one-time WebSocket URL…');
+  try {
+    const res = await fetch(`https://api.derivws.com/trading/v1/options/accounts/${accountId}/otp`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer '+token, 'Deriv-App-ID': appId, 'Content-Type': 'application/json' }
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      showAuthResultNew('danger', 'OTP request failed: '+(body.errors?.[0]?.message || res.statusText));
+      return;
+    }
+    const wsUrl = body.data?.url || body.url;
+    if (!wsUrl) { showAuthResultNew('danger', 'No WebSocket URL in response'); return; }
+    showAuthResultNew('info', 'OTP received — connecting…');
+    addLog('info','Auth (New)','Connecting…');
+    const ws = new WebSocket(wsUrl);
+    ws.onopen = () => {
+      state.conn.ws = ws;
+      state.conn.connected = true;
+      onAuthSuccess({ loginid: accountId, balance: '—', currency: 'USD', isVirtual: accountId.startsWith('D') });
+      showAuthResultNew('success', 'Connected via new OTP API!');
+      try { document.getElementById('disconnect-btn-new').disabled = false; } catch {}
+    };
+    ws.onerror = () => showAuthResultNew('danger', 'WebSocket error after OTP.');
+    ws.onclose = () => { state.conn.connected = false; };
+  } catch(e) {
+    showAuthResultNew('danger', 'Failed: '+e.message+'. CORS may be blocking the request.');
+    addLog('warn','Auth (New)','Error: '+e.message);
+  }
+}
+
+function showAuthResultNew(type, msg) {
+  const el = document.getElementById('auth-result-new');
+  if (!el) return;
+  const icons = { danger:'ti-alert-circle', success:'ti-circle-check', info:'ti-info-circle' };
+  el.innerHTML = `<div class="alert ${type}"><i class="ti ${icons[type]||'ti-info-circle'}" style="font-size:16px;flex-shrink:0;" aria-hidden="true"></i><span>${msg}</span></div>`;
 }
 
 function showAuthResult(type, msg) {
