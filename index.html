@@ -1402,10 +1402,34 @@ async function fetchNewAccounts() {
   if (!token || !appId) { showAuthResultNew('danger', 'Enter your PAT token and App ID first.'); return; }
   showAuthResultNew('info', 'Fetching accounts…');
   try {
-    const res = await fetch('https://api.derivws.com/trading/v1/options/accounts', {
-      method: 'GET',
-      headers: { 'Authorization': 'Bearer '+token, 'Deriv-App-ID': appId }
-    });
+    const res = await fetch(
+    'https://api.derivws.com/trading/v1/options/accounts',
+    {
+        method: 'GET',
+        headers: {
+            Authorization: 'Bearer ' + token,
+            'Deriv-App-ID': appId
+        }
+    }
+);
+
+const text = await res.text();
+
+let body;
+
+try {
+    body = JSON.parse(text);
+} catch {
+    throw new Error(text);
+}
+
+if (!res.ok) {
+    throw new Error(
+        body.errors?.[0]?.message ||
+        body.message ||
+        res.statusText
+    );
+});
     const body = await res.json();
     if (!res.ok) {
       showAuthResultNew('danger', 'Failed: '+(body.errors?.[0]?.message || res.statusText));
