@@ -674,27 +674,79 @@ const state = {
 
 // ─── Markets ─────────────────────────────────────────────────────────────────
 const MARKETS = [
+  // Standard Volatility Indices
   { id:'R_10', name:'Volatility 10', cat:'volatility', start:800 },
   { id:'R_25', name:'Volatility 25', cat:'volatility', start:900 },
   { id:'R_50', name:'Volatility 50', cat:'volatility', start:1000 },
   { id:'R_75', name:'Volatility 75', cat:'volatility', start:700 },
   { id:'R_100', name:'Volatility 100', cat:'volatility', start:1200 },
-  { id:'1HZ10V', name:'Volatility 10(1s)', cat:'volatility', start:850 },
+
+  // 1-Second Volatility Indices
+  { id:'1HZ10V', name:'Volatility 10 (1s)', cat:'volatility', start:850 },
+  { id:'1HZ25V', name:'Volatility 25 (1s)', cat:'volatility', start:900 },
+  { id:'1HZ50V', name:'Volatility 50 (1s)', cat:'volatility', start:1000 },
+  { id:'1HZ75V', name:'Volatility 75 (1s)', cat:'volatility', start:700 },
+  { id:'1HZ100V', name:'Volatility 100 (1s)', cat:'volatility', start:1200 },
+
+  // Step Index
+  { id:'stpRNG', name:'Step Index', cat:'volatility', start:1000 },
+
+  // Drift Switching Indices
+  { id:'RDBULL', name:'Bull Market Index', cat:'volatility', start:1000 },
+  { id:'RDBEAR', name:'Bear Market Index', cat:'volatility', start:1000 },
+
+  // Crash Indices
+  { id:'CRASH300', name:'Crash 300', cat:'volatility', start:1000 },
+  { id:'CRASH500', name:'Crash 500', cat:'volatility', start:1000 },
+  { id:'CRASH600', name:'Crash 600', cat:'volatility', start:1000 },
+  { id:'CRASH900', name:'Crash 900', cat:'volatility', start:1000 },
+  { id:'CRASH1000', name:'Crash 1000', cat:'volatility', start:1000 },
+
+  // Boom Indices
+  { id:'BOOM300', name:'Boom 300', cat:'volatility', start:1000 },
+  { id:'BOOM500', name:'Boom 500', cat:'volatility', start:1000 },
+  { id:'BOOM600', name:'Boom 600', cat:'volatility', start:1000 },
+  { id:'BOOM900', name:'Boom 900', cat:'volatility', start:1000 },
+  { id:'BOOM1000', name:'Boom 1000', cat:'volatility', start:1000 },
+
+  // Jump Indices
+  { id:'JD10', name:'Jump 10 Index', cat:'volatility', start:1000 },
+  { id:'JD25', name:'Jump 25 Index', cat:'volatility', start:1000 },
+  { id:'JD50', name:'Jump 50 Index', cat:'volatility', start:1000 },
+  { id:'JD75', name:'Jump 75 Index', cat:'volatility', start:1000 },
+  { id:'JD100', name:'Jump 100 Index', cat:'volatility', start:1000 },
+
+  // Range Break Indices
+  { id:'RANGE100', name:'Range Break 100', cat:'volatility', start:1000 },
+  { id:'RANGE200', name:'Range Break 200', cat:'volatility', start:1000 },
+
+  // Daily Reset Indices
+  { id:'DR10', name:'Daily Reset 10', cat:'volatility', start:1000 },
+  { id:'DR25', name:'Daily Reset 25', cat:'volatility', start:1000 },
+  { id:'DR50', name:'Daily Reset 50', cat:'volatility', start:1000 },
+  { id:'DR75', name:'Daily Reset 75', cat:'volatility', start:1000 },
+  { id:'DR100', name:'Daily Reset 100', cat:'volatility', start:1000 },
+
+  // Crypto
   { id:'BTCUSD', name:'Bitcoin/USD', cat:'crypto', start:30000 },
   { id:'ETHUSD', name:'Ethereum/USD', cat:'crypto', start:2000 },
+
+  // Forex
   { id:'frxEURUSD', name:'EUR/USD', cat:'forex', start:1.08 },
   { id:'frxGBPUSD', name:'GBP/USD', cat:'forex', start:1.26 },
   { id:'frxUSDJPY', name:'USD/JPY', cat:'forex', start:148 },
-  { id:'frxXAUUSD', name:'Gold/USD', cat:'commodities', start:1900 },
+
+  // Commodities
+  { id:'frxXAUUSD', name:'Gold/USD', cat:'commodities', start:1900 }
 ];
 
 // ─── Presets ──────────────────────────────────────────────────────────────────
 const PRESETS = {
-  conservative: { minStake:1, maxStake:10, growthRate:0.02, martingaleFactor:5, exitThreshold:0.05, maxConsecutiveLosses:3, maxTradesPerDay:1, tradeIntervalHours:24, stabilityWindow:10, minTickGap:1, volatilityThreshold:0.01, accumulatorMax:1000 },
-  balanced:     { minStake:1, maxStake:40, growthRate:0.05, martingaleFactor:22, exitThreshold:0.05, maxConsecutiveLosses:2, maxTradesPerDay:2, tradeIntervalHours:6, stabilityWindow:5, minTickGap:1, volatilityThreshold:0.02, accumulatorMax:1000 },
-  aggressive:   { minStake:5, maxStake:100, growthRate:0.10, martingaleFactor:30, exitThreshold:0.10, maxConsecutiveLosses:1, maxTradesPerDay:4, tradeIntervalHours:3, stabilityWindow:3, minTickGap:0.5, volatilityThreshold:0.03, accumulatorMax:2000 },
-  scalping:     { minStake:0.5, maxStake:20, growthRate:0.01, martingaleFactor:10, exitThreshold:0.02, maxConsecutiveLosses:5, maxTradesPerDay:10, tradeIntervalHours:0.5, stabilityWindow:3, minTickGap:0.5, volatilityThreshold:0.05, accumulatorMax:500 },
-  recovery:     { minStake:1, maxStake:40, growthRate:0.05, martingaleFactor:22, exitThreshold:0.05, maxConsecutiveLosses:2, maxTradesPerDay:2, tradeIntervalHours:6, stabilityWindow:5, minTickGap:1, volatilityThreshold:0.02, accumulatorMax:1000 },
+  conservative: { minStake:1, maxStake:10, growthRate:0.02, martingaleFactor:22, exitThreshold:0.05, maxConsecutiveLosses:2, maxTradesPerDay:10, tradeIntervalHours:2, stabilityWindow:10, minTickGap:1, volatilityThreshold:0.01, accumulatorMax:1000 },
+  balanced:     { minStake:1, maxStake:40, growthRate:0.05, martingaleFactor:22, exitThreshold:0.05, maxConsecutiveLosses:2, maxTradesPerDay:10, tradeIntervalHours:2, stabilityWindow:5, minTickGap:1, volatilityThreshold:0.02, accumulatorMax:1000 },
+  aggressive:   { minStake:5, maxStake:100, growthRate:0.10, martingaleFactor:22, exitThreshold:0.05, maxConsecutiveLosses:2, maxTradesPerDay:10, tradeIntervalHours:2, stabilityWindow:3, minTickGap:0.5, volatilityThreshold:0.03, accumulatorMax:2000 },
+  scalping:     { minStake:0.5, maxStake:20, growthRate:0.01, martingaleFactor:22, exitThreshold:0.05, maxConsecutiveLosses:2, maxTradesPerDay:10, tradeIntervalHours:2, stabilityWindow:3, minTickGap:0.5, volatilityThreshold:0.05, accumulatorMax:500 },
+  recovery:     { minStake:1, maxStake:40, growthRate:0.05, martingaleFactor:22, exitThreshold:0.05, maxConsecutiveLosses:2, maxTradesPerDay:10, tradeIntervalHours:2, stabilityWindow:5, minTickGap:1, volatilityThreshold:0.02, accumulatorMax:1000 },
 };
 
 // ─── Charts ───────────────────────────────────────────────────────────────────
