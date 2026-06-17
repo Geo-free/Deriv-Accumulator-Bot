@@ -953,9 +953,27 @@ function disconnectDeriv() {
   state.conn.connected = false;
   document.getElementById('conn-dot').style.background = 'var(--text3)';
   document.getElementById('conn-text').textContent = 'Disconnected';
-  document.getElementById('disconnect-btn').disabled = true;
+  try { document.getElementById('disconnect-btn').disabled = true; } catch {}
+  try { document.getElementById('disconnect-btn-new').disabled = true; } catch {}
   document.getElementById('account-info-card').style.display = 'none';
-  showAuthResult('info', 'Disconnected');
+  showAuthResult('info', 'Disconnected.');
+  showAuthResultNew('info', 'Disconnected.');
+  addLog('info','Auth','Disconnected from Deriv API');
+}
+
+function onAuthSuccess(acc) {
+  document.getElementById('conn-dot').style.background = 'var(--green)';
+  document.getElementById('conn-dot').style.boxShadow = '0 0 6px var(--green)';
+  document.getElementById('conn-text').textContent = 'Connected';
+  try { document.getElementById('disconnect-btn').disabled = false; } catch {}
+  try { document.getElementById('disconnect-btn-new').disabled = false; } catch {}
+  document.getElementById('account-info-card').style.display = 'block';
+  document.getElementById('ai-balance').textContent = isNaN(parseFloat(acc.balance)) ? acc.balance : parseFloat(acc.balance).toFixed(2);
+  document.getElementById('ai-currency').textContent = acc.currency || 'USD';
+  document.getElementById('ai-type').textContent = acc.isVirtual ? 'Demo' : 'Real';
+  document.getElementById('ai-loginid').textContent = acc.loginid;
+  showAuthResult('success', `Authorised as ${acc.loginid}`);
+  addLog('win','Auth','Connected: '+acc.loginid);
 }
 
 function switchAuthTab(tab) {
@@ -975,27 +993,58 @@ async function fetchNewAccounts() {
   if (!token || !appId) { showAuthResultNew('danger', 'Enter your PAT token and App ID first.'); return; }
   showAuthResultNew('info', 'Fetching accounts…');
   try {
-    const res = await fetch('https://api.derivws.com/trading/v1/options/accounts', {
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Deriv-App-ID': appId
+    // Try alternative endpoints
+    const endpoints = [
+      'https://api.derivws.com/trading/v1/options/accounts',
+      'https://api.deriv.com/api/v3/account/balance'
+    ];
+    
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Deriv-App-ID': appId,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        const text = await res.text();
+        let body;
+        
+        try {
+          body = JSON.parse(text);
+        } catch (e) {
+          console.error('Response:', text);
+          continue;
+        }
+        
+        if (!res.ok) {
+          continue;
+        }
+        
+        const accounts = body.data || body.accounts || [];
+        if (!accounts.length) { 
+          showAuthResultNew('info', 'No accounts found.'); 
+          return; 
+        }
+        
+        const first = accounts[0];
+        document.getElementById('new-account-id').value = first.account_id || first.id || '';
+        showAuthResultNew('success', `Found ${accounts.length} account(s). Account ID auto-filled.`);
+        addLog('info','Auth (New)','Accounts fetched: '+accounts.map(a=>a.account_id||a.id).join(', '));
+        return;
+      } catch (e) {
+        continue;
       }
-    });
-    const body = await res.json();
-    if (!res.ok) {
-      showAuthResultNew('danger', 'Failed: '+(body.errors?.[0]?.message || res.statusText));
-      return;
     }
-    const accounts = body.data || body.accounts || [];
-    if (!accounts.length) { showAuthResultNew('info', 'No accounts found.'); return; }
-    const first = accounts[0];
-    document.getElementById('new-account-id').value = first.account_id || first.id || '';
-    showAuthResultNew('success', `Found ${accounts.length} account(s). Account ID auto-filled.`);
-    addLog('info','Auth (New)','Accounts fetched: '+accounts.map(a=>a.account_id||a.id).join(', '));
+    
+    showAuthResultNew('danger', '<strong>CORS Restriction:</strong> The new REST API requires a backend proxy due to browser CORS policy. <br><br><strong>✅ Solution:</strong> Use the <strong>Legacy WebSocket</strong> tab instead - it works directly from the browser with no CORS issues!');
+    addLog('warn','Auth (New)','CORS blocking REST API. Use Legacy WebSocket instead.');
   } catch(e) {
-    showAuthResultNew('danger', 'Request failed: '+e.message+'. CORS may be blocking the request.');
-    addLog('warn','Auth (New)','Fetch error: '+e.message);
+    showAuthResultNew('danger', 'Error: '+e.message+'. Please use the Legacy WebSocket tab instead.');
+    addLog('warn','Auth (New)','Error: '+e.message);
   }
 }
 
@@ -1008,9 +1057,25 @@ async function connectNewAPI() {
   try {
     const res = await fetch(`https://api.derivws.com/trading/v1/options/accounts/${accountId}/otp`, {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer '+token, 'Deriv-App-ID': appId, 'Content-Type': 'application/json' }
+      headers: { 
+        'Authorization': 'Bearer '+token, 
+        'Deriv-App-ID': appId, 
+        'Content-Type': 'application/json' 
+      },
+      body: JSON.stringify({})
     });
-    const body = await res.json();
+    
+    const text = await res.text();
+    let body;
+    
+    try {
+      body = JSON.parse(text);
+    } catch (e) {
+      showAuthResultNew('danger', '<strong>CORS Restriction:</strong> The new REST API cannot be called directly from the browser due to CORS policy. <br><br><strong>✅ Solution:</strong> Use the <strong>Legacy WebSocket</strong> tab instead - it works perfectly with no CORS issues!');
+      addLog('warn','Auth (New)','CORS blocking REST API. Use Legacy WebSocket instead.');
+      return;
+    }
+    
     if (!res.ok) {
       showAuthResultNew('danger', 'OTP request failed: '+(body.errors?.[0]?.message || res.statusText));
       return;
@@ -1030,7 +1095,7 @@ async function connectNewAPI() {
     ws.onerror = () => showAuthResultNew('danger', 'WebSocket error after OTP.');
     ws.onclose = () => { state.conn.connected = false; };
   } catch(e) {
-    showAuthResultNew('danger', 'Failed: '+e.message+'. CORS may be blocking the request.');
+    showAuthResultNew('danger', '<strong>CORS Error:</strong> '+e.message+'<br><br><strong>✅ Recommendation:</strong> Use the <strong>Legacy WebSocket</strong> tab - it works without CORS restrictions!');
     addLog('warn','Auth (New)','Error: '+e.message);
   }
 }
@@ -1062,8 +1127,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('cfg-retry').value = state.cfg.retryDelay;
   document.getElementById('cfg-sl').value = state.cfg.stopLoss;
   document.getElementById('cfg-tp').value = state.cfg.takeProfit;
+  switchAuthTab('legacy');
   updateDashboard();
-  addLog('info', 'Bot', 'Accumulator bot ready. Connect Deriv account and click Start Trading.');
+  addLog('info', 'Bot', 'Accumulator bot ready. Choose auth method and connect Deriv account.');
 });
 </script>
 </body>
