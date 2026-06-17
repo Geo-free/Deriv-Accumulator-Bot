@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deriv Trading Bot - Accumulator</title>
+<title>Deriv Trading Bot</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
@@ -55,7 +55,7 @@
   .nav-item i { font-size: 16px; width: 20px; }
 
   .panel { display: none; }
-  .panel.active { display: block; }
+  .panel.active { display: contents; }
 
   .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px; }
   .card-title { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
@@ -87,28 +87,31 @@
 
   .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
   .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover:not(:disabled) { background: var(--accent2); }
+  .btn-primary:hover { background: var(--accent2); }
   .btn-success { background: var(--green2); color: #fff; }
-  .btn-success:hover:not(:disabled) { background: var(--green); }
+  .btn-success:hover { background: var(--green); }
   .btn-danger { background: var(--red2); color: #fff; }
-  .btn-danger:hover:not(:disabled) { background: var(--red); }
+  .btn-danger:hover { background: var(--red); }
   .btn-ghost { background: var(--bg3); color: var(--text2); border: 0.5px solid var(--border2); }
-  .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--border2); background: var(--bg); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--bg); }
   .btn-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  .trade-log { max-height: 400px; overflow-y: auto; font-size: 12px; }
+  .trade-log { max-height: 220px; overflow-y: auto; font-size: 12px; }
   .trade-log::-webkit-scrollbar { width: 4px; }
   .trade-log::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
-  .log-entry { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
+  .log-entry { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 0.5px solid var(--border); }
   .log-entry:last-child { border-bottom: none; }
-  .log-time { color: var(--text3); min-width: 60px; flex-shrink: 0; }
-  .log-type { min-width: 70px; font-weight: 500; flex-shrink: 0; }
+  .log-time { color: var(--text3); min-width: 60px; }
+  .log-type { min-width: 60px; font-weight: 500; }
   .log-type.win { color: var(--green); }
   .log-type.loss { color: var(--red); }
   .log-type.info { color: var(--teal); }
   .log-type.warn { color: var(--amber); }
   .log-msg { color: var(--text2); flex: 1; }
+  .log-pnl { min-width: 64px; text-align: right; font-weight: 500; }
+  .log-pnl.pos { color: var(--green); }
+  .log-pnl.neg { color: var(--red); }
 
   .chart-wrap { position: relative; width: 100%; height: 240px; }
   .price-display { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
@@ -117,7 +120,7 @@
   .price-change.up { color: var(--green); }
   .price-change.dn { color: var(--red); }
 
-  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
   .badge.green { background: rgba(34,197,94,0.15); color: var(--green); }
   .badge.red { background: rgba(239,68,68,0.15); color: var(--red); }
   .badge.amber { background: rgba(245,158,11,0.15); color: var(--amber); }
@@ -125,20 +128,26 @@
   .badge.gray { background: var(--bg3); color: var(--text2); }
 
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .col-span2 { grid-column: span 2; }
+
   .position-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
   .position-row:last-child { border-bottom: none; }
+
+  .auth-notice { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; background: rgba(245,158,11,0.07); border-radius: 8px; border: 0.5px solid rgba(245,158,11,0.2); margin-bottom: 12px; font-size: 12px; color: var(--amber); }
 
   .alert { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 8px; }
   .alert.danger { background: rgba(239,68,68,0.08); border: 0.5px solid rgba(239,68,68,0.2); color: var(--red); }
   .alert.success { background: rgba(34,197,94,0.08); border: 0.5px solid rgba(34,197,94,0.2); color: var(--green); }
   .alert.info { background: rgba(20,184,166,0.08); border: 0.5px solid rgba(20,184,166,0.2); color: var(--teal); }
 
-  .state-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
-
   @media (max-width: 900px) {
-    .app { grid-template-columns: 1fr; }
+    .app { grid-template-columns: 1fr; grid-template-rows: 56px auto 1fr; }
+    .sidebar { display: flex; flex-wrap: wrap; padding: 8px 12px; gap: 4px; border-right: none; border-bottom: 0.5px solid var(--border); }
+    .sidebar-section { display: none; }
     .metrics { grid-template-columns: 1fr 1fr; }
-    .grid2 { grid-template-columns: 1fr; }
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    .col-span2 { grid-column: span 1; }
   }
 </style>
 </head>
@@ -149,81 +158,88 @@
   <header class="topbar">
     <div class="logo">
       <div class="logo-dot"></div>
-      Accumulator Bot
+      Deriv Bot
     </div>
     <span style="color:var(--text3);font-size:12px;">Martingale Recovery Strategy</span>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
       <div class="conn-status">
-        <span class="dot" id="conn-dot" style="background:var(--text3);"></span>
-        <span id="conn-text">Ready</span>
+        <span class="dot" id="conn-dot" style="background:var(--text3);width:7px;height:7px;border-radius:50%;"></span>
+        <span id="conn-text">Disconnected</span>
       </div>
       <div class="status-badge">
-        <span class="dot" id="state-dot" style="background:var(--text3);"></span>
-        <span id="state-text">Idle</span>
+        <span class="dot" id="state-dot" style="background:var(--text3);width:7px;height:7px;border-radius:50%;animation:none;"></span>
+        <span id="state-text" style="font-size:12px;color:var(--text2);">Idle</span>
       </div>
     </div>
   </header>
 
   <!-- Sidebar -->
   <nav class="sidebar">
-    <div class="sidebar-section">Navigation</div>
+    <div class="sidebar-section">Overview</div>
     <button class="nav-item active" onclick="showPanel('dashboard')">
-      <i class="ti ti-dashboard"></i> Dashboard
+      <i class="ti ti-dashboard" aria-hidden="true"></i> Dashboard
     </button>
+    <button class="nav-item" onclick="showPanel('account')">
+      <i class="ti ti-user-circle" aria-hidden="true"></i> Account &amp; Auth
+    </button>
+    <div class="sidebar-section">Trading</div>
     <button class="nav-item" onclick="showPanel('config')">
-      <i class="ti ti-settings-2"></i> Configuration
+      <i class="ti ti-settings-2" aria-hidden="true"></i> Bot Config
     </button>
+    <div class="sidebar-section">History</div>
     <button class="nav-item" onclick="showPanel('logs')">
-      <i class="ti ti-terminal-2"></i> Logs
+      <i class="ti ti-terminal-2" aria-hidden="true"></i> Live Logs
     </button>
   </nav>
 
-  <!-- Main Content -->
-  <main class="main">
+  <!-- Main content -->
+  <main class="main" id="main-content">
 
-    <!-- DASHBOARD -->
+    <!-- DASHBOARD PANEL -->
     <div id="panel-dashboard" class="panel active">
+
+      <!-- Metrics row -->
       <div class="metrics">
         <div class="metric">
-          <div class="metric-label">Session P&L</div>
+          <div class="metric-label">Session P&amp;L</div>
           <div class="metric-value" id="m-pnl">$0.00</div>
-          <div class="metric-sub" id="m-pnl-sub">0 trades closed</div>
+          <div class="metric-sub" id="m-pnl-sub">No trades yet</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Current Stake</div>
+          <div class="metric-label">Win rate</div>
+          <div class="metric-value" id="m-wr">—</div>
+          <div class="metric-sub" id="m-trades-sub">0 trades total</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Current stake</div>
           <div class="metric-value amber" id="m-stake">$4.00</div>
-          <div class="metric-sub" id="m-losses">Losses: 0</div>
+          <div class="metric-sub" id="m-streak">Loss streak: 0</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Bot Status</div>
-          <div class="metric-value" id="m-state" style="font-size:16px;">
+          <div class="metric-label">Bot state</div>
+          <div class="metric-value" id="m-state" style="font-size:16px;margin-top:4px;">
             <span class="badge gray">Idle</span>
           </div>
-          <div class="metric-sub" id="m-pos">Ready to start</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Win Rate</div>
-          <div class="metric-value" id="m-wr">—</div>
-          <div class="metric-sub" id="m-total">Total: 0</div>
+          <div class="metric-sub" id="m-pos">No active position</div>
         </div>
       </div>
 
-      <!-- Price Chart -->
+      <!-- Price + chart -->
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
           <div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">1HZ100V (Live Price)</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;" id="market-label">1HZ100V - Live Price</div>
             <div class="price-display">
-              <div class="price-main" id="live-price">—</div>
+              <div class="price-main" id="live-price">——</div>
               <div class="price-change" id="price-chg"></div>
             </div>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn btn-primary" id="start-btn" onclick="startBot()">
-              <i class="ti ti-player-play"></i> Start Bot
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-success" id="trade-btn" onclick="startTrading()">
+              <i class="ti ti-trending-up"></i> Start Trading
             </button>
-            <button class="btn btn-danger" id="stop-btn" onclick="stopBot()" style="display:none;">
-              <i class="ti ti-player-stop"></i> Stop Bot
+            <button class="btn btn-danger" id="close-btn" onclick="stopTrading()" style="display:none;">
+              <i class="ti ti-x"></i> Stop Trading
             </button>
             <button class="btn btn-ghost" onclick="resetSession()">
               <i class="ti ti-refresh"></i> Reset
@@ -231,120 +247,193 @@
           </div>
         </div>
         <div class="chart-wrap" style="margin-top:12px;">
-          <canvas id="priceChart">Price chart</canvas>
+          <canvas id="priceChart" role="img" aria-label="Live price chart">Price chart loading…</canvas>
         </div>
       </div>
 
-      <!-- Active Position -->
+      <!-- Active position + quick controls -->
       <div class="grid2">
         <div class="card">
-          <div class="card-title"><i class="ti ti-bolt"></i> Active Position</div>
-          <div id="no-position" style="color:var(--text3);padding:12px 0;">Waiting for entry signal...</div>
+          <div class="card-title"><i class="ti ti-bolt" aria-hidden="true"></i> Active position</div>
+          <div id="no-position" style="color:var(--text3);font-size:13px;padding:12px 0;">No open position. Start trading to begin.</div>
           <div id="active-position" style="display:none;">
             <div class="position-row">
-              <span>Entry Price</span>
+              <span style="color:var(--text2);">Entry price</span>
               <span id="pos-entry" style="font-weight:500;">—</span>
             </div>
             <div class="position-row">
-              <span>Stake</span>
-              <span id="pos-stake" style="color:var(--amber);font-weight:500;">—</span>
+              <span style="color:var(--text2);">Stake</span>
+              <span id="pos-stake" style="font-weight:500;color:var(--amber);">—</span>
             </div>
             <div class="position-row">
-              <span>Stop Loss</span>
-              <span id="pos-sl" style="color:var(--red);font-weight:500;">—</span>
+              <span style="color:var(--text2);">Stop Loss</span>
+              <span id="pos-sl" style="font-weight:500;color:var(--red);">—</span>
             </div>
             <div class="position-row">
-              <span>Take Profit</span>
-              <span id="pos-tp" style="color:var(--green);font-weight:500;">—</span>
-            </div>
-            <div class="position-row">
-              <span>Unrealised P&L</span>
-              <span id="pos-pnl" style="font-weight:500;">—</span>
+              <span style="color:var(--text2);">Take Profit</span>
+              <span id="pos-tp" style="font-weight:500;color:var(--green);">—</span>
             </div>
           </div>
         </div>
-
-        <!-- Market Conditions -->
         <div class="card">
-          <div class="card-title"><i class="ti ti-activity"></i> Market Conditions</div>
-          <div class="position-row">
-            <span>Price Gap</span>
-            <span id="ind-gap" style="font-weight:500;">—</span>
+          <div class="card-title"><i class="ti ti-target" aria-hidden="true"></i> Session controls</div>
+          <div class="form-group">
+            <label>Stop Loss ($)</label>
+            <input type="number" id="cfg-sl" value="10" min="1" step="0.5">
           </div>
-          <div class="position-row">
-            <span>Volatility</span>
-            <span id="ind-vol" style="font-weight:500;">—</span>
+          <div class="form-group">
+            <label>Take Profit ($)</label>
+            <input type="number" id="cfg-tp" value="5" min="0.1" step="0.5">
           </div>
-          <div class="position-row">
-            <span>Gap Status</span>
-            <span id="ind-safe" style="font-weight:500;"><span class="badge gray">Checking...</span></span>
-          </div>
-          <div class="position-row">
-            <span>Analysis Loop</span>
-            <span id="ind-loop" style="font-weight:500;">0/10</span>
+          <div class="btn-row" style="margin-top:4px;">
+            <button class="btn btn-primary" onclick="applyRiskSettings()"><i class="ti ti-check"></i> Apply settings</button>
+            <button class="btn btn-ghost" onclick="resetSession()"><i class="ti ti-refresh"></i> Reset session</button>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- CONFIGURATION -->
-    <div id="panel-config" class="panel">
+      <!-- Market conditions -->
       <div class="card">
-        <div class="card-title"><i class="ti ti-adjustments"></i> Bot Configuration</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Initial Stake ($)</label>
-            <input type="number" id="cfg-stake" value="4" step="0.5" min="0.1">
+        <div class="card-title"><i class="ti ti-activity" aria-hidden="true"></i> Market condition</div>
+        <div class="grid3">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Price gap</div>
+            <span style="font-size:13px;font-weight:500;" id="ind-gap">—</span>
           </div>
-          <div class="form-group">
-            <label>Stop Loss ($)</label>
-            <input type="number" id="cfg-sl" value="10" step="0.5" min="1">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Volatility</div>
+            <span style="font-size:13px;font-weight:500;" id="ind-vol">—</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Gap Safe</div>
+            <span class="badge gray" id="ind-safe">Checking…</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Analysis Loop</div>
+            <span style="font-size:13px;font-weight:500;" id="ind-loop">0/10</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Trading Status</div>
+            <span class="badge gray" id="ind-status">Idle</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Consecutive Losses</div>
+            <span style="font-size:13px;font-weight:500;" id="ind-losses">0</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /dashboard -->
+
+    <!-- ACCOUNT PANEL -->
+    <div id="panel-account" class="panel">
+
+      <!-- Auth tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:0;">
+        <button class="btn btn-primary" id="tab-legacy" onclick="switchAuthTab('legacy')" style="border-radius:8px 8px 0 0;border-bottom:none;">
+          <i class="ti ti-plug"></i> Legacy WebSocket
+        </button>
+      </div>
+
+      <!-- Legacy auth panel -->
+      <div id="auth-legacy" class="card" style="border-radius:0 8px 8px 8px;">
+        <div class="card-title"><i class="ti ti-terminal" aria-hidden="true"></i> Deriv API Connection</div>
+        <div class="auth-notice">
+          <i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0;margin-top:1px;" aria-hidden="true"></i>
+          <div>
+            <strong>Setup:</strong> Get your token from <a href="https://app.deriv.com/account/api-token" target="_blank">app.deriv.com → Account → API Token</a>. Use App ID <code>36544</code> for testing.
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Take Profit ($)</label>
-            <input type="number" id="cfg-tp" value="5" step="0.5" min="0.1">
+            <label>API token</label>
+            <input type="password" id="api-token" placeholder="Paste your token here…" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label>App ID</label>
+            <input type="text" id="app-id" placeholder="36544" value="36544">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="connectDeriv()"><i class="ti ti-plug"></i> Connect</button>
+          <button class="btn btn-ghost" onclick="disconnectDeriv()" id="disconnect-btn" disabled><i class="ti ti-plug-x"></i> Disconnect</button>
+          <a href="https://app.deriv.com/account/api-token" target="_blank" class="btn btn-ghost"><i class="ti ti-external-link"></i> Get token</a>
+        </div>
+        <div id="auth-result" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- Account info card -->
+      <div class="card" id="account-info-card" style="display:none;">
+        <div class="card-title"><i class="ti ti-wallet" aria-hidden="true"></i> Connected account</div>
+        <div class="grid2">
+          <div class="metric">
+            <div class="metric-label">Balance</div>
+            <div class="metric-value green" id="ai-balance">$0.00</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Currency</div>
+            <div class="metric-value" id="ai-currency">USD</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Account type</div>
+            <div class="metric-value" style="font-size:15px;" id="ai-type">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Login ID</div>
+            <div class="metric-value" style="font-size:15px;" id="ai-loginid">—</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /account -->
+
+    <!-- CONFIG PANEL -->
+    <div id="panel-config" class="panel">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-adjustments" aria-hidden="true"></i> Bot Configuration</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Initial Stake ($)</label>
+            <input type="number" id="cfg-stake" value="4" min="0.1" step="0.5">
           </div>
           <div class="form-group">
             <label>Martingale Factor (×)</label>
-            <input type="number" id="cfg-martin" value="2" step="0.1" min="1">
+            <input type="number" id="cfg-martin" value="2" min="1" step="0.1">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Min Gap Threshold (%)</label>
-            <input type="number" id="cfg-gap" value="0.5" step="0.1" min="0.1">
+            <input type="number" id="cfg-gap" value="0.5" min="0.1" step="0.1">
           </div>
           <div class="form-group">
             <label>Max Volatility (%)</label>
-            <input type="number" id="cfg-vol" value="0.3" step="0.1" min="0.1">
+            <input type="number" id="cfg-vol" value="0.3" min="0.1" step="0.1">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Max Analysis Loops</label>
-            <input type="number" id="cfg-loops" value="10" step="1" min="1">
+            <input type="number" id="cfg-loops" value="10" min="1" step="1">
           </div>
           <div class="form-group">
-            <label>Analysis Retry Delay (s)</label>
-            <input type="number" id="cfg-retry" value="5" step="1" min="1">
+            <label>Retry Delay (seconds)</label>
+            <input type="number" id="cfg-retry" value="5" min="1" step="1">
           </div>
         </div>
-        <button class="btn btn-primary" onclick="saveConfig()"><i class="ti ti-check"></i> Save Config</button>
+        <button class="btn btn-primary" onclick="saveConfig()"><i class="ti ti-check"></i> Save Configuration</button>
       </div>
-    </div>
+    </div><!-- /config -->
 
-    <!-- LOGS -->
+    <!-- LOGS PANEL -->
     <div id="panel-logs" class="panel">
-      <div class="card">
+      <div class="card" style="flex:1;">
         <div class="card-title" style="justify-content:space-between;">
-          <span><i class="ti ti-terminal-2"></i> Activity Log</span>
+          <span><i class="ti ti-terminal-2" aria-hidden="true"></i> Live activity log</span>
           <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="clearLogs()"><i class="ti ti-trash"></i> Clear</button>
         </div>
-        <div class="trade-log" id="log-container"></div>
+        <div class="trade-log" id="log-container" style="max-height:520px;"></div>
       </div>
-    </div>
+    </div><!-- /logs -->
 
   </main>
 </div>
@@ -353,26 +442,24 @@
 'use strict';
 
 // ═════════════════════════════════════════════════════════════════════════════
-// STATE MANAGEMENT
+// STATE
 // ═════════════════════════════════════════════════════════════════════════════
 
 const state = {
   bot: {
     running: false,
-    state: 'idle', // idle | analyzing | trading | closed
-    price: 100,
+    state: 'idle',
+    price: 1000,
     priceHistory: [],
     consecutiveLosses: 0,
     totalTrades: 0,
-    closedTrades: 0,
     wins: 0,
     losses: 0,
     sessionPnl: 0,
-    totalPnl: 0,
+    currentStake: 4,
     activePosition: null,
-    trades: [],
+    positions: [],
     loopCount: 0,
-    previousPrice: 0,
   },
   cfg: {
     stake: 4,
@@ -384,10 +471,8 @@ const state = {
     maxLoops: 10,
     retryDelay: 5,
   },
-  sim: {
-    interval: null,
-    trend: 0,
-  },
+  sim: { interval: null, trend: 0 },
+  conn: { connected: false, ws: null },
   logs: [],
 };
 
@@ -398,20 +483,18 @@ const state = {
 function addLog(type, tag, msg) {
   const time = new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
   state.logs.unshift({type, tag, msg, time});
-  if (state.logs.length > 300) state.logs.pop();
+  if (state.logs.length > 200) state.logs.pop();
   renderLogs();
 }
 
 function renderLogs() {
   const c = document.getElementById('log-container');
-  c.innerHTML = state.logs.slice(0, 100).map(l => `
+  c.innerHTML = state.logs.slice(0, 60).map(l => `
     <div class="log-entry">
       <span class="log-time">${l.time}</span>
       <span class="log-type ${l.type}">[${l.tag}]</span>
       <span class="log-msg">${l.msg}</span>
-    </div>
-  `).join('');
-  c.scrollTop = 0;
+    </div>`).join('');
 }
 
 function clearLogs() {
@@ -425,28 +508,24 @@ function clearLogs() {
 
 function updateDashboard() {
   const b = state.bot;
+  const pnl = b.sessionPnl;
   
-  // Update P&L
   const pnlEl = document.getElementById('m-pnl');
-  pnlEl.textContent = (b.sessionPnl >= 0 ? '+' : '') + '$' + Math.abs(b.sessionPnl).toFixed(4);
-  pnlEl.className = 'metric-value ' + (b.sessionPnl > 0 ? 'green' : b.sessionPnl < 0 ? 'red' : '');
-  document.getElementById('m-pnl-sub').textContent = b.closedTrades + ' trades closed';
-  
-  // Update stake
-  document.getElementById('m-stake').textContent = '$' + b.currentStake.toFixed(2);
-  document.getElementById('m-losses').textContent = 'Losses: ' + b.consecutiveLosses;
-  
-  // Update state
-  const badges = { idle: 'gray', analyzing: 'blue', trading: 'green', closed: 'red' };
-  document.getElementById('m-state').innerHTML = `<span class="badge ${badges[b.state]}">${b.state.charAt(0).toUpperCase() + b.state.slice(1)}</span>`;
-  document.getElementById('m-pos').textContent = b.activePosition ? 'Position @ $' + b.activePosition.entryPrice.toFixed(4) : 'Ready to trade';
-  
-  // Update win rate
+  pnlEl.textContent = (pnl >= 0 ? '+' : '') + '$' + Math.abs(pnl).toFixed(4);
+  pnlEl.className = 'metric-value ' + (pnl > 0 ? 'green' : pnl < 0 ? 'red' : '');
+  document.getElementById('m-pnl-sub').textContent = (b.wins + b.losses) + ' closed trades';
+
   const wr = b.totalTrades > 0 ? Math.round(b.wins / b.totalTrades * 100) : null;
   document.getElementById('m-wr').textContent = wr !== null ? wr + '%' : '—';
-  document.getElementById('m-total').textContent = 'Total: ' + b.totalTrades;
-  
-  // Active position
+  document.getElementById('m-trades-sub').textContent = b.totalTrades + ' total trades';
+
+  document.getElementById('m-stake').textContent = '$' + b.currentStake.toFixed(2);
+  document.getElementById('m-streak').textContent = 'Loss streak: ' + b.consecutiveLosses;
+
+  const badges = {idle:'gray', analyzing:'blue', trading:'green', closed:'red'};
+  document.getElementById('m-state').innerHTML = '<span class="badge ' + (badges[b.state] || 'gray') + '">' + b.state.charAt(0).toUpperCase() + b.state.slice(1) + '</span>';
+  document.getElementById('m-pos').textContent = b.activePosition ? 'Position @ $' + b.activePosition.entryPrice.toFixed(4) : 'No active position';
+
   if (b.activePosition) {
     document.getElementById('no-position').style.display = 'none';
     document.getElementById('active-position').style.display = 'block';
@@ -454,20 +533,19 @@ function updateDashboard() {
     document.getElementById('pos-stake').textContent = '$' + b.activePosition.stake.toFixed(2);
     document.getElementById('pos-sl').textContent = '$' + b.activePosition.stopLoss.toFixed(2);
     document.getElementById('pos-tp').textContent = '$' + b.activePosition.takeProfit.toFixed(2);
-    const upnl = (b.price - b.activePosition.entryPrice) * b.activePosition.stake;
-    document.getElementById('pos-pnl').textContent = (upnl >= 0 ? '+' : '') + '$' + upnl.toFixed(4);
-    document.getElementById('pos-pnl').style.color = upnl >= 0 ? 'var(--green)' : 'var(--red)';
   } else {
     document.getElementById('no-position').style.display = 'block';
     document.getElementById('active-position').style.display = 'none';
   }
+
+  document.getElementById('ind-losses').textContent = b.consecutiveLosses;
 }
 
 function setBotState(s) {
   state.bot.state = s;
   const dot = document.getElementById('state-dot');
   const txt = document.getElementById('state-text');
-  const colors = { idle: '#555a6e', analyzing: '#14b8a6', trading: '#22c55e', closed: '#ef4444' };
+  const colors = {idle:'#555a6e', analyzing:'#14b8a6', trading:'#22c55e', closed:'#ef4444'};
   dot.style.background = colors[s] || '#555a6e';
   dot.style.animation = s === 'trading' ? 'pulse 1.5s infinite' : 'none';
   txt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
@@ -478,9 +556,9 @@ function setBotState(s) {
 // ═════════════════════════════════════════════════════════════════════════════
 
 function showPanel(id) {
-  document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('panel-' + id).style.display = 'block';
+  document.getElementById('panel-' + id).classList.add('active');
   event.target.closest('.nav-item').classList.add('active');
 }
 
@@ -490,109 +568,103 @@ function showPanel(id) {
 
 function saveConfig() {
   state.cfg.stake = parseFloat(document.getElementById('cfg-stake').value) || 4;
-  state.cfg.stopLoss = parseFloat(document.getElementById('cfg-sl').value) || 10;
-  state.cfg.takeProfit = parseFloat(document.getElementById('cfg-tp').value) || 5;
   state.cfg.martingaleFactor = parseFloat(document.getElementById('cfg-martin').value) || 2;
   state.cfg.minGapThreshold = parseFloat(document.getElementById('cfg-gap').value) || 0.5;
   state.cfg.maxVolatility = parseFloat(document.getElementById('cfg-vol').value) || 0.3;
   state.cfg.maxLoops = parseInt(document.getElementById('cfg-loops').value) || 10;
   state.cfg.retryDelay = parseInt(document.getElementById('cfg-retry').value) || 5;
   state.bot.currentStake = state.cfg.stake;
-  addLog('info', 'Config', 'Configuration saved successfully');
+  addLog('info', 'Config', 'Settings saved');
   updateDashboard();
 }
 
+function applyRiskSettings() {
+  state.cfg.stopLoss = parseFloat(document.getElementById('cfg-sl').value) || 10;
+  state.cfg.takeProfit = parseFloat(document.getElementById('cfg-tp').value) || 5;
+  addLog('info', 'Risk', 'SL: $' + state.cfg.stopLoss + ' | TP: $' + state.cfg.takeProfit);
+}
+
 // ═════════════════════════════════════════════════════════════════════════════
-// MARKET ANALYSIS (From XML Logic)
+// MARKET ANALYSIS (XML Logic)
 // ═════════════════════════════════════════════════════════════════════════════
 
 function calculateGap() {
   const h = state.bot.priceHistory;
   if (h.length < 2) return 0;
   const gap = Math.abs(h[h.length - 1] - h[h.length - 2]);
-  const gapPercent = (gap / h[h.length - 2]) * 100;
-  return gapPercent;
+  return (gap / h[h.length - 2]) * 100;
 }
 
 function calculateVolatility() {
   const h = state.bot.priceHistory;
   if (h.length < 5) return 0;
   const recent = h.slice(-5);
-  const hi = Math.max(...recent);
-  const lo = Math.min(...recent);
+  const hi = Math.max(...recent), lo = Math.min(...recent);
   const avg = recent.reduce((a, b) => a + b) / recent.length;
-  const vol = ((hi - lo) / avg) * 100;
-  return vol;
+  return ((hi - lo) / avg) * 100;
 }
 
 function isMarketSafe() {
   const gap = calculateGap();
   const vol = calculateVolatility();
-  const gapSafe = gap >= state.cfg.minGapThreshold;
-  const volSafe = vol <= state.cfg.maxVolatility;
-  return { safe: gapSafe && volSafe, gap, vol, gapSafe, volSafe };
+  return { safe: gap >= state.cfg.minGapThreshold && vol <= state.cfg.maxVolatility, gap, vol };
 }
 
-function updateMarketIndicators() {
-  const analysis = isMarketSafe();
-  document.getElementById('ind-gap').textContent = analysis.gap.toFixed(3) + '%';
-  document.getElementById('ind-vol').textContent = analysis.vol.toFixed(3) + '%';
-  const safeStatus = analysis.safe ? 'Safe' : 'Unsafe';
-  const safeBadge = analysis.safe ? 'green' : 'red';
-  document.getElementById('ind-safe').innerHTML = `<span class="badge ${safeBadge}">${safeStatus}</span>`;
+function updateConditions() {
+  const a = isMarketSafe();
+  document.getElementById('ind-gap').textContent = a.gap.toFixed(3) + '%';
+  document.getElementById('ind-vol').textContent = a.vol.toFixed(3) + '%';
+  document.getElementById('ind-safe').innerHTML = '<span class="badge ' + (a.safe ? 'green' : 'red') + '">' + (a.safe ? 'Safe' : 'Unsafe') + '</span>';
   document.getElementById('ind-loop').textContent = state.bot.loopCount + '/' + state.cfg.maxLoops;
+  document.getElementById('ind-status').innerHTML = '<span class="badge ' + {idle:'gray',analyzing:'blue',trading:'green'}[state.bot.state] + '">' + state.bot.state + '</span>';
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// TRADE EXECUTION (Integrated from XML Logic)
+// TRADE EXECUTION (XML Integrated)
 // ═════════════════════════════════════════════════════════════════════════════
 
-async function analyzeAndTrade() {
+async function analyzeMarket() {
   if (!state.bot.running) return;
   
   state.bot.loopCount = 0;
+  state.bot.state = 'analyzing';
+  setBotState('analyzing');
   addLog('info', 'Analysis', 'Starting market analysis...');
   
   while (state.bot.loopCount < state.cfg.maxLoops && state.bot.running) {
     state.bot.loopCount++;
-    updateMarketIndicators();
+    updateConditions();
     
-    const analysis = isMarketSafe();
+    const a = isMarketSafe();
+    addLog('info', 'Loop', `Attempt ${state.bot.loopCount}/${state.cfg.maxLoops} - Gap: ${a.gap.toFixed(3)}% | Vol: ${a.vol.toFixed(3)}%`);
     
-    addLog('info', 'Loop', `Attempt ${state.bot.loopCount}/${state.cfg.maxLoops} - Gap: ${analysis.gap.toFixed(3)}% | Vol: ${analysis.vol.toFixed(3)}%`);
-    
-    if (analysis.safe) {
-      addLog('win', 'Analysis', 'Market conditions satisfied! Entering trade...');
+    if (a.safe) {
+      addLog('win', 'Market', 'Conditions met! Opening trade...');
       placeTrade();
       return;
     }
     
     if (state.bot.loopCount >= state.cfg.maxLoops) {
-      addLog('warn', 'Analysis', 'Max attempts reached. Forcing entry...');
+      addLog('warn', 'Market', 'Max attempts reached. Force entering...');
       placeTrade();
       return;
     }
     
-    addLog('info', 'Wait', `Waiting ${state.cfg.retryDelay}s before retry...`);
-    await new Promise(resolve => setTimeout(resolve, state.cfg.retryDelay * 1000));
+    await new Promise(r => setTimeout(r, state.cfg.retryDelay * 1000));
   }
 }
 
 function placeTrade() {
-  if (state.bot.activePosition) return;
-  if (!state.bot.running) return;
+  if (state.bot.activePosition || !state.bot.running) return;
   
-  const currentStake = state.bot.currentStake;
   const entry = state.bot.price;
-  const stopLoss = state.cfg.stopLoss;
-  const takeProfit = state.cfg.takeProfit;
+  const stake = state.bot.currentStake;
   
   state.bot.activePosition = {
-    id: state.bot.totalTrades + 1,
     entryPrice: entry,
-    stake: currentStake,
-    stopLoss: stopLoss,
-    takeProfit: takeProfit,
+    stake: stake,
+    stopLoss: state.cfg.stopLoss,
+    takeProfit: state.cfg.takeProfit,
     entryTime: Date.now(),
   };
   
@@ -600,7 +672,7 @@ function placeTrade() {
   state.bot.state = 'trading';
   setBotState('trading');
   
-  addLog('info', 'Trade', `OPENED #${state.bot.activePosition.id} @ $${entry.toFixed(4)} | Stake $${currentStake.toFixed(2)} | SL: $${stopLoss.toFixed(2)} | TP: $${takeProfit.toFixed(2)}`);
+  addLog('info', 'Trade', 'OPEN #' + state.bot.totalTrades + ' @ $' + entry.toFixed(4) + ' | Stake $' + stake.toFixed(2) + ' | SL: $' + state.cfg.stopLoss + ' | TP: $' + state.cfg.takeProfit);
   updateDashboard();
 }
 
@@ -608,38 +680,21 @@ function closePosition(win) {
   if (!state.bot.activePosition) return;
   
   const pos = state.bot.activePosition;
-  const exitPrice = state.bot.price;
+  const pnl = win ? state.cfg.takeProfit : -state.cfg.stopLoss;
   
-  let pnl = 0;
   if (win) {
-    pnl = state.cfg.takeProfit;
     state.bot.wins++;
     state.bot.consecutiveLosses = 0;
-    state.bot.currentStake = state.cfg.stake; // Reset to initial stake
-    addLog('win', 'Trade', `WIN #${pos.id} +$${pnl.toFixed(4)} | Exit @ $${exitPrice.toFixed(4)}`);
+    state.bot.currentStake = state.cfg.stake;
+    addLog('win', 'Trade', 'WIN +$' + state.cfg.takeProfit.toFixed(2));
   } else {
-    pnl = -state.cfg.stopLoss;
     state.bot.losses++;
     state.bot.consecutiveLosses++;
-    // Apply Martingale strategy
     state.bot.currentStake = state.bot.currentStake * state.cfg.martingaleFactor;
-    addLog('loss', 'Trade', `LOSS #${pos.id} $${pnl.toFixed(4)} | Exit @ $${exitPrice.toFixed(4)} | Loss streak: ${state.bot.consecutiveLosses}`);
+    addLog('loss', 'Trade', 'LOSS -$' + state.cfg.stopLoss.toFixed(2) + ' | Martingale: $' + state.bot.currentStake.toFixed(2) + ' | Streak: ' + state.bot.consecutiveLosses);
   }
   
   state.bot.sessionPnl += pnl;
-  state.bot.totalPnl += pnl;
-  state.bot.closedTrades++;
-  
-  state.bot.trades.push({
-    id: pos.id,
-    entryPrice: pos.entryPrice,
-    exitPrice: exitPrice,
-    stake: pos.stake,
-    pnl: pnl,
-    win: win,
-    time: new Date(pos.entryTime).toLocaleTimeString(),
-  });
-  
   state.bot.activePosition = null;
   state.bot.loopCount = 0;
   
@@ -657,18 +712,15 @@ function initChart() {
   const ctx = document.getElementById('priceChart').getContext('2d');
   priceChart = new Chart(ctx, {
     type: 'line',
-    data: {
-      labels: priceData.labels,
-      datasets: [{
-        data: priceData.data,
-        borderColor: '#6c63ff',
-        borderWidth: 1.5,
-        pointRadius: 0,
-        tension: 0.3,
-        fill: true,
-        backgroundColor: 'rgba(108,99,255,0.08)',
-      }]
-    },
+    data: { labels: priceData.labels, datasets: [{
+      data: priceData.data,
+      borderColor: '#6c63ff',
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: 0.3,
+      fill: true,
+      backgroundColor: 'rgba(108,99,255,0.08)',
+    }]},
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -682,29 +734,25 @@ function initChart() {
   });
 }
 
-let prevPrice = 100;
+let prevPrice = 1000;
 
 function simulateTick() {
   if (!state.bot.running) return;
   
-  // Random walk with trend
   if (Math.random() < 0.08) state.sim.trend = (Math.random() - 0.5) * 0.005;
   const vol = 0.002;
   const change = (Math.random() - 0.5) * state.bot.price * vol + state.bot.price * state.sim.trend;
   state.bot.price = Math.max(state.bot.price + change, 50);
   
-  // Update price history
   state.bot.priceHistory.push(parseFloat(state.bot.price.toFixed(4)));
   if (state.bot.priceHistory.length > 100) state.bot.priceHistory.shift();
   
-  // Update chart
   const now = new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
   priceData.labels.push(now);
   priceData.data.push(parseFloat(state.bot.price.toFixed(4)));
   if (priceData.labels.length > 80) { priceData.labels.shift(); priceData.data.shift(); }
   if (priceChart) priceChart.update('none');
   
-  // Update live price
   const chg = state.bot.price - prevPrice;
   document.getElementById('live-price').textContent = '$' + state.bot.price.toFixed(2);
   const chgEl = document.getElementById('price-chg');
@@ -712,21 +760,17 @@ function simulateTick() {
   chgEl.className = 'price-change ' + (chg >= 0 ? 'up' : 'dn');
   prevPrice = state.bot.price;
   
-  updateMarketIndicators();
+  updateConditions();
   
-  // Check active position
+  // Check position
   if (state.bot.activePosition && state.bot.running) {
     const pos = state.bot.activePosition;
-    const currentPnl = (state.bot.price - pos.entryPrice) * pos.stake;
-    
     if (state.bot.price >= pos.entryPrice + pos.takeProfit) {
       closePosition(true);
-      // After delay, continue analysis
-      setTimeout(() => analyzeAndTrade(), 2000);
+      setTimeout(() => analyzeMarket(), 2000);
     } else if (state.bot.price <= pos.entryPrice - pos.stopLoss) {
       closePosition(false);
-      // After delay, continue analysis
-      setTimeout(() => analyzeAndTrade(), 2000);
+      setTimeout(() => analyzeMarket(), 2000);
     }
   }
 }
@@ -735,55 +779,49 @@ function simulateTick() {
 // BOT CONTROL
 // ═════════════════════════════════════════════════════════════════════════════
 
-function startBot() {
+function startTrading() {
   if (state.bot.running) return;
   
   saveConfig();
+  applyRiskSettings();
+  
   state.bot.running = true;
-  state.bot.state = 'analyzing';
-  setBotState('analyzing');
   state.bot.currentStake = state.cfg.stake;
   
-  document.getElementById('start-btn').style.display = 'none';
-  document.getElementById('stop-btn').style.display = 'inline-flex';
+  document.getElementById('trade-btn').style.display = 'none';
+  document.getElementById('close-btn').style.display = 'inline-flex';
   
-  addLog('info', 'Bot', '🚀 Bot started! Initializing...');
+  addLog('info', 'Bot', 'Trading started!');
   
-  // Start price simulation - every 500ms tick
   state.sim.interval = setInterval(simulateTick, 500);
-  
-  // Start analysis after 2 seconds
-  setTimeout(() => analyzeAndTrade(), 2000);
+  setTimeout(() => analyzeMarket(), 2000);
 }
 
-function stopBot() {
+function stopTrading() {
   state.bot.running = false;
   if (state.sim.interval) clearInterval(state.sim.interval);
   
   state.bot.state = 'idle';
   setBotState('idle');
   
-  document.getElementById('start-btn').style.display = 'inline-flex';
-  document.getElementById('stop-btn').style.display = 'none';
+  document.getElementById('trade-btn').style.display = 'inline-flex';
+  document.getElementById('close-btn').style.display = 'none';
   
-  addLog('info', 'Bot', '⏹️ Bot stopped');
+  addLog('info', 'Bot', 'Trading stopped');
   updateDashboard();
 }
 
 function resetSession() {
-  stopBot();
+  stopTrading();
   state.bot.consecutiveLosses = 0;
   state.bot.totalTrades = 0;
-  state.bot.closedTrades = 0;
   state.bot.wins = 0;
   state.bot.losses = 0;
   state.bot.sessionPnl = 0;
-  state.bot.totalPnl = 0;
-  state.bot.trades = [];
-  state.bot.loopCount = 0;
+  state.bot.positions = [];
+  state.bot.currentStake = state.cfg.stake;
   state.bot.priceHistory = [];
   state.bot.activePosition = null;
-  state.bot.currentStake = state.cfg.stake;
   priceData.labels = [];
   priceData.data = [];
   if (priceChart) priceChart.update();
@@ -792,27 +830,128 @@ function resetSession() {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// DERIV AUTH
+// ═════════════════════════════════════════════════════════════════════════════
+
+function connectDeriv() {
+  const token = document.getElementById('api-token').value.trim();
+  const appId = document.getElementById('app-id').value.trim() || '36544';
+  
+  if (!token) {
+    showAuthResult('danger', 'Please enter your API token');
+    return;
+  }
+  
+  showAuthResult('info', 'Connecting...');
+  const server = 'wss://ws.derivws.com/websockets/v3';
+  
+  let authed = false;
+  let ws;
+  
+  try {
+    ws = new WebSocket(`${server}?app_id=${appId}`);
+  } catch (e) {
+    showAuthResult('danger', 'Connection failed: ' + e.message);
+    return;
+  }
+  
+  const timeout = setTimeout(() => {
+    if (!authed) {
+      showAuthResult('danger', 'Connection timeout');
+      ws.close();
+    }
+  }, 10000);
+  
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ authorize: token }));
+  };
+  
+  ws.onmessage = (e) => {
+    let d;
+    try { d = JSON.parse(e.data); } catch { return; }
+    
+    if (d.error) {
+      clearTimeout(timeout);
+      showAuthResult('danger', 'Auth failed: ' + (d.error.message || 'Unknown error'));
+      ws.close();
+      return;
+    }
+    
+    if (d.msg_type === 'authorize') {
+      authed = true;
+      clearTimeout(timeout);
+      state.conn.ws = ws;
+      state.conn.connected = true;
+      
+      const acc = d.authorize;
+      document.getElementById('conn-dot').style.background = 'var(--green)';
+      document.getElementById('conn-text').textContent = 'Connected';
+      document.getElementById('disconnect-btn').disabled = false;
+      document.getElementById('account-info-card').style.display = 'block';
+      document.getElementById('ai-balance').textContent = parseFloat(acc.balance).toFixed(2);
+      document.getElementById('ai-currency').textContent = acc.currency || 'USD';
+      document.getElementById('ai-type').textContent = acc.is_virtual ? 'Demo' : 'Real';
+      document.getElementById('ai-loginid').textContent = acc.loginid;
+      
+      showAuthResult('success', 'Connected: ' + acc.loginid);
+      addLog('win', 'Auth', 'Connected as ' + acc.loginid);
+    }
+  };
+  
+  ws.onerror = () => {
+    if (!authed) showAuthResult('danger', 'WebSocket error');
+  };
+  
+  ws.onclose = () => {
+    if (authed) {
+      state.conn.connected = false;
+      document.getElementById('conn-dot').style.background = 'var(--text3)';
+      document.getElementById('conn-text').textContent = 'Disconnected';
+    }
+  };
+}
+
+function disconnectDeriv() {
+  if (state.conn.ws) {
+    try { state.conn.ws.close(); } catch {}
+    state.conn.ws = null;
+  }
+  state.conn.connected = false;
+  document.getElementById('conn-dot').style.background = 'var(--text3)';
+  document.getElementById('conn-text').textContent = 'Disconnected';
+  document.getElementById('disconnect-btn').disabled = true;
+  document.getElementById('account-info-card').style.display = 'none';
+  showAuthResult('info', 'Disconnected');
+}
+
+function switchAuthTab(tab) {
+  document.getElementById('auth-legacy').style.display = tab === 'legacy' ? 'block' : 'none';
+  document.getElementById('tab-legacy').className = tab === 'legacy' ? 'btn btn-primary' : 'btn btn-ghost';
+}
+
+function showAuthResult(type, msg) {
+  const el = document.getElementById('auth-result');
+  const icons = {danger:'ti-alert-circle', success:'ti-circle-check', info:'ti-info-circle'};
+  el.innerHTML = `<div class="alert ${type}"><i class="ti ${icons[type]}" style="font-size:16px;flex-shrink:0;"></i><span>${msg}</span></div>`;
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 // INITIALIZATION
 // ═════════════════════════════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
   initChart();
-  state.bot.currentStake = state.cfg.stake;
-  loadConfigToUI();
-  updateDashboard();
-  addLog('info', 'System', 'Accumulator Bot ready. Configure settings and click Start Bot to begin.');
-});
-
-function loadConfigToUI() {
   document.getElementById('cfg-stake').value = state.cfg.stake;
-  document.getElementById('cfg-sl').value = state.cfg.stopLoss;
-  document.getElementById('cfg-tp').value = state.cfg.takeProfit;
   document.getElementById('cfg-martin').value = state.cfg.martingaleFactor;
   document.getElementById('cfg-gap').value = state.cfg.minGapThreshold;
   document.getElementById('cfg-vol').value = state.cfg.maxVolatility;
   document.getElementById('cfg-loops').value = state.cfg.maxLoops;
   document.getElementById('cfg-retry').value = state.cfg.retryDelay;
-}
+  document.getElementById('cfg-sl').value = state.cfg.stopLoss;
+  document.getElementById('cfg-tp').value = state.cfg.takeProfit;
+  updateDashboard();
+  addLog('info', 'Bot', 'Accumulator bot ready. Connect Deriv account and click Start Trading.');
+});
 </script>
 </body>
 </html>
