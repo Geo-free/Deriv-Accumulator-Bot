@@ -283,68 +283,21 @@ input[type=range]{width:100%;accent-color:var(--accent);}
 <!-- ── ACCOUNT ── -->
 <div id="panel-account" class="panel">
 
-  <!-- Mode switcher -->
+  <!-- Single auth form -->
   <div class="card">
-    <div class="card-title"><i class="ti ti-switch-horizontal" aria-hidden="true"></i>Account mode</div>
-    <div style="display:flex;gap:12px;">
-      <button id="mode-demo-btn" onclick="setAccountMode('demo')"
-        style="flex:1;padding:16px;border-radius:var(--radius-lg);border:2px solid var(--accent);background:rgba(108,99,255,0.12);cursor:pointer;text-align:center;">
-        <div style="font-size:20px;margin-bottom:4px;"><i class="ti ti-test-pipe" style="color:var(--accent2);" aria-hidden="true"></i></div>
-        <div style="font-size:13px;font-weight:500;color:var(--accent2);">Demo</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">Virtual funds</div>
-      </button>
-      <button id="mode-real-btn" onclick="setAccountMode('real')"
-        style="flex:1;padding:16px;border-radius:var(--radius-lg);border:1px solid var(--border2);background:var(--bg3);cursor:pointer;text-align:center;">
-        <div style="font-size:20px;margin-bottom:4px;"><i class="ti ti-cash" style="color:var(--green);" aria-hidden="true"></i></div>
-        <div style="font-size:13px;font-weight:500;color:var(--text);">Real</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">Live funds</div>
-      </button>
-    </div>
-    <div id="mode-warning" style="display:none;margin-top:10px;">
-      <div class="alert danger"><i class="ti ti-alert-triangle" style="font-size:16px;flex-shrink:0;" aria-hidden="true"></i><span><strong>Real account active.</strong> All trades use real funds.</span></div>
-    </div>
-  </div>
-
-  <!-- Token cards -->
-  <div class="grid2">
-    <div class="card">
-      <div class="card-title"><i class="ti ti-test-pipe" aria-hidden="true"></i>Demo token</div>
-      <div class="form-group">
-        <label>API token (demo account)</label>
-        <div style="position:relative;">
-          <input type="password" id="demo-token" placeholder="Paste demo token…" autocomplete="off" style="padding-right:36px;">
-          <button onclick="toggleVis('demo-token','eye-demo')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);padding:0;"><i class="ti ti-eye" id="eye-demo" style="font-size:16px;" aria-hidden="true"></i></button>
-        </div>
-      </div>
-      <div id="demo-saved-badge" style="display:none;margin-bottom:8px;"><span class="badge blue"><i class="ti ti-circle-check" aria-hidden="true"></i>Saved</span></div>
-      <div class="btn-row">
-        <button class="btn btn-ghost" onclick="saveToken('demo')" style="font-size:12px;padding:6px 12px;"><i class="ti ti-device-floppy"></i>Save</button>
-        <button class="btn btn-ghost" onclick="clearToken('demo')" style="font-size:12px;padding:6px 12px;"><i class="ti ti-trash"></i>Clear</button>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title"><i class="ti ti-cash" aria-hidden="true"></i>Real token</div>
-      <div class="form-group">
-        <label>API token (real account)</label>
-        <div style="position:relative;">
-          <input type="password" id="real-token" placeholder="Paste real token…" autocomplete="off" style="padding-right:36px;">
-          <button onclick="toggleVis('real-token','eye-real')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);padding:0;"><i class="ti ti-eye" id="eye-real" style="font-size:16px;" aria-hidden="true"></i></button>
-        </div>
-      </div>
-      <div id="real-saved-badge" style="display:none;margin-bottom:8px;"><span class="badge green"><i class="ti ti-circle-check" aria-hidden="true"></i>Saved</span></div>
-      <div class="btn-row">
-        <button class="btn btn-ghost" onclick="saveToken('real')" style="font-size:12px;padding:6px 12px;"><i class="ti ti-device-floppy"></i>Save</button>
-        <button class="btn btn-ghost" onclick="clearToken('real')" style="font-size:12px;padding:6px 12px;"><i class="ti ti-trash"></i>Clear</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Connection -->
-  <div class="card">
-    <div class="card-title"><i class="ti ti-terminal" aria-hidden="true"></i>Connection settings</div>
+    <div class="card-title"><i class="ti ti-shield-lock" aria-hidden="true"></i>Deriv account details</div>
     <div class="auth-notice">
       <i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0;margin-top:1px;" aria-hidden="true"></i>
-      <div>App ID <code>1089</code> belongs to Deriv — use <code>36544</code> for testing or your own registered App ID from <a href="https://api.deriv.com/dashboard" target="_blank">api.deriv.com/dashboard</a>. Connection persists across page refreshes via sessionStorage.</div>
+      <div>Enter your API token from <strong>app.deriv.com → Account Settings → API Token</strong>. Select <strong>Read</strong> and <strong>Trade</strong> scopes. Use App ID <code>36544</code> for testing, or your own from <a href="https://api.deriv.com/dashboard" target="_blank">api.deriv.com/dashboard</a>.</div>
+    </div>
+    <div class="form-group">
+      <label>API token</label>
+      <div style="position:relative;">
+        <input type="password" id="api-token" placeholder="Paste your Deriv API token here…" autocomplete="off" style="padding-right:40px;">
+        <button onclick="toggleVis('api-token','eye-token')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);padding:0;">
+          <i class="ti ti-eye" id="eye-token" style="font-size:16px;" aria-hidden="true"></i>
+        </button>
+      </div>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -360,9 +313,9 @@ input[type=range]{width:100%;accent-color:var(--accent);}
       </div>
     </div>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="connectDeriv()" id="connect-btn"><i class="ti ti-plug"></i>Connect <span id="connect-mode-label">demo</span> account</button>
+      <button class="btn btn-primary" onclick="connectDeriv()" id="connect-btn"><i class="ti ti-plug"></i>Connect to Deriv</button>
       <button class="btn btn-ghost" onclick="disconnectDeriv()" id="disconnect-btn" disabled><i class="ti ti-plug-x"></i>Disconnect</button>
-      <a href="https://app.deriv.com/account/api-token" target="_blank" class="btn btn-ghost"><i class="ti ti-external-link"></i>Get tokens</a>
+      <a href="https://app.deriv.com/account/api-token" target="_blank" class="btn btn-ghost"><i class="ti ti-external-link"></i>Get API token</a>
     </div>
     <div id="auth-result" style="margin-top:12px;"></div>
   </div>
@@ -389,13 +342,6 @@ input[type=range]{width:100%;accent-color:var(--accent);}
       <div class="metric">
         <div class="metric-label">Login ID</div>
         <div class="metric-value" style="font-size:14px;" id="ai-loginid">—</div>
-      </div>
-    </div>
-    <div style="border-top:0.5px solid var(--border);padding-top:12px;">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Quick switch</div>
-      <div class="btn-row">
-        <button class="btn btn-ghost" onclick="quickSwitch('demo')" id="qs-demo" style="font-size:12px;"><i class="ti ti-test-pipe"></i>Switch to Demo</button>
-        <button class="btn btn-ghost" onclick="quickSwitch('real')" id="qs-real" style="font-size:12px;"><i class="ti ti-cash"></i>Switch to Real</button>
       </div>
     </div>
   </div>
@@ -622,40 +568,28 @@ const PRESETS = {
   recovery:     { minStake:1,    maxStake:40,  growthRate:0.05, martingaleFactor:2.2, maxConsecutiveLosses:3, maxTradesPerDay:0, tradeDelaySecs:1, stabilityWindow:5, minTickGap:0, volatilityThreshold:0, accumulatorMax:1000 },
 };
 
-// ─── Token store + mode ────────────────────────────────────────────────────────
-const tokens = { demo: '', real: '' };
-let activeMode = 'demo';
-
-// ─── Persist session across refresh (tokens + config) ─────────────────────────
+// ─── Persist session across refresh ──────────────────────────────────────────
 function persistSession() {
   try {
-    sessionStorage.setItem('derivbot_tokens', JSON.stringify(tokens));
-    sessionStorage.setItem('derivbot_mode', activeMode);
-    sessionStorage.setItem('derivbot_cfg', JSON.stringify(state.cfg));
+    sessionStorage.setItem('derivbot_token',  document.getElementById('api-token').value.trim());
+    sessionStorage.setItem('derivbot_cfg',    JSON.stringify(state.cfg));
     sessionStorage.setItem('derivbot_market', JSON.stringify(state.market));
-    sessionStorage.setItem('derivbot_appid', document.getElementById('app-id').value);
+    sessionStorage.setItem('derivbot_appid',  document.getElementById('app-id').value);
     sessionStorage.setItem('derivbot_server', document.getElementById('deriv-server').value);
   } catch(e) {}
 }
 function restoreSession() {
   try {
-    const t = sessionStorage.getItem('derivbot_tokens');
-    if (t) { const p=JSON.parse(t); tokens.demo=p.demo||''; tokens.real=p.real||''; }
-    const m = sessionStorage.getItem('derivbot_mode');
-    if (m) activeMode = m;
-    const c = sessionStorage.getItem('derivbot_cfg');
-    if (c) Object.assign(state.cfg, JSON.parse(c));
-    const mk = sessionStorage.getItem('derivbot_market');
+    const t   = sessionStorage.getItem('derivbot_token');
+    if (t)  document.getElementById('api-token').value = t;
+    const c   = sessionStorage.getItem('derivbot_cfg');
+    if (c)  Object.assign(state.cfg, JSON.parse(c));
+    const mk  = sessionStorage.getItem('derivbot_market');
     if (mk) Object.assign(state.market, JSON.parse(mk));
     const aid = sessionStorage.getItem('derivbot_appid');
     if (aid) document.getElementById('app-id').value = aid;
     const srv = sessionStorage.getItem('derivbot_server');
     if (srv) document.getElementById('deriv-server').value = srv;
-    // Restore token inputs
-    if (tokens.demo) document.getElementById('demo-token').value = tokens.demo;
-    if (tokens.real) document.getElementById('real-token').value = tokens.real;
-    if (tokens.demo) document.getElementById('demo-saved-badge').style.display='block';
-    if (tokens.real) document.getElementById('real-saved-badge').style.display='block';
   } catch(e) {}
 }
 
@@ -1225,7 +1159,7 @@ function updateBalanceDisplay(bal, cur) {
   document.getElementById('topbar-balance').textContent = fmt;
   document.getElementById('topbar-currency').textContent = cur||'';
   document.getElementById('m-balance').textContent = fmt;
-  document.getElementById('m-balance-mode').textContent = activeMode.charAt(0).toUpperCase()+activeMode.slice(1)+' account';
+  document.getElementById('m-balance-mode').textContent = 'Connected account';
   if (document.getElementById('ai-balance')) document.getElementById('ai-balance').textContent = fmt;
 }
 
@@ -1244,52 +1178,15 @@ function addLog(type, tag, msg) {
 }
 function clearLogs() { state.logs=[]; document.getElementById('log-container').innerHTML=''; }
 
-// ─── Account mode ─────────────────────────────────────────────────────────────
-function setAccountMode(mode) {
-  activeMode = mode;
-  const isReal = mode==='real';
-  document.getElementById('mode-demo-btn').style.border  = isReal?'1px solid var(--border2)':'2px solid var(--accent)';
-  document.getElementById('mode-demo-btn').style.background = isReal?'var(--bg3)':'rgba(108,99,255,0.12)';
-  document.getElementById('mode-real-btn').style.border  = isReal?'2px solid var(--green)':'1px solid var(--border2)';
-  document.getElementById('mode-real-btn').style.background = isReal?'rgba(34,197,94,0.1)':'var(--bg3)';
-  document.getElementById('mode-warning').style.display  = isReal?'block':'none';
-  const cl = document.getElementById('connect-mode-label');
-  if (cl) cl.textContent = mode;
-  persistSession();
-}
-function saveToken(mode) {
-  const val = document.getElementById(mode+'-token').value.trim();
-  if (!val) return;
-  tokens[mode] = val;
-  document.getElementById(mode+'-saved-badge').style.display='block';
-  addLog('info','Auth',mode+' token saved');
-  persistSession();
-}
-function clearToken(mode) {
-  tokens[mode]='';
-  document.getElementById(mode+'-token').value='';
-  document.getElementById(mode+'-saved-badge').style.display='none';
-  persistSession();
-}
-function toggleVis(id, iconId) {
-  const el=document.getElementById(id); const ic=document.getElementById(iconId);
-  el.type=el.type==='password'?'text':'password';
-  ic.className=el.type==='password'?'ti ti-eye':'ti ti-eye-off';
-}
-function quickSwitch(mode) {
-  if (!tokens[mode]) { showAuthResult('danger','No '+mode+' token saved. Save it in the token cards above.'); return; }
-  disconnectDeriv();
-  setTimeout(()=>{ setAccountMode(mode); connectDeriv(); }, 700);
-}
-
 // ─── Deriv connection ─────────────────────────────────────────────────────────
 function connectDeriv() {
-  const token  = tokens[activeMode] || document.getElementById(activeMode+'-token').value.trim();
+  const token  = document.getElementById('api-token').value.trim();
   const appId  = document.getElementById('app-id').value.trim() || '36544';
   const server = document.getElementById('deriv-server').value;
-  if (!token) { showAuthResult('danger','No '+activeMode+' token found. Save your token first.'); return; }
+  if (!token) { showAuthResult('danger', 'Please enter your Deriv API token.'); return; }
 
-  showAuthResult('info','Connecting '+activeMode+' account…');
+  persistSession();
+  showAuthResult('info', 'Connecting…');
   addLog('info','Auth','Connecting → '+server+' (App ID '+appId+')');
 
   let authed = false;
@@ -1297,7 +1194,7 @@ function connectDeriv() {
   try { ws = new WebSocket(server+'?app_id='+appId); }
   catch(e) { showAuthResult('danger','WebSocket failed: '+e.message); return; }
 
-  const timeout = setTimeout(()=>{ if(!authed){ showAuthResult('danger','Timeout. Check network.'); ws.close(); } }, 12000);
+  const timeout = setTimeout(()=>{ if(!authed){ showAuthResult('danger','Timeout. Check network or try the other endpoint.'); ws.close(); } }, 12000);
 
   ws.onopen = () => {
     addLog('info','Auth','WS open — authorising…');
@@ -1310,8 +1207,8 @@ function connectDeriv() {
       clearTimeout(timeout);
       const code = d.error.code||'';
       let hint = '';
-      if (code==='InvalidToken') hint = ' — Check token scopes (Read+Trade) and that it matches '+activeMode+' account.';
-      if (code==='RateLimit') hint = ' — Too many attempts, wait 60s.';
+      if (code==='InvalidToken') hint = ' — Check token scopes (Read + Trade). Make sure your App ID matches the token (try 36544).';
+      if (code==='RateLimit')    hint = ' — Too many attempts, wait 60s.';
       showAuthResult('danger','Auth failed ['+code+']: '+d.error.message+hint);
       addLog('warn','Auth',d.error.message+' ('+code+')');
       ws.close(); return;
@@ -1322,22 +1219,15 @@ function connectDeriv() {
       const acc = d.authorize;
       state.conn.ws = ws;
       state.conn.connected = true;
-      state.conn.balance = parseFloat(acc.balance);
-      state.conn.currency = acc.currency;
+      state.conn.balance   = parseFloat(acc.balance);
+      state.conn.currency  = acc.currency;
       updateBalanceDisplay(acc.balance, acc.currency);
-
-      // Subscribe to balance updates
       ws.send(JSON.stringify({ balance:1, subscribe:1 }));
-
       onAuthSuccess({ loginid:acc.loginid, balance:acc.balance, currency:acc.currency, isVirtual:acc.is_virtual });
-
-      // Keep alive
       state.conn.pingInterval = setInterval(()=>{ if(ws.readyState===1) ws.send(JSON.stringify({ping:1})); }, 25000);
-
-      // Route all subsequent messages
       ws.onmessage = (ev) => {
         let msg; try { msg=JSON.parse(ev.data); } catch { return; }
-        if (msg.msg_type==='tick') handleLiveTick(msg.tick);
+        if (msg.msg_type==='tick')    handleLiveTick(msg.tick);
         if (msg.msg_type==='balance') {
           const bal = parseFloat(msg.balance.balance);
           state.conn.balance = bal;
@@ -1351,13 +1241,12 @@ function connectDeriv() {
   ws.onclose = (ev) => {
     clearTimeout(timeout);
     if (!authed) {
-      showAuthResult('danger','Closed before auth (code '+ev.code+'). Try the other endpoint.');
+      showAuthResult('danger','Connection closed (code '+ev.code+'). Try the other endpoint.');
     } else {
       addLog('warn','Auth','WS closed ('+ev.code+') — reconnecting in 5s…');
       state.conn.connected = false;
       document.getElementById('conn-dot').style.background = 'var(--amber)';
       document.getElementById('conn-text').textContent = 'Reconnecting…';
-      // Auto-reconnect
       setTimeout(()=>{ if(!state.conn.connected) connectDeriv(); }, 5000);
     }
   };
@@ -1367,9 +1256,9 @@ function disconnectDeriv() {
   if (state.conn.ws) { try { state.conn.ws.close(); } catch {} state.conn.ws=null; }
   if (state.conn.pingInterval) { clearInterval(state.conn.pingInterval); state.conn.pingInterval=null; }
   state.conn.connected = false;
-  state.conn.balance = null;
+  state.conn.balance   = null;
   document.getElementById('conn-dot').style.background = 'var(--text3)';
-  document.getElementById('conn-dot').style.boxShadow = 'none';
+  document.getElementById('conn-dot').style.boxShadow  = 'none';
   document.getElementById('conn-text').textContent = 'Disconnected';
   document.getElementById('disconnect-btn').disabled = true;
   document.getElementById('account-info-card').style.display = 'none';
@@ -1380,33 +1269,34 @@ function disconnectDeriv() {
 
 function onAuthSuccess(acc) {
   document.getElementById('conn-dot').style.background = 'var(--green)';
-  document.getElementById('conn-dot').style.boxShadow = '0 0 5px var(--green)';
+  document.getElementById('conn-dot').style.boxShadow  = '0 0 5px var(--green)';
   document.getElementById('conn-text').textContent = 'Connected';
   document.getElementById('disconnect-btn').disabled = false;
   document.getElementById('account-info-card').style.display = 'block';
-  document.getElementById('ai-balance').textContent = isNaN(parseFloat(acc.balance)) ? acc.balance : parseFloat(acc.balance).toFixed(2);
+  document.getElementById('ai-balance').textContent  = isNaN(parseFloat(acc.balance)) ? acc.balance : parseFloat(acc.balance).toFixed(2);
   document.getElementById('ai-currency').textContent = acc.currency||'USD';
-  document.getElementById('ai-type').textContent = acc.isVirtual?'Demo':'Real';
-  document.getElementById('ai-loginid').textContent = acc.loginid;
+  document.getElementById('ai-type').textContent     = acc.isVirtual ? 'Demo' : 'Real';
+  document.getElementById('ai-loginid').textContent  = acc.loginid;
   const badgeEl = document.getElementById('active-mode-badge');
   if (badgeEl) badgeEl.innerHTML = acc.isVirtual
     ? '<span class="badge blue"><i class="ti ti-test-pipe" aria-hidden="true"></i> Demo</span>'
     : '<span class="badge green"><i class="ti ti-cash" aria-hidden="true"></i> Real</span>';
-  const qd = document.getElementById('qs-demo');
-  const qr = document.getElementById('qs-real');
-  if (qd) qd.disabled = acc.isVirtual;
-  if (qr) qr.disabled = !acc.isVirtual;
-  showAuthResult('success','Authorised as '+acc.loginid+' — '+acc.balance+' '+acc.currency);
+  showAuthResult('success','Authorised as '+acc.loginid+' — Balance: '+acc.balance+' '+(acc.currency||''));
   addLog('win','Auth','Connected: '+acc.loginid+' ('+(acc.isVirtual?'Demo':'Real')+')');
   if (state.market.symbol) subscribeToTicks(state.market.symbol);
-  // Enable run button if market selected
   if (state.market.symbol) document.getElementById('run-btn').disabled = false;
 }
 
+function toggleVis(id, iconId) {
+  const el=document.getElementById(id); const ic=document.getElementById(iconId);
+  el.type = el.type==='password' ? 'text' : 'password';
+  ic.className = el.type==='password' ? 'ti ti-eye' : 'ti ti-eye-off';
+}
+
 function showAuthResult(type, msg) {
-  const el = document.getElementById('auth-result'); if (!el) return;
-  const icons = { danger:'ti-alert-circle', success:'ti-circle-check', info:'ti-info-circle' };
-  el.innerHTML = `<div class="alert ${type}"><i class="ti ${icons[type]||'ti-info-circle'}" style="font-size:15px;flex-shrink:0;" aria-hidden="true"></i><span>${msg}</span></div>`;
+  const el=document.getElementById('auth-result'); if(!el) return;
+  const icons={danger:'ti-alert-circle',success:'ti-circle-check',info:'ti-info-circle'};
+  el.innerHTML=`<div class="alert ${type}"><i class="ti ${icons[type]||'ti-info-circle'}" style="font-size:15px;flex-shrink:0;" aria-hidden="true"></i><span>${msg}</span></div>`;
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
@@ -1416,7 +1306,6 @@ document.addEventListener('DOMContentLoaded', () => {
   buildMarketGrid();
   buildPresetGrid();
   loadConfigToUI(state.cfg);
-  setAccountMode(activeMode);
 
   // Restore market label if saved
   if (state.market.symbol) {
@@ -1427,13 +1316,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('run-btn').disabled = false;
   }
 
-  // Auto-reconnect if tokens saved
-  if (tokens[activeMode]) {
+  // Auto-reconnect if token was saved
+  if (document.getElementById('api-token').value.trim()) {
     setTimeout(connectDeriv, 800);
   }
 
-  addLog('info','Bot','Deriv Bot ready. App ID 36544 is pre-set — replace with your own registered App ID.');
-  addLog('info','Bot','Bot runs continuously on every tick, exits after 1 tick, then immediately enters next trade.');
+  addLog('info','Bot','Deriv Bot ready. Enter your API token in Account & Auth and connect.');
+  addLog('info','Bot','Bot runs continuously — exits after 1 tick, then immediately enters the next trade.');
   updateDashboard();
 });
 </script>
