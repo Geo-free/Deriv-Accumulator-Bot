@@ -726,7 +726,7 @@ const state = {
   },
   market: { symbol: null, label: null },
   demo: false,
-  conn: { connected: false, ws: null, pingInterval: null },
+  conn: { connected: false, ws: null, pingInterval: null, balancePoll: null, api: null },
   logs: [],
   analysis: {
     priceHistory: [],
@@ -1067,9 +1067,11 @@ function sendTradeToDerivAPI(stake) {
     contract_type: 'ACCU',
     currency: state.conn.currency || 'USD',                   // the account's real currency
     growth_rate: gr,
-    symbol: state.market.symbol || 'R_100',
     limit_order: { take_profit: tp },
   };
+  // v3 WebSocket uses `symbol`; the new REST+OTP WebSocket uses `instrument_id`
+  if (state.conn.api === 'new') req.instrument_id = state.market.symbol || 'R_100';
+  else req.symbol = state.market.symbol || 'R_100';
   if (state.conn.ws) {
     state.conn.ws.send(JSON.stringify(req));
   }
@@ -1092,11 +1094,28 @@ function handleWsMessage(msg) {
     addLog('warn','API', (msg.error.message || 'API error') + det);
     if (msg.echo_req && (msg.echo_req.proposal !== undefined || msg.echo_req.buy !== undefined)) {
       const pos = state.bot.activePosition;
+      const wsOk = state.conn.ws && state.conn.ws.readyState === 1;
+      // Schema self-healing: "Properties not allowed: X, Y" → swap symbol ⇄
+      // instrument_id where possible, drop the rest, and resend (max 2 tries).
+      const na = /properties not allowed:?\s*([^.]+)/i.exec(msg.error.message || '');
+      if (na && pos && !pos.contractId && wsOk && (pos.schemaRetries || 0) < 2) {
+        pos.schemaRetries = (pos.schemaRetries || 0) + 1;
+        const retry = { ...msg.echo_req };
+        delete retry.req_id;
+        na[1].split(',').map(s => s.trim()).forEach(prop => {
+          if (prop === 'symbol' && retry.symbol !== undefined) { retry.instrument_id = retry.symbol; delete retry.symbol; }
+          else if (prop === 'instrument_id' && retry.instrument_id !== undefined) { retry.symbol = retry.instrument_id; delete retry.instrument_id; }
+          else delete retry[prop];
+        });
+        addLog('info','Trade',`Adapting order to this API's schema (removed: ${na[1].trim()}) — retrying…`);
+        toast('warn','Adapting order to API schema — retrying');
+        state.conn.ws.send(JSON.stringify(retry));
+        return;
+      }
       // A rejected proposal with a limit_order → retry once without the
       // server-side take-profit (some accounts/markets reject it on ACCU).
       if (pos && !pos.contractId && !pos.retriedNoTP &&
-          msg.echo_req.proposal !== undefined && msg.echo_req.limit_order &&
-          state.conn.ws && state.conn.ws.readyState === 1) {
+          msg.echo_req.proposal !== undefined && msg.echo_req.limit_order && wsOk) {
         pos.retriedNoTP = true;
         const retry = { ...msg.echo_req };
         delete retry.limit_order;
@@ -1476,6 +1495,7 @@ function connectLegacy() {
       const acc = d.authorize;
       state.conn.ws = ws;
       state.conn.connected = true;
+      state.conn.api = 'v3';
       
       const initialBalance = acc.balance || acc.account_balance || '0';
       
@@ -1590,14 +1610,25 @@ function onAuthSuccess(acc) {
   toast('success', 'Connected as '+acc.loginid);
 
   if (state.market.symbol) subscribeToTicks(state.market.symbol);
-  
+
+  // Poll the balance every 10s — some connections (new REST+OTP WebSocket)
+  // don't stream balance updates from a one-time subscribe like v3 does.
+  if (state.conn.balancePoll) clearInterval(state.conn.balancePoll);
+  state.conn.balancePoll = setInterval(() => {
+    if (state.conn.ws && state.conn.ws.readyState === 1) {
+      state.conn.ws.send(JSON.stringify({ balance: 1 }));
+    }
+  }, 10000);
+
   updateDashboard();
 }
 
 function disconnectDeriv() {
   if (state.conn.ws) { try { state.conn.ws.close(); } catch {} }
   if (state.conn.pingInterval) clearInterval(state.conn.pingInterval);
+  if (state.conn.balancePoll) clearInterval(state.conn.balancePoll);
   state.conn.connected = false;
+  state.conn.api = null;
   state.bot.running = false;
   state.bot.state = 'idle';
 
@@ -1685,6 +1716,7 @@ async function connectNewAPI() {
       connected = true;
       state.conn.ws = ws;
       state.conn.connected = true;
+      state.conn.api = 'new';
       
       // Set status to connected
       document.getElementById('conn-dot').style.background = 'var(--green)';
