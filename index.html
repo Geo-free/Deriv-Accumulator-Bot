@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deriv Bot Pro - Gap-Based Trading Strategy</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #0a0c12;
+    --bg2: #12151d;
+    --bg3: #1a1e29;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.12);
+    --text: #eceef4;
+    --text2: #9297a8;
+    --text3: #5c6175;
+    --accent: #6c63ff;
+    --accent2: #8b85ff;
+    --green: #22c55e;
+    --green2: #16a34a;
+    --red: #ef4444;
+    --red2: #b91c1c;
+    --amber: #f59e0b;
+    --amber2: #d97706;
+    --teal: #14b8a6;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.6; min-height: 100vh; }
+  a { color: var(--accent2); text-decoration: none; }
+
+  .app { display: grid; grid-template-columns: 260px 1fr; grid-template-rows: 56px 1fr; height: 100vh; overflow: hidden; }
+  .topbar { grid-column: 1 / -1; background: var(--bg2); border-bottom: 0.5px solid var(--border2); display: flex; align-items: center; padding: 0 20px; gap: 16px; }
+  .sidebar { background: var(--bg2); border-right: 0.5px solid var(--border); overflow-y: auto; padding: 16px 12px; }
+  .main { overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+  .logo { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: var(--accent2); }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+  .status-badge { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot.idle { background: var(--text3); }
+  .dot.running { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .conn-status { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--bg3); border-radius: 20px; border: 0.5px solid var(--border); }
+
+  .sidebar-section { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 8px 8px; margin-top: 8px; }
+  .nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; color: var(--text2); font-size: 13px; transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(108,99,255,0.15); color: var(--accent2); }
+  .nav-item i { font-size: 16px; width: 20px; }
+
+  .panel { display: none; }
+  .panel.active { display: contents; }
+
+  .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px; }
+  .card-title { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .card-title i { font-size: 14px; }
+
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .metric { background: var(--bg3); border-radius: var(--radius); padding: 14px 16px; border: 0.5px solid var(--border); }
+  .metric-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .metric-value { font-size: 22px; font-weight: 600; color: var(--text); }
+  .metric-value.green { color: var(--green); }
+  .metric-value.red { color: var(--red); }
+  .metric-value.amber { color: var(--amber); }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; }
+  input[type=text], input[type=number], input[type=password], select {
+    width: 100%; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 8px;
+    color: var(--text); padding: 8px 12px; font-size: 13px; outline: none; transition: border 0.15s;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  select option { background: var(--bg3); }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-group { margin-bottom: 12px; }
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  .slider-row input[type=range] { flex: 1; }
+  .slider-val { min-width: 48px; text-align: right; font-size: 13px; font-weight: 500; color: var(--accent2); }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s ease; user-select: none; }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-primary:active { background: var(--accent); }
+  .btn-success { background: var(--green2); color: #fff; }
+  .btn-success:hover { background: var(--green); }
+  .btn-danger { background: var(--red2); color: #fff; }
+  .btn-danger:hover { background: var(--red); }
+  .btn-ghost { background: var(--bg3); color: var(--text2); border: 0.5px solid var(--border2); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--bg); }
+  .btn-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .trade-log { max-height: 320px; overflow-y: auto; font-size: 12px; }
+  .trade-log::-webkit-scrollbar { width: 4px; }
+  .trade-log::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+  .log-entry { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 0.5px solid var(--border); }
+  .log-entry:last-child { border-bottom: none; }
+  .log-time { color: var(--text3); min-width: 60px; }
+  .log-type { min-width: 60px; font-weight: 500; }
+  .log-type.win { color: var(--green); }
+  .log-type.loss { color: var(--red); }
+  .log-type.info { color: var(--teal); }
+  .log-type.warn { color: var(--amber); }
+  .log-msg { color: var(--text2); flex: 1; }
+  .log-pnl { min-width: 64px; text-align: right; font-weight: 500; }
+  .log-pnl.pos { color: var(--green); }
+  .log-pnl.neg { color: var(--red); }
+
+  .chart-wrap { position: relative; width: 100%; height: 240px; }
+
+  .price-display { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+  .price-main { font-size: 32px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .price-change { font-size: 14px; font-weight: 500; }
+  .price-change.up { color: var(--green); }
+  .price-change.dn { color: var(--red); }
+
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge.green { background: rgba(34,197,94,0.15); color: var(--green); }
+  .badge.red { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge.amber { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .badge.blue { background: rgba(108,99,255,0.15); color: var(--accent2); }
+  .badge.gray { background: var(--bg3); color: var(--text2); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .col-span2 { grid-column: span 2; }
+
+  .state-pill { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg3); border-radius: 30px; border: 0.5px solid var(--border2); width: fit-content; }
+  .state-label { font-size: 13px; font-weight: 500; }
+
+  .position-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
+  .position-row:last-child { border-bottom: none; }
+
+  .auth-notice { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; background: rgba(245,158,11,0.07); border-radius: 8px; border: 0.5px solid rgba(245,158,11,0.2); margin-bottom: 12px; font-size: 12px; color: var(--amber); }
+
+  .market-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .market-card { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); cursor: pointer; transition: all 0.15s; }
+  .market-card:hover { border-color: var(--border2); }
+  .market-card.selected { border-color: var(--accent); background: rgba(108,99,255,0.12); }
+  .market-name { font-size: 12px; font-weight: 500; color: var(--text); }
+  .market-desc { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  .alert { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 8px; }
+  .alert.danger { background: rgba(239,68,68,0.08); border: 0.5px solid rgba(239,68,68,0.2); color: var(--red); }
+  .alert.success { background: rgba(34,197,94,0.08); border: 0.5px solid rgba(34,197,94,0.2); color: var(--green); }
+  .alert.info { background: rgba(20,184,166,0.08); border: 0.5px solid rgba(20,184,166,0.2); color: var(--teal); }
+
+  .tech-indicator { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: var(--bg3); border-radius: 6px; border: 0.5px solid var(--border); font-size: 11px; }
+
+  /* ── Visual refresh ─────────────────────────────────────────────────────── */
+  .card { box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 8px 24px rgba(0,0,0,0.25); }
+  .btn-primary { background: linear-gradient(180deg, var(--accent2), var(--accent)); box-shadow: 0 4px 14px rgba(108,99,255,0.3); }
+  .btn-primary:hover { filter: brightness(1.08); background: linear-gradient(180deg, var(--accent2), var(--accent)); }
+  .metric { transition: border-color 0.15s; }
+  .metric:hover { border-color: var(--border2); }
+  .topbar { backdrop-filter: blur(8px); }
+
+  /* Account chip + logout in topbar */
+  .account-chip { display: none; align-items: center; gap: 8px; padding: 4px 10px 4px 6px; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 20px; font-size: 12px; }
+  .account-chip.visible { display: flex; }
+  .account-chip .avatar { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--teal)); display: flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; }
+  .account-chip .acct-id { font-weight: 600; color: var(--text); }
+  .account-chip .acct-bal { color: var(--green); font-weight: 600; }
+  .btn-logout { padding: 5px 12px; font-size: 12px; }
+
+  /* ── Auth gate (login screen before dashboard) ──────────────────────────── */
+  body.locked .app { display: none; }
+  .auth-gate { display: none; }
+  body.locked .auth-gate { display: flex; }
+  .auth-gate {
+    position: fixed; inset: 0; z-index: 100; overflow-y: auto;
+    align-items: flex-start; justify-content: center;
+    background:
+      radial-gradient(700px 400px at 15% -10%, rgba(108,99,255,0.16), transparent 60%),
+      radial-gradient(600px 400px at 90% 110%, rgba(20,184,166,0.10), transparent 60%),
+      var(--bg);
+    padding: 48px 16px;
+  }
+  .auth-card {
+    width: 100%; max-width: 520px; margin: auto;
+    background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 18px;
+    padding: 28px; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    animation: gateIn 0.35s ease;
+  }
+  @keyframes gateIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  .auth-brand { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 22px; text-align: center; }
+  .auth-brand .mark { width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, var(--accent), var(--teal)); display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; box-shadow: 0 8px 24px rgba(108,99,255,0.35); }
+  .auth-brand h1 { font-size: 20px; font-weight: 700; }
+  .auth-brand p { font-size: 12.5px; color: var(--text2); }
+  .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--bg3); border: 0.5px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 16px; }
+  .auth-tab { border: none; background: none; color: var(--text2); font-size: 12.5px; font-weight: 500; padding: 8px 10px; border-radius: 7px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; }
+  .auth-tab:hover { color: var(--text); }
+  .auth-tab.active { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(108,99,255,0.35); }
+  .auth-gate .card { border: none; background: none; padding: 0; box-shadow: none; }
+  .auth-gate .card-title { display: none; }
+  .auth-footer { margin-top: 18px; padding-top: 14px; border-top: 0.5px solid var(--border); text-align: center; font-size: 12px; color: var(--text3); }
+  .auth-footer a { cursor: pointer; }
+
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; grid-template-rows: 56px auto 1fr; }
+    .sidebar { display: flex; flex-wrap: wrap; padding: 8px 12px; gap: 4px; border-right: none; border-bottom: 0.5px solid var(--border); }
+    .sidebar-section { display: none; }
+    .metrics { grid-template-columns: 1fr 1fr; }
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    .market-grid { grid-template-columns: 1fr 1fr; }
+    .col-span2 { grid-column: span 1; }
+  }
+</style>
+</head>
+<body class="locked">
+
+<!-- ─── AUTH GATE (shown before the dashboard) ─────────────────────────────── -->
+<div class="auth-gate" id="auth-gate">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="mark"><i class="ti ti-chart-candle"></i></div>
+      <h1>Deriv Bot Pro</h1>
+      <p>Gap-Width Strategy · Volatility Indices<br>Sign in with your Deriv API credentials to access the dashboard.</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-legacy" onclick="switchAuthTab('legacy')"><i class="ti ti-plug"></i> WebSocket (v3)</button>
+      <button class="auth-tab" id="tab-new" onclick="switchAuthTab('new')"><i class="ti ti-api"></i> REST + OTP</button>
+    </div>
+
+    <!-- Legacy auth panel -->
+    <div id="auth-legacy" class="card" style="animation: fadeIn 0.2s ease;">
+      <div class="auth-notice">
+        <i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0;margin-top:1px;"></i>
+        <div>
+          Register an app at <a href="https://app.deriv.com/account/api-token" target="_blank">app.deriv.com → API Token</a> to get your personal App ID. You can use <code>36544</code> for testing.
+        </div>
+      </div>
+      <div class="form-group">
+        <label>API Token</label>
+        <input type="password" id="api-token" placeholder="Paste your token here…" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>App ID</label>
+        <input type="text" id="app-id" placeholder="36544" value="36544">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="connectLegacy()"><i class="ti ti-login-2"></i> Connect &amp; Enter Dashboard</button>
+        <a href="https://app.deriv.com/account/api-token" target="_blank" class="btn btn-ghost"><i class="ti ti-external-link"></i> Get token</a>
+      </div>
+      <div id="auth-result" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- New API auth panel -->
+    <div id="auth-new" class="card" style="display:none; animation: fadeIn 0.2s ease;">
+      <div class="auth-notice">
+        <i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0;margin-top:1px;"></i>
+        <div>
+          The new API uses a 3-step flow: <strong>1)</strong> Enter your PAT token → <strong>2)</strong> Fetch your account ID via REST → <strong>3)</strong> Request a one-time WebSocket URL and connect.
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Personal Access Token (PAT)</label>
+          <input type="password" id="new-api-token" placeholder="Your PAT token…" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>App ID</label>
+          <input type="text" id="new-app-id" placeholder="Your registered App ID">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Account ID <span style="color:var(--text3);font-size:11px;">(auto-filled after step 1, or enter manually e.g. DOT12345678)</span></label>
+        <input type="text" id="new-account-id" placeholder="e.g. DOT12345678 — click 'Fetch accounts' to auto-fill">
+      </div>
+      <div class="btn-row" style="margin-bottom:8px;">
+        <button class="btn btn-ghost" onclick="fetchNewAccounts()"><i class="ti ti-download"></i> 1. Fetch accounts</button>
+        <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="connectNewAPI()"><i class="ti ti-login-2"></i> 2. Connect &amp; Enter Dashboard</button>
+      </div>
+      <div id="auth-result-new" style="margin-top:4px;"></div>
+    </div>
+
+    <div class="auth-footer">
+      Just looking around? <a onclick="enterDemoMode()">Explore the dashboard in demo mode →</a>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      Deriv Bot Pro
+    </div>
+    <span style="color:var(--text3);font-size:12px;">Gap-Width Strategy | Volatility Indices</span>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+      <div class="account-chip" id="account-chip">
+        <div class="avatar"><i class="ti ti-user"></i></div>
+        <span class="acct-id" id="ai-loginid">—</span>
+        <span class="acct-bal"><span id="ai-balance">$0.00</span> <span id="ai-currency" style="color:var(--text3);font-weight:500;">USD</span></span>
+      </div>
+      <button class="btn btn-ghost btn-logout" id="logout-btn" onclick="disconnectDeriv()" style="display:none;"><i class="ti ti-logout"></i> Logout</button>
+      <div class="conn-status">
+        <span class="dot" id="conn-dot" style="background:var(--text3);"></span>
+        <span id="conn-text">Disconnected</span>
+      </div>
+      <div class="status-badge">
+        <span class="dot" id="state-dot" style="background:var(--text3);animation:none;"></span>
+        <span id="state-text" style="font-size:12px;color:var(--text2);">Idle</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="sidebar">
+    <div class="sidebar-section">Overview</div>
+    <button class="nav-item active" onclick="showPanel('dashboard')">
+      <i class="ti ti-dashboard"></i> Dashboard
+    </button>
+    <div class="sidebar-section">Trading</div>
+    <button class="nav-item" onclick="showPanel('market')">
+      <i class="ti ti-chart-candle"></i> Market & Symbols
+    </button>
+    <button class="nav-item" onclick="showPanel('config')">
+      <i class="ti ti-settings-2"></i> Bot Config
+    </button>
+    <div class="sidebar-section">Analysis</div>
+    <button class="nav-item" onclick="showPanel('analysis')">
+      <i class="ti ti-brain"></i> Gap Analysis
+    </button>
+    <div class="sidebar-section">History</div>
+    <button class="nav-item" onclick="showPanel('history')">
+      <i class="ti ti-history"></i> Trade History
+    </button>
+    <button class="nav-item" onclick="showPanel('logs')">
+      <i class="ti ti-terminal-2"></i> Live Logs
+    </button>
+  </nav>
+
+  <main class="main" id="main-content">
+
+    <!-- DASHBOARD -->
+    <div id="panel-dashboard" class="panel active">
+
+      <div style="background: linear-gradient(135deg, rgba(108,99,255,0.1), rgba(34,197,94,0.1)); border: 0.5px solid var(--border2); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;">
+        <div style="font-size: 11px; color: var(--text3); margin-bottom: 4px;">💳 Account Balance</div>
+        <div style="font-size: 24px; font-weight: 700; color: var(--green);" id="top-balance">$0.00</div>
+        <div style="font-size: 12px; color: var(--text2); margin-top: 4px;">
+          <span id="top-currency">USD</span> • <span id="top-type">Not connected</span> • <span id="top-loginid">—</span>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Session P&L</div>
+          <div class="metric-value" id="m-pnl">$0.00</div>
+          <div class="metric-sub" id="m-pnl-sub">No trades yet</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Win Rate</div>
+          <div class="metric-value" id="m-wr">—</div>
+          <div class="metric-sub" id="m-trades-sub">0 trades</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Current Gap</div>
+          <div class="metric-value amber" id="m-gap">—</div>
+          <div class="metric-sub" id="m-gap-status">Analyzing…</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Bot Status</div>
+          <div class="metric-value" id="m-state" style="font-size:16px;margin-top:4px;">
+            <span class="badge gray">Ready</span>
+          </div>
+          <div class="metric-sub" id="m-pos">Waiting for signal</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;" id="market-label">— Select market —</div>
+            <div class="price-display">
+              <div class="price-main" id="live-price">——</div>
+              <div class="price-change" id="price-chg"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="start-btn" onclick="toggleAutoTrade()">
+              <i class="ti ti-player-play"></i> Start Trading
+            </button>
+            <button class="btn btn-danger" id="stop-btn" onclick="toggleAutoTrade()" disabled>
+              <i class="ti ti-player-stop"></i> Stop Trading
+            </button>
+          </div>
+        </div>
+        <div class="chart-wrap" style="margin-top:12px;">
+          <canvas id="priceChart">Price chart loading…</canvas>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title"><i class="ti ti-bolt"></i> Active Position</div>
+          <div id="no-position" style="color:var(--text3);font-size:13px;padding:12px 0;">Waiting for next trade signal.</div>
+          <div id="active-position" style="display:none;">
+            <div class="position-row">
+              <span style="color:var(--text2);">Entry Price</span>
+              <span id="pos-entry" style="font-weight:500;">—</span>
+            </div>
+            <div class="position-row">
+              <span style="color:var(--text2);">Gap Width</span>
+              <span id="pos-gap" style="font-weight:500;color:var(--amber);">—</span>
+            </div>
+            <div class="position-row">
+              <span style="color:var(--text2);">Stake</span>
+              <span id="pos-stake" style="font-weight:500;color:var(--amber);">—</span>
+            </div>
+            <div class="position-row">
+              <span style="color:var(--text2);">Current P&L</span>
+              <span id="pos-upnl" style="font-weight:500;">—</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><i class="ti ti-target"></i> Trade Targets</div>
+          <div class="form-group">
+            <label>Profit Target ($)</label>
+            <input type="number" id="profit-target" value="50" min="1" step="1">
+          </div>
+          <div class="form-group">
+            <label>Stop Loss ($)</label>
+            <input type="number" id="stop-loss" value="-20" min="-1000" step="1">
+          </div>
+          <div class="btn-row" style="margin-top:4px;">
+            <button class="btn btn-primary" onclick="setTargets()"><i class="ti ti-check"></i> Set Targets</button>
+            <button class="btn btn-ghost" onclick="resetSession()"><i class="ti ti-refresh"></i> Reset Session</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="ti ti-activity"></i> Market Indicators</div>
+        <div class="grid3">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Gap Width</div>
+            <span class="badge gray" id="ind-gap">—</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Volatility</div>
+            <span class="badge gray" id="ind-vol">—</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Price Stability</div>
+            <span class="badge gray" id="ind-stability">—</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Gap Trend</div>
+            <span class="badge gray" id="ind-gap-trend">—</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Can Trade</div>
+            <span class="badge gray" id="ind-freq">—</span>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Avg Gap</div>
+            <span class="badge gray" id="ind-avg-gap">—</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MARKET -->
+    <div id="panel-market" class="panel">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-world"></i> Volatility Indices Markets</div>
+        <div style="margin-bottom:14px;">
+          <label>Filter</label>
+          <select id="market-cat" onchange="filterMarkets()">
+            <option value="all">All Volatility Indices</option>
+            <option value="volatility">Volatility 10-100</option>
+          </select>
+        </div>
+        <div class="market-grid" id="market-grid"></div>
+        <div style="margin-top:14px;">
+          <div class="form-group">
+            <label>Custom Symbol</label>
+            <input type="text" id="custom-symbol" placeholder="e.g., R_100, R_25, R_50">
+          </div>
+          <button class="btn btn-primary" onclick="applyMarket()"><i class="ti ti-check"></i> Apply Market</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="panel-config" class="panel">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-adjustments"></i> Gap Width Strategy</div>
+        <div class="alert info">
+          <i class="ti ti-info-circle"></i>
+          <div>
+            <strong>Gap-Width Trading:</strong> The bot analyzes price gaps (high-low swings) and only trades when gaps are wide enough to be profitable. Perfect for Volatility Indices with their natural fluctuations.
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Minimum Gap Width (points)</label>
+            <div class="slider-row"><input type="range" min="0.05" max="2" step="0.05" id="cfg-min-gap" oninput="syncSlider(this,'lbl-min-gap')"><span class="slider-val" id="lbl-min-gap">0.20</span></div>
+          </div>
+          <div class="form-group">
+            <label>Gap Check Period (candles)</label>
+            <div class="slider-row"><input type="range" min="2" max="20" step="1" id="cfg-gap-period" oninput="syncSlider(this,'lbl-gap-period')"><span class="slider-val" id="lbl-gap-period">5</span></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Min Volatility (%)</label>
+            <div class="slider-row"><input type="range" min="0.1" max="5" step="0.1" id="cfg-vol-min" oninput="syncSlider(this,'lbl-vol-min')"><span class="slider-val" id="lbl-vol-min">0.5%</span></div>
+          </div>
+          <div class="form-group">
+            <label>Max Volatility (%)</label>
+            <div class="slider-row"><input type="range" min="2" max="20" step="0.5" id="cfg-vol-max" oninput="syncSlider(this,'lbl-vol-max')"><span class="slider-val" id="lbl-vol-max">5.0%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="ti ti-sliders"></i> Risk Parameters</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Min Stake ($)</label>
+            <div class="slider-row"><input type="range" min="0.5" max="10" step="0.5" id="cfg-min-stake" oninput="syncSlider(this,'lbl-min-stake')"><span class="slider-val" id="lbl-min-stake">1.00</span></div>
+          </div>
+          <div class="form-group">
+            <label>Max Stake ($)</label>
+            <div class="slider-row"><input type="range" min="5" max="500" step="5" id="cfg-max-stake" oninput="syncSlider(this,'lbl-max-stake')"><span class="slider-val" id="lbl-max-stake">50.00</span></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Growth Rate (%)</label>
+            <div class="slider-row"><input type="range" min="1" max="20" step="1" id="cfg-growth" oninput="syncSlider(this,'lbl-growth')"><span class="slider-val" id="lbl-growth">5%</span></div>
+          </div>
+          <div class="form-group">
+            <label>Martingale Factor (×)</label>
+            <div class="slider-row"><input type="range" min="2" max="50" step="1" id="cfg-martin" oninput="syncSlider(this,'lbl-martin')"><span class="slider-val" id="lbl-martin">22×</span></div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Max Consecutive Losses</label>
+            <div class="slider-row"><input type="range" min="1" max="10" step="1" id="cfg-maxloss" oninput="syncSlider(this,'lbl-maxloss')"><span class="slider-val" id="lbl-maxloss">3</span></div>
+          </div>
+          <div class="form-group">
+            <label>Exit Profit Threshold ($)</label>
+            <div class="slider-row"><input type="range" min="0.01" max="2" step="0.01" id="cfg-exit" oninput="syncSlider(this,'lbl-exit')"><span class="slider-val" id="lbl-exit">$0.10</span></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="applyConfig()"><i class="ti ti-check"></i> Apply Configuration</button>
+      </div>
+    </div>
+
+    <!-- ANALYSIS -->
+    <div id="panel-analysis" class="panel">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-brain"></i> Real-Time Gap Analysis</div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+          <div style="padding:12px;background:var(--bg3);border-radius:8px;border:0.5px solid var(--border);">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">📊 Current Gap</div>
+            <div id="analysis-gap" style="font-size:12px;color:var(--text2);line-height:1.6;">—</div>
+          </div>
+          <div style="padding:12px;background:var(--bg3);border-radius:8px;border:0.5px solid var(--border);">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">📈 Average Gap</div>
+            <div id="analysis-avg-gap" style="font-size:12px;color:var(--text2);line-height:1.6;">—</div>
+          </div>
+          <div style="padding:12px;background:var(--bg3);border-radius:8px;border:0.5px solid var(--border);">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">📉 Volatility Analysis</div>
+            <div id="analysis-vol" style="font-size:12px;color:var(--text2);line-height:1.6;">—</div>
+          </div>
+          <div style="padding:12px;background:var(--bg3);border-radius:8px;border:0.5px solid var(--border);">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">🎯 Trade Signal</div>
+            <div id="analysis-signal" style="font-size:12px;color:var(--text2);line-height:1.6;">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-candle"></i> Gap Width Trend</div>
+        <div class="chart-wrap" style="height:200px;">
+          <canvas id="gapChart">Gap chart loading…</canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="panel-history" class="panel">
+      <div class="metrics" style="grid-template-columns:repeat(3,1fr);">
+        <div class="metric">
+          <div class="metric-label">Total P&L</div>
+          <div class="metric-value" id="h-total-pnl">$0.00</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Total Trades</div>
+          <div class="metric-value" id="h-total-trades">0</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Win / Loss</div>
+          <div class="metric-value" id="h-wl">0 / 0</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-bar"></i> Cumulative P&L</div>
+        <div class="chart-wrap" style="height:200px;">
+          <canvas id="pnlChart">Cumulative P&L chart…</canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-list"></i> Trade History</div>
+        <div style="overflow-x:auto;">
+          <table id="history-table" style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead>
+              <tr style="border-bottom:0.5px solid var(--border2);">
+                <th style="text-align:left;padding:6px 8px;color:var(--text3);font-weight:500;">#</th>
+                <th style="text-align:left;padding:6px 8px;color:var(--text3);font-weight:500;">Time</th>
+                <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:500;">Entry</th>
+                <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:500;">Gap</th>
+                <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:500;">Stake</th>
+                <th style="text-align:right;padding:6px 8px;color:var(--text3);font-weight:500;">P&L</th>
+                <th style="text-align:center;padding:6px 8px;color:var(--text3);font-weight:500;">Result</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody">
+              <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3);">No trades recorded yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGS -->
+    <div id="panel-logs" class="panel">
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between;">
+          <span><i class="ti ti-terminal-2"></i> Live Activity Log</span>
+          <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px;" onclick="clearLogs()"><i class="ti ti-trash"></i> Clear</button>
+        </div>
+        <div class="trade-log" id="log-container"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+'use strict';
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const state = {
+  bot: {
+    running: false,
+    state: 'idle',
+    currentStake: 1.0,
+    targetProfit: 50.0,
+    stopLoss: -20.0,
+    consecutiveLosses: 0,
+    totalTrades: 0,
+    wins: 0,
+    losses: 0,
+    sessionPnl: 0.0,
+    totalPnl: 0.0,
+    activePosition: null,
+    positions: [],
+    priceHistory: [],
+    lastTradeTime: null,
+  },
+  cfg: {
+    minStake: 1.0, maxStake: 50.0,
+    growthRate: 0.05, martingaleFactor: 22.0, exitThreshold: 0.1,
+    maxConsecutiveLosses: 3, tradeIntervalMinutes: 5,
+    minGapWidth: 0.2,     // Minimum gap width threshold
+    gapCheckPeriod: 5,     // Candles to check for gap
+    volMin: 0.5, volMax: 5.0,
+  },
+  market: { symbol: null, label: null },
+  conn: { connected: false, ws: null, pingInterval: null },
+  logs: [],
+  analysis: {
+    priceHistory: [],
+    gapWidth: null,
+    avgGapWidth: null,
+    volatility: null,
+    signal: 'neutral',
+    recentGaps: [],
+  },
+};
+
+// ─── MARKETS ─────────────────────────────────────────────────────────────────
+const MARKETS = [
+  { id:'R_10', name:'Volatility 10 (1s) Index', cat:'volatility' },
+  { id:'R_25', name:'Volatility 25 (1s) Index', cat:'volatility' },
+  { id:'R_50', name:'Volatility 50 (1s) Index', cat:'volatility' },
+  { id:'R_75', name:'Volatility 75 (1s) Index', cat:'volatility' },
+  { id:'R_100', name:'Volatility 100 (1s) Index', cat:'volatility' },
+];
+
+let priceChart, pnlChart, gapChart;
+const priceData = { labels:[], data:[] };
+const pnlData   = { labels:[], data:[] };
+const gapData   = { labels:[], data:[] };
+
+function initCharts() {
+  const priceCtx = document.getElementById('priceChart').getContext('2d');
+  priceChart = new Chart(priceCtx, {
+    type: 'line',
+    data: { labels: priceData.labels, datasets: [{ data: priceData.data, borderColor: '#6c63ff', borderWidth: 1.5, pointRadius: 0, tension: 0.3, fill: true, backgroundColor: 'rgba(108,99,255,0.08)' }] },
+    options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display:false } }, scales: { x: { display:false }, y: { grid: { color:'rgba(255,255,255,0.05)' }, ticks: { color:'#555a6e', font:{size:11} } } } }
+  });
+
+  const pnlCtx = document.getElementById('pnlChart').getContext('2d');
+  pnlChart = new Chart(pnlCtx, {
+    type: 'line',
+    data: { labels: pnlData.labels, datasets: [{ label: 'P&L', data: pnlData.data, borderColor: '#22c55e', borderWidth: 2, pointRadius: 2, pointBackgroundColor: '#22c55e', tension: 0.2, fill: true, backgroundColor: 'rgba(34,197,94,0.06)' }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display:false } }, scales: { x: { ticks: { color:'#555a6e', font:{size:11} } }, y: { grid: { color:'rgba(255,255,255,0.05)' }, ticks: { color:'#555a6e', font:{size:11}, callback: v => '$'+v.toFixed(2) } } } }
+  });
+
+  const gapCtx = document.getElementById('gapChart').getContext('2d');
+  gapChart = new Chart(gapCtx, {
+    type: 'line',
+    data: { labels: gapData.labels, datasets: [{ label: 'Gap Width', data: gapData.data, borderColor: '#f59e0b', borderWidth: 2, pointRadius: 1, tension: 0.2, fill: true, backgroundColor: 'rgba(245,158,11,0.06)' }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display:false } }, scales: { x: { ticks: { color:'#555a6e', font:{size:11} } }, y: { grid: { color:'rgba(255,255,255,0.05)' }, ticks: { color:'#555a6e', font:{size:11}, callback: v => v.toFixed(3) } } } }
+  });
+}
+
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+function syncSlider(el, lblId) {
+  const v = parseFloat(el.value);
+  const lbl = document.getElementById(lblId);
+  if (el.id.includes('vol')) lbl.textContent = v.toFixed(1)+'%';
+  else if (el.id.includes('gap')) lbl.textContent = v.toFixed(2);
+  else if (el.id === 'cfg-growth') lbl.textContent = v+'%';
+  else if (el.id === 'cfg-martin') lbl.textContent = v+'×';
+  else if (el.id === 'cfg-exit') lbl.textContent = '$'+v.toFixed(2);
+  else if (el.id === 'cfg-gap-period') lbl.textContent = Math.round(v);
+  else lbl.textContent = '$'+parseFloat(v).toFixed(2);
+}
+
+function loadConfigToUI(cfg) {
+  const set = (id, val) => { const el=document.getElementById(id); if(el){ el.value=val; const lbl = id.replace('cfg-', 'lbl-'); syncSlider(el, lbl); } };
+  set('cfg-min-gap', cfg.minGapWidth);
+  set('cfg-gap-period', cfg.gapCheckPeriod);
+  set('cfg-min-stake', cfg.minStake);
+  set('cfg-max-stake', cfg.maxStake);
+  set('cfg-growth', (cfg.growthRate||0)*100);
+  set('cfg-martin', cfg.martingaleFactor);
+  set('cfg-maxloss', cfg.maxConsecutiveLosses);
+  set('cfg-exit', cfg.exitThreshold);
+  set('cfg-vol-min', (cfg.volMin||0.5));
+  set('cfg-vol-max', (cfg.volMax||5));
+}
+
+function applyConfig() {
+  state.cfg.minGapWidth = parseFloat(document.getElementById('cfg-min-gap').value);
+  state.cfg.gapCheckPeriod = parseInt(document.getElementById('cfg-gap-period').value);
+  state.cfg.minStake = parseFloat(document.getElementById('cfg-min-stake').value);
+  state.cfg.maxStake = parseFloat(document.getElementById('cfg-max-stake').value);
+  state.cfg.growthRate = parseFloat(document.getElementById('cfg-growth').value)/100;
+  state.cfg.martingaleFactor = parseFloat(document.getElementById('cfg-martin').value);
+  state.cfg.maxConsecutiveLosses = parseInt(document.getElementById('cfg-maxloss').value);
+  state.cfg.exitThreshold = parseFloat(document.getElementById('cfg-exit').value);
+  state.cfg.volMin = parseFloat(document.getElementById('cfg-vol-min').value);
+  state.cfg.volMax = parseFloat(document.getElementById('cfg-vol-max').value);
+  addLog('info','Config','Configuration updated');
+  state.bot.currentStake = state.cfg.minStake;
+}
+
+let selectedMarketId = null;
+let currentMarketCat = 'all';
+
+function buildMarketGrid(cat) {
+  const grid = document.getElementById('market-grid');
+  grid.innerHTML = '';
+  MARKETS.filter(m => cat==='all'||m.cat===cat).forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'market-card' + (selectedMarketId===m.id?' selected':'');
+    d.innerHTML = `<div class="market-name">${m.name}</div><div class="market-desc">${m.id}</div>`;
+    d.onclick = () => { selectedMarketId = m.id; buildMarketGrid(currentMarketCat); };
+    grid.appendChild(d);
+  });
+}
+
+function filterMarkets() {
+  currentMarketCat = document.getElementById('market-cat').value;
+  buildMarketGrid(currentMarketCat);
+}
+
+function applyMarket() {
+  const custom = document.getElementById('custom-symbol').value.trim();
+  const id = custom || selectedMarketId;
+  if (!id) { addLog('warn','Market','Select a market first'); return; }
+  const found = MARKETS.find(m=>m.id===id);
+  state.market.symbol = id;
+  state.market.label = found ? found.name : id;
+  document.getElementById('market-label').textContent = state.market.label;
+  addLog('info','Market','Selected: '+state.market.label);
+  document.getElementById('start-btn').disabled = false;
+  if (state.conn.connected && state.conn.ws && state.conn.ws.readyState === 1) {
+    state.conn.ws.send(JSON.stringify({ forget_all: 'ticks' }));
+    subscribeToTicks(id);
+  }
+}
+
+// ─── GAP ANALYSIS ─────────────────────────────────────────────────────────────
+function calculateGapWidth(prices, period) {
+  if (prices.length < period) return null;
+  const recent = prices.slice(-period);
+  const high = Math.max(...recent);
+  const low = Math.min(...recent);
+  return high - low;
+}
+
+function analyzeMarket() {
+  const prices = state.bot.priceHistory;
+  if (prices.length < state.cfg.gapCheckPeriod) return;
+
+  // Calculate gap width
+  const gap = calculateGapWidth(prices, state.cfg.gapCheckPeriod);
+  if (gap !== null) {
+    state.analysis.gapWidth = gap;
+    state.analysis.recentGaps.push(gap);
+    if (state.analysis.recentGaps.length > 50) state.analysis.recentGaps.shift();
+    state.analysis.avgGapWidth = state.analysis.recentGaps.reduce((a,b)=>a+b,0) / state.analysis.recentGaps.length;
+  }
+
+  // Calculate volatility
+  const recent = prices.slice(-20);
+  const avg = recent.reduce((a,b)=>a+b,0) / recent.length;
+  const variance = recent.reduce((a,b)=>a+Math.pow(b-avg,2),0) / recent.length;
+  state.analysis.volatility = (Math.sqrt(variance) / avg) * 100;
+
+  // Generate signal based on gap width
+  let signal = 'neutral';
+  if (state.analysis.gapWidth !== null && state.analysis.volatility !== null) {
+    const gapOk = state.analysis.gapWidth >= state.cfg.minGapWidth;
+    const volOk = state.analysis.volatility >= state.cfg.volMin && state.analysis.volatility <= state.cfg.volMax;
+    
+    if (gapOk && volOk) {
+      signal = 'READY';
+    } else if (!gapOk) {
+      signal = 'GAP_TOO_SMALL';
+    } else {
+      signal = 'VOL_OUT_OF_RANGE';
+    }
+  }
+  state.analysis.signal = signal;
+
+  updateAnalysisUI();
+}
+
+function updateAnalysisUI() {
+  const gap = state.analysis.gapWidth;
+  const avgGap = state.analysis.avgGapWidth;
+  const vol = state.analysis.volatility;
+  const sig = state.analysis.signal;
+
+  document.getElementById('analysis-gap').innerHTML = gap ? `<strong>${gap.toFixed(4)}</strong> pts<br><span style="font-size:11px;color:var(--text3);">${gap >= state.cfg.minGapWidth ? '✓ Above threshold' : '⚠️ Below threshold'}</span>` : '—';
+  document.getElementById('analysis-avg-gap').innerHTML = avgGap ? `<strong>${avgGap.toFixed(4)}</strong> pts<br><span style="font-size:11px;color:var(--text3);">Last 50 candles</span>` : '—';
+  document.getElementById('analysis-vol').innerHTML = vol ? `<strong>${vol.toFixed(2)}%</strong><br><span style="font-size:11px;color:var(--text3);">${vol < state.cfg.volMin ? '⚠️ Too low' : vol > state.cfg.volMax ? '⚠️ Too high' : '✓ Good'}</span>` : '—';
+  document.getElementById('analysis-signal').innerHTML = `<strong style="color:${sig==='READY'?'#22c55e':sig.includes('GAP')?'#f59e0b':'#ef4444'}">${sig}</strong>`;
+
+  // Update dashboard indicators
+  document.getElementById('m-gap').textContent = gap ? gap.toFixed(4) : '—';
+  document.getElementById('m-gap-status').textContent = sig === 'READY' ? '✓ Ready to trade' : sig === 'GAP_TOO_SMALL' ? '⚠️ Gap too small' : '⚠️ Vol out of range';
+  
+  document.getElementById('ind-gap').textContent = gap ? gap.toFixed(4) : '—';
+  document.getElementById('ind-gap').className = 'badge ' + (gap && gap >= state.cfg.minGapWidth ? 'green' : 'amber');
+  
+  document.getElementById('ind-vol').textContent = vol ? vol.toFixed(2)+'%' : '—';
+  document.getElementById('ind-vol').className = 'badge ' + (vol && vol >= state.cfg.volMin && vol <= state.cfg.volMax ? 'green' : 'amber');
+  
+  document.getElementById('ind-stability').textContent = vol ? (vol < 2 ? 'Stable' : 'Volatile') : '—';
+  document.getElementById('ind-stability').className = 'badge ' + (vol && vol < 2 ? 'green' : 'amber');
+  
+  document.getElementById('ind-gap-trend').textContent = avgGap ? (gap && gap > avgGap ? '↑ Above avg' : gap < avgGap ? '↓ Below avg' : '→ Equal') : '—';
+  document.getElementById('ind-avg-gap').textContent = avgGap ? avgGap.toFixed(4) : '—';
+  
+  document.getElementById('ind-freq').textContent = canTradeNow() && sig === 'READY' ? 'Yes' : 'Wait';
+  document.getElementById('ind-freq').className = 'badge ' + (canTradeNow() && sig === 'READY' ? 'green' : 'amber');
+
+  // Update gap chart
+  if (gapChart) {
+    if (state.analysis.gapWidth !== null) {
+      gapData.labels.push(state.bot.priceHistory.length);
+      gapData.data.push(state.analysis.gapWidth);
+      if (gapData.labels.length > 50) {
+        gapData.labels.shift();
+        gapData.data.shift();
+      }
+      gapChart.update('none');
+    }
+  }
+}
+
+// ─── BOT TRADING LOGIC ────────────────────────────────────────────────────────
+function canTradeNow() {
+  if (!state.bot.lastTradeTime) return true;
+  const minutesAgo = (Date.now() - state.bot.lastTradeTime) / 60000;
+  return minutesAgo >= state.cfg.tradeIntervalMinutes;
+}
+
+function shouldPlaceTrade() {
+  if (!state.market.symbol || state.bot.activePosition) return false;
+  if (!canTradeNow()) return false;
+  if (state.bot.consecutiveLosses >= state.cfg.maxConsecutiveLosses) return false;
+  if (state.analysis.signal !== 'READY') return false;
+  return true;
+}
+
+function placeTrade() {
+  if (!shouldPlaceTrade()) return;
+  
+  const stake = state.bot.currentStake;
+  const price = state.bot.priceHistory[state.bot.priceHistory.length - 1];
+  const gap = state.analysis.gapWidth;
+  
+  state.bot.activePosition = {
+    entryPrice: price,
+    stake: stake,
+    entryTime: Date.now(),
+    gapWidth: gap,
+  };
+  
+  state.bot.lastTradeTime = Date.now();
+  state.bot.totalTrades++;
+  state.bot.state = 'trading';
+  setBotState('trading');
+  
+  addLog('info','Trade',`OPEN @$${price.toFixed(4)} | Gap: ${gap.toFixed(4)} | Stake $${stake.toFixed(2)}`);
+  
+  if (state.conn.ws && state.conn.ws.readyState === 1) {
+    sendTradeToDerivAPI(stake, price);
+  }
+  
+  updateDashboard();
+}
+
+function sendTradeToDerivAPI(stake, price) {
+  const proposal = {
+    buy: '1',
+    price: stake,
+    parameters: {
+      amount: stake,
+      basis: 'stake',
+      contract_type: 'CALL',
+      currency: 'USD',
+      duration: '5m',
+      duration_unit: 'm',
+      symbol: state.market.symbol || 'R_100',
+    }
+  };
+  if (state.conn.ws) {
+    state.conn.ws.send(JSON.stringify(proposal));
+  }
+}
+
+function closePosition(exitPrice) {
+  if (!state.bot.activePosition) return;
+  const pos = state.bot.activePosition;
+  const ep = exitPrice || state.bot.priceHistory[state.bot.priceHistory.length - 1];
+  const pnl = parseFloat(((ep - pos.entryPrice) * pos.stake).toFixed(4));
+
+  const isWin = pnl > 0;
+  if (isWin) {
+    state.bot.wins++;
+    state.bot.consecutiveLosses = 0;
+    state.bot.currentStake = state.cfg.minStake;
+    addLog('win','Trade',`✓ WIN +$${pnl.toFixed(4)} | Exit @$${ep.toFixed(4)}`);
+  } else {
+    state.bot.losses++;
+    state.bot.consecutiveLosses++;
+    addLog('loss','Trade',`✗ LOSS -$${Math.abs(pnl).toFixed(4)} | Exit @$${ep.toFixed(4)}`);
+    if (state.bot.consecutiveLosses < state.cfg.maxConsecutiveLosses) {
+      state.bot.currentStake = Math.min(state.bot.currentStake * state.cfg.martingaleFactor, state.cfg.maxStake);
+    }
+  }
+
+  if (state.bot.consecutiveLosses >= state.cfg.maxConsecutiveLosses) {
+    state.bot.state = 'closed';
+    setBotState('closed');
+    addLog('warn','Bot','Max consecutive losses reached.');
+  } else {
+    state.bot.state = 'idle';
+    setBotState('idle');
+  }
+
+  state.bot.sessionPnl += pnl;
+  state.bot.totalPnl += pnl;
+
+  const trade = { ...pos, exitPrice: ep, exitTime: Date.now(), pnl };
+  state.bot.positions.push(trade);
+  state.bot.activePosition = null;
+
+  pnlData.labels.push('#'+state.bot.positions.length);
+  pnlData.data.push(parseFloat(state.bot.totalPnl.toFixed(4)));
+  if (pnlChart) pnlChart.update();
+
+  updateDashboard();
+  updateHistory();
+
+  if (state.bot.sessionPnl >= state.bot.targetProfit) {
+    addLog('win','Bot','🎯 Profit target reached!');
+    state.bot.state = 'idle';
+    setBotState('idle');
+  }
+
+  if (state.bot.sessionPnl <= state.bot.stopLoss) {
+    addLog('warn','Bot','🛑 Stop loss hit!');
+    state.bot.state = 'closed';
+    setBotState('closed');
+  }
+}
+
+function setBotState(s) {
+  const dot = document.getElementById('state-dot');
+  const txt = document.getElementById('state-text');
+  const colors = { idle:'#555a6e', monitoring:'#14b8a6', trading:'#22c55e', closed:'#ef4444', ready:'#6c63ff' };
+  dot.style.background = colors[s] || '#555a6e';
+  dot.style.animation = s === 'trading' ? 'pulse 1.5s infinite' : 'none';
+  txt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function setTargets() {
+  state.bot.targetProfit = parseFloat(document.getElementById('profit-target').value);
+  state.bot.stopLoss = parseFloat(document.getElementById('stop-loss').value);
+  addLog('info','Bot',`Targets: TP $${state.bot.targetProfit.toFixed(2)} / SL $${state.bot.stopLoss.toFixed(2)}`);
+}
+
+function resetSession() {
+  if (state.bot.activePosition) { addLog('warn','Bot','Close position first'); return; }
+  state.bot.consecutiveLosses = 0;
+  state.bot.currentStake = state.cfg.minStake;
+  state.bot.sessionPnl = 0;
+  state.bot.totalPnl = 0;
+  state.bot.positions = [];
+  state.bot.totalTrades = 0;
+  state.bot.wins = 0;
+  state.bot.losses = 0;
+  state.bot.state = 'idle';
+  setBotState('idle');
+  priceData.labels = [];
+  priceData.data = [];
+  pnlData.labels = [];
+  pnlData.data = [];
+  if (priceChart) priceChart.update();
+  if (pnlChart) pnlChart.update();
+  addLog('info','Bot','Session reset');
+  updateDashboard();
+  updateHistory();
+}
+
+function toggleAutoTrade() {
+  if (!state.market.symbol) { addLog('warn','Bot','Select a market first'); return; }
+  if (!state.conn.connected) { addLog('warn','Bot','Connect to Deriv first'); return; }
+
+  state.bot.running = !state.bot.running;
+  const startBtn = document.getElementById('start-btn');
+  const stopBtn = document.getElementById('stop-btn');
+
+  if (state.bot.running) {
+    state.bot.state = 'ready';
+    setBotState('ready');
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    addLog('info','Bot','🤖 Gap-width trading started');
+  } else {
+    state.bot.state = 'idle';
+    setBotState('idle');
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    addLog('info','Bot','Trading stopped');
+  }
+}
+
+// ─── CONTINUOUS TRADING LOOP ─────────────────────────────────────────────────
+setInterval(() => {
+  if (!state.bot.running || !state.conn.connected) return;
+  
+  analyzeMarket();
+  
+  if (shouldPlaceTrade()) {
+    placeTrade();
+  }
+  
+  if (state.bot.activePosition) {
+    const price = state.bot.priceHistory[state.bot.priceHistory.length - 1];
+    const upnl = (price - state.bot.activePosition.entryPrice) * state.bot.activePosition.stake;
+    
+    if (upnl >= state.cfg.exitThreshold) {
+      closePosition(price);
+    }
+  }
+}, 2000);
+
+// ─── DERIV API ────────────────────────────────────────────────────────────────
+function switchAuthTab(tab) {
+  document.getElementById('auth-legacy').style.display = tab==='legacy' ? 'block' : 'none';
+  document.getElementById('auth-new').style.display    = tab==='new'    ? 'block' : 'none';
+  document.getElementById('tab-legacy').className = 'auth-tab' + (tab==='legacy' ? ' active' : '');
+  document.getElementById('tab-new').className    = 'auth-tab' + (tab==='new'    ? ' active' : '');
+}
+
+// ─── AUTH GATE ────────────────────────────────────────────────────────────────
+function unlockApp() {
+  document.body.classList.remove('locked');
+  document.getElementById('logout-btn').style.display = '';
+}
+
+function lockApp() {
+  document.body.classList.add('locked');
+  document.getElementById('logout-btn').style.display = 'none';
+  document.getElementById('account-chip').classList.remove('visible');
+}
+
+function enterDemoMode() {
+  unlockApp();
+  addLog('info','Demo','Viewing in demo mode — no account connected. Use Logout to return to the login screen.');
+}
+
+function connectLegacy() {
+  const token = document.getElementById('api-token').value.trim();
+  const appId = document.getElementById('app-id').value.trim() || '36544';
+  const server = 'wss://ws.derivws.com/websockets/v3';
+
+  if (!token) { showAuthResult('danger', 'Enter your API token'); return; }
+
+  showAuthResult('info', 'Connecting…');
+  addLog('info','Auth','Connecting to Deriv API');
+
+  let authed = false;
+  let ws;
+  try {
+    ws = new WebSocket(`${server}?app_id=${appId}`);
+  } catch(e) {
+    showAuthResult('danger', 'WebSocket error: '+e.message);
+    return;
+  }
+
+  const timeout = setTimeout(() => {
+    if (!authed) {
+      showAuthResult('danger', 'Connection timeout');
+      ws.close();
+    }
+  }, 15000);
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ authorize: token }));
+  };
+
+  ws.onmessage = (e) => {
+    let d;
+    try { d = JSON.parse(e.data); } catch { return; }
+
+    if (d.error) {
+      clearTimeout(timeout);
+      showAuthResult('danger', `Error: ${d.error.message}`);
+      addLog('warn','Auth','Auth failed: '+d.error.message);
+      ws.close();
+      return;
+    }
+
+    if (d.msg_type === 'authorize') {
+      authed = true;
+      clearTimeout(timeout);
+      const acc = d.authorize;
+      state.conn.ws = ws;
+      state.conn.connected = true;
+      
+      const initialBalance = acc.balance || acc.account_balance || '0';
+      
+      onAuthSuccess({
+        loginid: acc.loginid,
+        balance: initialBalance,
+        currency: acc.currency,
+        isVirtual: acc.is_virtual,
+      });
+      
+      ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
+      
+      state.conn.pingInterval = setInterval(() => {
+        if (ws.readyState === 1) ws.send(JSON.stringify({ ping: 1 }));
+      }, 30000);
+      
+      ws.onmessage = (ev) => {
+        let msg;
+        try { msg = JSON.parse(ev.data); } catch { return; }
+        if (msg.msg_type === 'tick') handleLiveTick(msg.tick);
+        if (msg.msg_type === 'balance') {
+          const balanceVal = msg.balance?.balance || msg.balance;
+          if (balanceVal && !isNaN(balanceVal)) {
+            const newBalance = parseFloat(balanceVal);
+            document.getElementById('ai-balance').textContent = '$' + newBalance.toFixed(2);
+            document.getElementById('top-balance').textContent = '$' + newBalance.toFixed(2);
+          }
+        }
+      };
+    }
+  };
+
+  ws.onerror = () => {
+    clearTimeout(timeout);
+    if (!authed) showAuthResult('danger', 'WebSocket error');
+  };
+
+  ws.onclose = () => {
+    clearTimeout(timeout);
+    document.getElementById('conn-dot').style.background = 'var(--text3)';
+    document.getElementById('conn-text').textContent = 'Disconnected';
+    state.conn.connected = false;
+  };
+}
+
+function subscribeToTicks(symbol) {
+  const ws = state.conn.ws;
+  if (!ws || ws.readyState !== 1) return;
+  ws.send(JSON.stringify({ ticks: symbol, subscribe: 1 }));
+  addLog('info','Ticks','Subscribed to '+symbol);
+}
+
+function handleLiveTick(tick) {
+  if (!tick) return;
+  const price = parseFloat(tick.quote);
+  state.bot.priceHistory.push(price);
+  if (state.bot.priceHistory.length > 200) state.bot.priceHistory.shift();
+
+  const now = new Date(tick.epoch*1000).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  priceData.labels.push(now);
+  priceData.data.push(price);
+  if (priceData.labels.length > 80) { priceData.labels.shift(); priceData.data.shift(); }
+  if (priceChart) priceChart.update('none');
+
+  document.getElementById('live-price').textContent = '$'+price.toFixed(4);
+
+  if (state.bot.activePosition) {
+    const pos = state.bot.activePosition;
+    const upnl = (price - pos.entryPrice) * pos.stake;
+    document.getElementById('pos-upnl').textContent = (upnl>=0?'+':'')+upnl.toFixed(4);
+    document.getElementById('pos-upnl').style.color = upnl>=0?'var(--green)':'var(--red)';
+  }
+}
+
+function onAuthSuccess(acc) {
+  document.getElementById('conn-dot').style.background = 'var(--green)';
+  document.getElementById('conn-dot').style.boxShadow = '0 0 6px var(--green)';
+  document.getElementById('conn-text').textContent = 'Connected';
+  document.getElementById('account-chip').classList.add('visible');
+  document.getElementById('top-type').textContent = acc.isVirtual ? 'Demo account' : 'Real account';
+  unlockApp();
+
+  let balanceStr = '$0.00';
+  if (acc.balance && acc.balance !== '—') {
+    const balanceNum = typeof acc.balance === 'string' ? parseFloat(acc.balance) : acc.balance;
+    if (!isNaN(balanceNum)) {
+      balanceStr = '$' + balanceNum.toFixed(2);
+    }
+  }
+  
+  document.getElementById('top-balance').textContent = balanceStr;
+  document.getElementById('ai-balance').textContent = balanceStr;
+  document.getElementById('ai-loginid').textContent = acc.loginid || '—';
+  document.getElementById('top-loginid').textContent = acc.loginid || '—';
+
+  showAuthResult('success', 'Connected: '+acc.loginid);
+  addLog('win','Auth','Connected: '+acc.loginid);
+
+  if (state.market.symbol) subscribeToTicks(state.market.symbol);
+  
+  updateDashboard();
+}
+
+function disconnectDeriv() {
+  if (state.conn.ws) { try { state.conn.ws.close(); } catch {} }
+  if (state.conn.pingInterval) clearInterval(state.conn.pingInterval);
+  state.conn.connected = false;
+  state.bot.running = false;
+  state.bot.state = 'idle';
+
+  document.getElementById('conn-dot').style.background = 'var(--text3)';
+  document.getElementById('conn-text').textContent = 'Disconnected';
+  lockApp();
+  document.getElementById('top-type').textContent = 'Not connected';
+  document.getElementById('top-loginid').textContent = '—';
+  document.getElementById('start-btn').disabled = false;
+  document.getElementById('stop-btn').disabled = true;
+
+  showAuthResult('info', 'Disconnected.');
+  try { showAuthResultNew('info', 'Disconnected.'); } catch {}
+  addLog('info','Auth','Disconnected from Deriv API');
+}
+
+function showAuthResult(type, msg) {
+  const el = document.getElementById('auth-result');
+  if (!el) return;
+  const icons = { danger:'ti-alert-circle', success:'ti-circle-check', info:'ti-info-circle' };
+  el.innerHTML = `<div class="alert ${type}"><i class="ti ${icons[type]||'ti-info-circle'}" style="font-size:16px;flex-shrink:0;"></i><span>${msg}</span></div>`;
+}
+
+// ─── New REST + OTP API ───────────────────────────────────────────────────────
+async function fetchNewAccounts() {
+  const token = document.getElementById('new-api-token').value.trim();
+  const appId = document.getElementById('new-app-id').value.trim();
+  if (!token || !appId) { showAuthResultNew('danger', 'Enter your PAT token and App ID first.'); return; }
+  showAuthResultNew('info', 'Fetching accounts…');
+  try {
+    const res = await fetch('https://api.derivws.com/trading/v1/options/accounts', {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer '+token, 'Deriv-App-ID': appId }
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      showAuthResultNew('danger', 'Failed: '+(body.errors?.[0]?.message || res.statusText));
+      return;
+    }
+    const accounts = body.data || body.accounts || [];
+    if (!accounts.length) { showAuthResultNew('info', 'No accounts found. The account may not exist yet.'); return; }
+    const first = accounts[0];
+    document.getElementById('new-account-id').value = first.account_id || first.id || '';
+    showAuthResultNew('success', `Found ${accounts.length} account(s). Account ID auto-filled: ${first.account_id || first.id}`);
+    addLog('info','Auth (New)','Accounts fetched: '+accounts.map(a=>a.account_id||a.id).join(', '));
+  } catch(e) {
+    showAuthResultNew('danger', 'Request failed: '+e.message+'. This may be a CORS issue — the new REST API may need a backend proxy.');
+    addLog('warn','Auth (New)','Fetch error: '+e.message);
+  }
+}
+
+async function connectNewAPI() {
+  const token = document.getElementById('new-api-token').value.trim();
+  const appId = document.getElementById('new-app-id').value.trim();
+  const accountId = document.getElementById('new-account-id').value.trim();
+  if (!token||!appId||!accountId) { showAuthResultNew('danger', 'Fill in token, App ID, and Account ID.'); return; }
+  showAuthResultNew('info', 'Requesting one-time WebSocket URL…');
+  try {
+    const res = await fetch(`https://api.derivws.com/trading/v1/options/accounts/${accountId}/otp`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer '+token, 'Deriv-App-ID': appId, 'Content-Type': 'application/json' }
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      showAuthResultNew('danger', 'OTP request failed: '+(body.errors?.[0]?.message || res.statusText));
+      return;
+    }
+    const wsUrl = body.data?.url || body.url;
+    if (!wsUrl) { showAuthResultNew('danger', 'No WebSocket URL in response: '+JSON.stringify(body)); return; }
+    showAuthResultNew('info', 'OTP received — opening WebSocket…');
+    addLog('info','Auth (New)','Connecting to '+wsUrl.slice(0,60)+'…');
+    
+    const ws = new WebSocket(wsUrl);
+    let connected = false;
+    
+    ws.onopen = () => {
+      connected = true;
+      state.conn.ws = ws;
+      state.conn.connected = true;
+      
+      // Set status to connected
+      document.getElementById('conn-dot').style.background = 'var(--green)';
+      document.getElementById('conn-dot').style.boxShadow = '0 0 6px var(--green)';
+      document.getElementById('conn-text').textContent = 'Connected';
+      
+      onAuthSuccess({ 
+        loginid: accountId, 
+        balance: '—', 
+        currency: 'USD', 
+        isVirtual: accountId.startsWith('D') 
+      });
+      showAuthResultNew('success', 'Connected via new OTP API!');
+      addLog('win','Auth (New)','Connected: '+accountId);
+      
+      // Request balance subscription
+      ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
+      
+      ws.onmessage = (ev) => {
+        let msg;
+        try { msg = JSON.parse(ev.data); } catch { return; }
+        if (msg.msg_type === 'tick') handleLiveTick(msg.tick);
+        if (msg.msg_type === 'balance') {
+          const balanceVal = msg.balance?.balance || msg.balance;
+          if (balanceVal && !isNaN(balanceVal)) {
+            const newBalance = parseFloat(balanceVal);
+            document.getElementById('ai-balance').textContent = '$' + newBalance.toFixed(2);
+            document.getElementById('top-balance').textContent = '$' + newBalance.toFixed(2);
+            const currency = msg.balance?.currency || 'USD';
+            document.getElementById('ai-currency').textContent = currency;
+            document.getElementById('top-currency').textContent = currency;
+          }
+        }
+      };
+      
+      state.conn.pingInterval = setInterval(() => {
+        if (ws.readyState === 1) ws.send(JSON.stringify({ ping: 1 }));
+      }, 30000);
+    };
+    
+    ws.onerror = (err) => {
+      if (connected) {
+        addLog('warn','Auth (New)','WebSocket error: '+err);
+      } else {
+        showAuthResultNew('danger', 'WebSocket error. Token may have expired.');
+      }
+    };
+    
+    ws.onclose = () => { 
+      if (connected) {
+        state.conn.connected = false;
+        document.getElementById('conn-dot').style.background = 'var(--text3)';
+        document.getElementById('conn-text').textContent = 'Disconnected';
+        addLog('warn','Auth (New)','WebSocket closed');
+      }
+    };
+  } catch(e) {
+    showAuthResultNew('danger', 'Failed: '+e.message+'. Note: the new REST API may block direct browser calls due to CORS.');
+    addLog('warn','Auth (New)','Error: '+e.message);
+  }
+}
+
+function showAuthResultNew(type, msg) {
+  const el = document.getElementById('auth-result-new');
+  if (!el) return;
+  const icons = { danger:'ti-alert-circle', success:'ti-circle-check', info:'ti-info-circle' };
+  el.innerHTML = `<div class="alert ${type}"><i class="ti ${icons[type]||'ti-info-circle'}" style="font-size:16px;flex-shrink:0;"></i><span>${msg}</span></div>`;
+}
+
+// ─── LOGGING ──────────────────────────────────────────────────────────────────
+function addLog(type, tag, msg) {
+  const time = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  state.logs.unshift({type,tag,msg,time});
+  if (state.logs.length > 300) state.logs.pop();
+  renderLogs();
+}
+
+function renderLogs() {
+  const c = document.getElementById('log-container');
+  c.innerHTML = state.logs.slice(0,80).map(l => `
+    <div class="log-entry">
+      <span class="log-time">${l.time}</span>
+      <span class="log-type ${l.type}">[${l.tag}]</span>
+      <span class="log-msg">${l.msg}</span>
+    </div>`).join('');
+}
+
+function clearLogs() {
+  state.logs = [];
+  document.getElementById('log-container').innerHTML = '';
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function updateDashboard() {
+  const b = state.bot;
+  const pnl = b.sessionPnl;
+  document.getElementById('m-pnl').textContent = (pnl>=0?'+':'')+'$'+Math.abs(pnl).toFixed(4);
+  document.getElementById('m-pnl').className = 'metric-value ' + (pnl>=0?'green':pnl<0?'red':'');
+  document.getElementById('m-pnl-sub').textContent = b.positions.length + ' closed';
+
+  const wr = b.totalTrades > 0 ? Math.round(b.wins/b.totalTrades*100) : null;
+  document.getElementById('m-wr').textContent = wr !== null ? wr+'%' : '—';
+  document.getElementById('m-trades-sub').textContent = b.totalTrades + ' trades';
+
+  const badges = {idle:'gray',ready:'blue',trading:'green',monitoring:'amber',closed:'red'};
+  document.getElementById('m-state').innerHTML = '<span class="badge '+badges[b.state]+'">'+b.state.toUpperCase()+'</span>';
+  document.getElementById('m-pos').textContent = b.activePosition ? 'Position open @ $'+b.activePosition.entryPrice.toFixed(4) : 'Waiting for signal';
+
+  if (b.activePosition) {
+    document.getElementById('no-position').style.display = 'none';
+    document.getElementById('active-position').style.display = 'block';
+    document.getElementById('pos-entry').textContent = '$'+b.activePosition.entryPrice.toFixed(4);
+    document.getElementById('pos-gap').textContent = b.activePosition.gapWidth ? b.activePosition.gapWidth.toFixed(4) : '—';
+    document.getElementById('pos-stake').textContent = '$'+b.activePosition.stake.toFixed(2);
+  } else {
+    document.getElementById('no-position').style.display = 'block';
+    document.getElementById('active-position').style.display = 'none';
+  }
+}
+
+function updateHistory() {
+  const b = state.bot;
+  document.getElementById('h-total-pnl').textContent = (b.totalPnl>=0?'+':'')+'$'+Math.abs(b.totalPnl).toFixed(4);
+  document.getElementById('h-total-pnl').className = 'metric-value ' + (b.totalPnl>=0?'green':'red');
+  document.getElementById('h-total-trades').textContent = b.totalTrades;
+  document.getElementById('h-wl').textContent = b.wins+' / '+b.losses;
+
+  const tbody = document.getElementById('history-tbody');
+  if (b.positions.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3);">No trades yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = [...b.positions].reverse().map((p,i) => {
+    const n = b.positions.length - i;
+    const win = p.pnl > 0;
+    const time = new Date(p.entryTime).toLocaleTimeString();
+    return `<tr style="border-bottom:0.5px solid var(--border);">
+      <td style="padding:7px 8px;color:var(--text3);">${n}</td>
+      <td style="padding:7px 8px;color:var(--text2);">${time}</td>
+      <td style="padding:7px 8px;text-align:right;">$${parseFloat(p.entryPrice).toFixed(4)}</td>
+      <td style="padding:7px 8px;text-align:right;">${parseFloat(p.gapWidth || 0).toFixed(4)}</td>
+      <td style="padding:7px 8px;text-align:right;color:var(--amber);">$${parseFloat(p.stake).toFixed(2)}</td>
+      <td style="padding:7px 8px;text-align:right;color:${win?'var(--green)':'var(--red)'};">${(p.pnl>=0?'+':'')+'$'+Math.abs(p.pnl).toFixed(4)}</td>
+      <td style="padding:7px 8px;text-align:center;"><span class="badge ${win?'green':'red'}">${win?'Win':'Loss'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof Chart !== 'undefined') initCharts();
+  buildMarketGrid('all');
+  loadConfigToUI(state.cfg);
+  switchAuthTab('legacy');
+  document.getElementById('start-btn').disabled = true;
+  addLog('info','Bot','Deriv Bot Pro (Gap-Width Strategy) initialized');
+  addLog('info','Setup','1. Sign in on the login screen\n2. Select a market (R_100 recommended)\n3. Config tab → Set minimum gap width threshold\n4. Start Trading');
+  updateDashboard();
+  updateHistory();
+  setInterval(() => {
+    if (state.bot.running && state.conn.connected) {
+      analyzeMarket();
+    }
+  }, 1000);
+});
+</script>
+</body>
+</html>
