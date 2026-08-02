@@ -437,6 +437,10 @@
               <span id="pos-upnl" style="font-weight:500;">—</span>
             </div>
           </div>
+          <div style="margin-top:10px;border-top:0.5px solid var(--border);padding-top:8px;">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Recent tick trades</div>
+            <div id="recent-trades" style="font-size:12px;"><span style="color:var(--text3);">No trades yet this session.</span></div>
+          </div>
         </div>
         <div class="card">
           <div class="card-title"><i class="ti ti-target"></i> Trade Targets</div>
@@ -540,11 +544,11 @@
         <div class="form-row">
           <div class="form-group">
             <label>Min Volatility (%)</label>
-            <div class="slider-row"><input type="range" min="0.1" max="5" step="0.1" id="cfg-vol-min" oninput="syncSlider(this,'lbl-vol-min')"><span class="slider-val" id="lbl-vol-min">0.5%</span></div>
+            <div class="slider-row"><input type="range" min="0" max="1" step="0.01" id="cfg-vol-min" oninput="syncSlider(this,'lbl-vol-min')"><span class="slider-val" id="lbl-vol-min">0.01%</span></div>
           </div>
           <div class="form-group">
             <label>Max Volatility (%)</label>
-            <div class="slider-row"><input type="range" min="2" max="20" step="0.5" id="cfg-vol-max" oninput="syncSlider(this,'lbl-vol-max')"><span class="slider-val" id="lbl-vol-max">5.0%</span></div>
+            <div class="slider-row"><input type="range" min="0.1" max="10" step="0.1" id="cfg-vol-max" oninput="syncSlider(this,'lbl-vol-max')"><span class="slider-val" id="lbl-vol-max">2.0%</span></div>
           </div>
         </div>
       </div>
@@ -718,7 +722,7 @@ const state = {
     maxConsecutiveLosses: 2, tradeCooldownSec: 2,
     minGapWidth: 0.2,     // Minimum gap width threshold
     gapCheckPeriod: 5,     // Candles to check for gap
-    volMin: 0.5, volMax: 5.0,
+    volMin: 0.01, volMax: 2.0,
   },
   market: { symbol: null, label: null },
   demo: false,
@@ -807,7 +811,7 @@ function showPanel(id) {
 function syncSlider(el, lblId) {
   const v = parseFloat(el.value);
   const lbl = document.getElementById(lblId);
-  if (el.id.includes('vol')) lbl.textContent = v.toFixed(1)+'%';
+  if (el.id.includes('vol')) lbl.textContent = v.toFixed(2)+'%';
   else if (el.id.includes('gap')) lbl.textContent = v.toFixed(2);
   else if (el.id === 'cfg-growth') lbl.textContent = v+'%';
   else if (el.id === 'cfg-martin') lbl.textContent = v+'×';
@@ -946,7 +950,11 @@ function updateAnalysisUI() {
 
   // Update dashboard indicators
   document.getElementById('m-gap').textContent = gap ? gap.toFixed(4) : '—';
-  document.getElementById('m-gap-status').textContent = sig === 'READY' ? '✓ Ready to trade' : sig === 'GAP_TOO_SMALL' ? '⚠️ Gap too small' : '⚠️ Vol out of range';
+  document.getElementById('m-gap-status').textContent =
+    sig === 'READY' ? '✓ Ready to trade'
+    : sig === 'GAP_TOO_SMALL' ? `⚠️ Gap ${gap ? gap.toFixed(3) : '—'} < min ${state.cfg.minGapWidth}`
+    : sig === 'VOL_OUT_OF_RANGE' ? `⚠️ Vol ${vol ? vol.toFixed(2) : '—'}% outside ${state.cfg.volMin}–${state.cfg.volMax}%`
+    : 'Analyzing…';
   
   document.getElementById('ind-gap').textContent = gap ? gap.toFixed(4) : '—';
   document.getElementById('ind-gap').className = 'badge ' + (gap && gap >= state.cfg.minGapWidth ? 'green' : 'amber');
@@ -1731,7 +1739,7 @@ function clearLogs() {
 function updateDashboard() {
   const b = state.bot;
   const pnl = b.sessionPnl;
-  document.getElementById('m-pnl').textContent = (pnl>=0?'+':'')+'$'+Math.abs(pnl).toFixed(4);
+  document.getElementById('m-pnl').textContent = (pnl>=0?'+':'−')+'$'+Math.abs(pnl).toFixed(2);
   document.getElementById('m-pnl').className = 'metric-value ' + (pnl>=0?'green':pnl<0?'red':'');
   document.getElementById('m-pnl-sub').textContent = b.positions.length + ' closed';
 
@@ -1753,11 +1761,25 @@ function updateDashboard() {
     document.getElementById('no-position').style.display = 'block';
     document.getElementById('active-position').style.display = 'none';
   }
+
+  // Live trade feed on the home screen — last 6 tick trades, newest first
+  const rt = document.getElementById('recent-trades');
+  if (rt && b.positions.length) {
+    rt.innerHTML = [...b.positions].slice(-6).reverse().map(p => {
+      const win = p.pnl > 0;
+      return `<div class="position-row">
+        <span style="color:var(--text3);">${new Date(p.exitTime).toLocaleTimeString('en-GB')}</span>
+        <span style="color:var(--text2);">$${parseFloat(p.stake).toFixed(2)}</span>
+        <span style="font-weight:600;color:${win?'var(--green)':'var(--red)'};">${(p.pnl>=0?'+':'−')}$${Math.abs(p.pnl).toFixed(2)}</span>
+        <span class="badge ${win?'green':'red'}">${win?'Win':'Loss'}</span>
+      </div>`;
+    }).join('');
+  }
 }
 
 function updateHistory() {
   const b = state.bot;
-  document.getElementById('h-total-pnl').textContent = (b.totalPnl>=0?'+':'')+'$'+Math.abs(b.totalPnl).toFixed(4);
+  document.getElementById('h-total-pnl').textContent = (b.totalPnl>=0?'+':'−')+'$'+Math.abs(b.totalPnl).toFixed(2);
   document.getElementById('h-total-pnl').className = 'metric-value ' + (b.totalPnl>=0?'green':'red');
   document.getElementById('h-total-trades').textContent = b.totalTrades;
   document.getElementById('h-wl').textContent = b.wins+' / '+b.losses;
@@ -1778,7 +1800,7 @@ function updateHistory() {
       <td style="padding:7px 8px;text-align:right;">$${parseFloat(p.entryPrice).toFixed(4)}</td>
       <td style="padding:7px 8px;text-align:right;">${parseFloat(p.gapWidth || 0).toFixed(4)}</td>
       <td style="padding:7px 8px;text-align:right;color:var(--amber);">$${parseFloat(p.stake).toFixed(2)}</td>
-      <td style="padding:7px 8px;text-align:right;color:${win?'var(--green)':'var(--red)'};">${(p.pnl>=0?'+':'')+'$'+Math.abs(p.pnl).toFixed(4)}</td>
+      <td style="padding:7px 8px;text-align:right;color:${win?'var(--green)':'var(--red)'};">${(p.pnl>=0?'+':'−')+'$'+Math.abs(p.pnl).toFixed(2)}</td>
       <td style="padding:7px 8px;text-align:center;"><span class="badge ${win?'green':'red'}">${win?'Win':'Loss'}</span></td>
     </tr>`;
   }).join('');
