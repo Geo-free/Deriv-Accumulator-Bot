@@ -1054,51 +1054,60 @@ function placeTrade() {
 }
 
 function sendTradeToDerivAPI(stake) {
-  // Accumulator contract — immediate buy, single round-trip, no proposal step.
-  // Server-side take-profit (limit_order) closes the contract at the exchange
-  // itself, which is the fastest possible exit — no client round-trip needed.
+  // Deriv's canonical accumulator flow: request a proposal quote, then buy it
+  // the instant the quote arrives (see onProposalResponse). This is the
+  // documented, schema-safe path for ACCU contracts.
   const gr = Math.min(0.05, Math.max(0.01, state.cfg.growthRate || 0.05));
   const amount = Math.round(stake * 100) / 100;              // Deriv accepts max 2 decimals
   const tp = Math.max(0.01, Math.round(state.cfg.exitThreshold * 100) / 100);
   const req = {
-    buy: 1,
-    price: amount,
-    parameters: {
-      amount: amount,
-      basis: 'stake',
-      contract_type: 'ACCU',
-      currency: state.conn.currency || 'USD',                 // use the account's real currency
-      growth_rate: gr,
-      symbol: state.market.symbol || 'R_100',
-      limit_order: { take_profit: tp },
-    }
+    proposal: 1,
+    amount: amount,
+    basis: 'stake',
+    contract_type: 'ACCU',
+    currency: state.conn.currency || 'USD',                   // the account's real currency
+    growth_rate: gr,
+    symbol: state.market.symbol || 'R_100',
+    limit_order: { take_profit: tp },
   };
   if (state.conn.ws) {
     state.conn.ws.send(JSON.stringify(req));
   }
 }
 
+function onProposalResponse(prop) {
+  const pos = state.bot.activePosition;
+  if (!pos || pos.contractId || pos.buySent || !prop || !prop.id) return;
+  pos.buySent = true;
+  // Buy immediately at the quoted ask price — fastest valid execution
+  state.conn.ws.send(JSON.stringify({ buy: prop.id, price: prop.ask_price }));
+  addLog('info','Trade',`Quote received (ask $${parseFloat(prop.ask_price).toFixed(2)}) — buying…`);
+}
+
 // ─── WS MESSAGE HANDLING (shared by legacy + new API) ────────────────────────
 function handleWsMessage(msg) {
   if (msg.error) {
-    addLog('warn','API', msg.error.message || 'API error');
-    // A rejected buy → retry once without the server-side take-profit
-    // (some accounts/markets reject limit_order on ACCU), else cancel.
-    if (msg.echo_req && msg.echo_req.buy !== undefined) {
+    // Surface Deriv's error details — they name the exact offending field
+    const det = msg.error.details ? ' — ' + JSON.stringify(msg.error.details) : '';
+    addLog('warn','API', (msg.error.message || 'API error') + det);
+    if (msg.echo_req && (msg.echo_req.proposal !== undefined || msg.echo_req.buy !== undefined)) {
       const pos = state.bot.activePosition;
+      // A rejected proposal with a limit_order → retry once without the
+      // server-side take-profit (some accounts/markets reject it on ACCU).
       if (pos && !pos.contractId && !pos.retriedNoTP &&
-          msg.echo_req.parameters && msg.echo_req.parameters.limit_order &&
+          msg.echo_req.proposal !== undefined && msg.echo_req.limit_order &&
           state.conn.ws && state.conn.ws.readyState === 1) {
         pos.retriedNoTP = true;
-        const retry = { buy: 1, price: msg.echo_req.price, parameters: { ...msg.echo_req.parameters } };
-        delete retry.parameters.limit_order;
-        addLog('info','Trade','Order rejected — retrying without server-side take-profit…');
-        toast('warn','Order rejected — retrying without take-profit limit');
+        const retry = { ...msg.echo_req };
+        delete retry.limit_order;
+        delete retry.req_id;
+        addLog('info','Trade','Quote rejected — retrying without server-side take-profit…');
+        toast('warn','Quote rejected — retrying without take-profit limit');
         state.conn.ws.send(JSON.stringify(retry));
         return;
       }
-      toast('danger', msg.error.message || 'API error');
-      cancelPendingTrade(msg.error.message);
+      toast('danger', (msg.error.message || 'API error') + det);
+      cancelPendingTrade((msg.error.message || '') + det);
       return;
     }
     toast('danger', msg.error.message || 'API error');
@@ -1107,6 +1116,7 @@ function handleWsMessage(msg) {
   switch (msg.msg_type) {
     case 'tick': handleLiveTick(msg.tick); break;
     case 'balance': updateBalance(msg.balance); break;
+    case 'proposal': onProposalResponse(msg.proposal); break;
     case 'buy': onBuyResponse(msg.buy); break;
     case 'proposal_open_contract': onContractUpdate(msg.proposal_open_contract); break;
     case 'sell': addLog('info','Trade','Sell order accepted by Deriv'); break;
