@@ -1069,8 +1069,9 @@ function sendTradeToDerivAPI(stake) {
     growth_rate: gr,
     limit_order: { take_profit: tp },
   };
-  // v3 WebSocket uses `symbol`; the new REST+OTP WebSocket uses `instrument_id`
-  if (state.conn.api === 'new') req.instrument_id = state.market.symbol || 'R_100';
+  // v3 WebSocket uses `symbol`; the new REST+OTP WebSocket uses `underlying_symbol`
+  // (verified against Deriv's official dtrader-template v4 API types)
+  if (state.conn.api === 'new') req.underlying_symbol = state.market.symbol || 'R_100';
   else req.symbol = state.market.symbol || 'R_100';
   if (state.conn.ws) {
     state.conn.ws.send(JSON.stringify(req));
@@ -1110,8 +1111,8 @@ function handleWsMessage(msg) {
         const retry = { ...msg.echo_req };
         delete retry.req_id;
         na[1].split(',').map(s => s.trim()).forEach(prop => {
-          if (prop === 'symbol' && retry.symbol !== undefined) { retry.instrument_id = retry.symbol; delete retry.symbol; }
-          else if (prop === 'instrument_id' && retry.instrument_id !== undefined) { retry.symbol = retry.instrument_id; delete retry.instrument_id; }
+          if (prop === 'symbol' && retry.symbol !== undefined) { retry.underlying_symbol = retry.symbol; delete retry.symbol; }
+          else if (prop === 'underlying_symbol' && retry.underlying_symbol !== undefined) { retry.symbol = retry.underlying_symbol; delete retry.underlying_symbol; }
           else delete retry[prop];
         });
         addLog('info','Trade',`Adapting order to this API's schema (removed: ${na[1].trim()}) — retrying…`);
