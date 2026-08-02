@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deriv Bot Pro - Gap-Based Trading Strategy</title>
+<title>Deriv Bot Pro — Accumulator Strategy</title>
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -237,7 +237,7 @@
     <div class="auth-brand">
       <div class="mark"><i class="ti ti-chart-candle"></i></div>
       <h1>Deriv Bot Pro</h1>
-      <p>Gap-Width Strategy · Volatility Indices<br>Sign in with your Deriv API credentials to access the dashboard.</p>
+      <p>Accumulator Strategy · Volatility Indices<br>Sign in with your Deriv API credentials to access the dashboard.</p>
     </div>
 
     <div class="auth-tabs">
@@ -310,7 +310,7 @@
       <div class="logo-dot"></div>
       Deriv Bot Pro
     </div>
-    <span style="color:var(--text3);font-size:12px;">Gap-Width Strategy | Volatility Indices</span>
+    <span style="color:var(--text3);font-size:12px;">Accumulator Strategy | Volatility Indices</span>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
       <div class="account-chip" id="account-chip">
         <div class="avatar"><i class="ti ti-user"></i></div>
@@ -490,12 +490,20 @@
     <!-- MARKET -->
     <div id="panel-market" class="panel">
       <div class="card">
-        <div class="card-title"><i class="ti ti-world"></i> Volatility Indices Markets</div>
+        <div class="card-title"><i class="ti ti-world"></i> Deriv Indices</div>
+        <div class="alert info" style="margin-bottom:12px;">
+          <i class="ti ti-info-circle"></i>
+          <div><strong>Note:</strong> Deriv accumulator (ACCU) contracts are only offered on Volatility and Volatility (1s) indices. Other indices are listed for tick analysis, but live ACCU orders on them will be rejected by Deriv.</div>
+        </div>
         <div style="margin-bottom:14px;">
           <label>Filter</label>
           <select id="market-cat" onchange="filterMarkets()">
-            <option value="all">All Volatility Indices</option>
-            <option value="volatility">Volatility 10-100</option>
+            <option value="all">All Deriv Indices</option>
+            <option value="volatility">Volatility</option>
+            <option value="volatility1s">Volatility (1s)</option>
+            <option value="jump">Jump</option>
+            <option value="boomcrash">Boom &amp; Crash</option>
+            <option value="other">Step &amp; Range Break</option>
           </select>
         </div>
         <div class="market-grid" id="market-grid"></div>
@@ -546,17 +554,17 @@
         <div class="form-row">
           <div class="form-group">
             <label>Min Stake ($)</label>
-            <div class="slider-row"><input type="range" min="0.5" max="10" step="0.5" id="cfg-min-stake" oninput="syncSlider(this,'lbl-min-stake')"><span class="slider-val" id="lbl-min-stake">1.00</span></div>
+            <div class="slider-row"><input type="range" min="0.35" max="10" step="0.05" id="cfg-min-stake" oninput="syncSlider(this,'lbl-min-stake')"><span class="slider-val" id="lbl-min-stake">0.35</span></div>
           </div>
           <div class="form-group">
             <label>Max Stake ($)</label>
-            <div class="slider-row"><input type="range" min="5" max="500" step="5" id="cfg-max-stake" oninput="syncSlider(this,'lbl-max-stake')"><span class="slider-val" id="lbl-max-stake">50.00</span></div>
+            <div class="slider-row"><input type="range" min="5" max="200" step="1" id="cfg-max-stake" oninput="syncSlider(this,'lbl-max-stake')"><span class="slider-val" id="lbl-max-stake">45.00</span></div>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Growth Rate (%)</label>
-            <div class="slider-row"><input type="range" min="1" max="20" step="1" id="cfg-growth" oninput="syncSlider(this,'lbl-growth')"><span class="slider-val" id="lbl-growth">5%</span></div>
+            <label>Accumulator Growth Rate (%)</label>
+            <div class="slider-row"><input type="range" min="1" max="5" step="1" id="cfg-growth" oninput="syncSlider(this,'lbl-growth')"><span class="slider-val" id="lbl-growth">5%</span></div>
           </div>
           <div class="form-group">
             <label>Martingale Factor (×)</label>
@@ -616,18 +624,23 @@
 
     <!-- HISTORY -->
     <div id="panel-history" class="panel">
-      <div class="metrics" style="grid-template-columns:repeat(3,1fr);">
+      <div class="metrics" style="grid-template-columns:repeat(4,1fr);">
         <div class="metric">
           <div class="metric-label">Total P&L</div>
           <div class="metric-value" id="h-total-pnl">$0.00</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Total Trades</div>
+          <div class="metric-label">Contracts</div>
           <div class="metric-value" id="h-total-trades">0</div>
         </div>
         <div class="metric">
           <div class="metric-label">Win / Loss</div>
           <div class="metric-value" id="h-wl">0 / 0</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Completed Cycles</div>
+          <div class="metric-value" id="h-cycles">0</div>
+          <div class="metric-sub">Each TP/SL total = 1 trade</div>
         </div>
       </div>
       <div class="card">
@@ -683,9 +696,11 @@ const state = {
   bot: {
     running: false,
     state: 'idle',
-    currentStake: 1.0,
+    currentStake: 0.35,
     targetProfit: 50.0,
     stopLoss: -20.0,
+    cycles: 0,          // completed TP cycles — each counts as "one trade"
+    postLoss: 0,        // ticks of market analysis remaining after a loss
     consecutiveLosses: 0,
     totalTrades: 0,
     wins: 0,
@@ -698,9 +713,9 @@ const state = {
     lastTradeTime: null,
   },
   cfg: {
-    minStake: 1.0, maxStake: 50.0,
+    minStake: 0.35, maxStake: 45.0,
     growthRate: 0.05, martingaleFactor: 22.0, exitThreshold: 0.1,
-    maxConsecutiveLosses: 3, tradeCooldownSec: 10,
+    maxConsecutiveLosses: 2, tradeCooldownSec: 2,
     minGapWidth: 0.2,     // Minimum gap width threshold
     gapCheckPeriod: 5,     // Candles to check for gap
     volMin: 0.5, volMax: 5.0,
@@ -721,11 +736,37 @@ const state = {
 
 // ─── MARKETS ─────────────────────────────────────────────────────────────────
 const MARKETS = [
-  { id:'R_10', name:'Volatility 10 (1s) Index', cat:'volatility' },
-  { id:'R_25', name:'Volatility 25 (1s) Index', cat:'volatility' },
-  { id:'R_50', name:'Volatility 50 (1s) Index', cat:'volatility' },
-  { id:'R_75', name:'Volatility 75 (1s) Index', cat:'volatility' },
-  { id:'R_100', name:'Volatility 100 (1s) Index', cat:'volatility' },
+  // Volatility indices (2s ticks) — accumulators supported
+  { id:'R_10',  name:'Volatility 10 Index',  cat:'volatility' },
+  { id:'R_25',  name:'Volatility 25 Index',  cat:'volatility' },
+  { id:'R_50',  name:'Volatility 50 Index',  cat:'volatility' },
+  { id:'R_75',  name:'Volatility 75 Index',  cat:'volatility' },
+  { id:'R_100', name:'Volatility 100 Index', cat:'volatility' },
+  // Volatility (1s) indices — accumulators supported, fastest tick rate
+  { id:'1HZ10V',  name:'Volatility 10 (1s) Index',  cat:'volatility1s' },
+  { id:'1HZ25V',  name:'Volatility 25 (1s) Index',  cat:'volatility1s' },
+  { id:'1HZ50V',  name:'Volatility 50 (1s) Index',  cat:'volatility1s' },
+  { id:'1HZ75V',  name:'Volatility 75 (1s) Index',  cat:'volatility1s' },
+  { id:'1HZ100V', name:'Volatility 100 (1s) Index', cat:'volatility1s' },
+  { id:'1HZ150V', name:'Volatility 150 (1s) Index', cat:'volatility1s' },
+  { id:'1HZ250V', name:'Volatility 250 (1s) Index', cat:'volatility1s' },
+  // Jump indices
+  { id:'JD10',  name:'Jump 10 Index',  cat:'jump' },
+  { id:'JD25',  name:'Jump 25 Index',  cat:'jump' },
+  { id:'JD50',  name:'Jump 50 Index',  cat:'jump' },
+  { id:'JD75',  name:'Jump 75 Index',  cat:'jump' },
+  { id:'JD100', name:'Jump 100 Index', cat:'jump' },
+  // Boom & Crash
+  { id:'BOOM300N',  name:'Boom 300 Index',  cat:'boomcrash' },
+  { id:'BOOM500',   name:'Boom 500 Index',  cat:'boomcrash' },
+  { id:'BOOM1000',  name:'Boom 1000 Index', cat:'boomcrash' },
+  { id:'CRASH300N', name:'Crash 300 Index', cat:'boomcrash' },
+  { id:'CRASH500',  name:'Crash 500 Index', cat:'boomcrash' },
+  { id:'CRASH1000', name:'Crash 1000 Index',cat:'boomcrash' },
+  // Step & Range Break
+  { id:'stpRNG',  name:'Step Index',            cat:'other' },
+  { id:'RDBEAR',  name:'Range Break 100 (Bear)',cat:'other' },
+  { id:'RDBULL',  name:'Range Break 100 (Bull)',cat:'other' },
 ];
 
 let priceChart, pnlChart, gapChart;
@@ -946,9 +987,33 @@ function canTradeNow() {
 function shouldPlaceTrade() {
   if (!state.market.symbol || state.bot.activePosition) return false;
   if (!canTradeNow()) return false;
+  if (state.bot.postLoss > 0) return false; // post-loss market analysis in progress
   if (state.bot.consecutiveLosses >= state.cfg.maxConsecutiveLosses) return false;
   if (state.analysis.signal !== 'READY') return false;
   return true;
+}
+
+// ─── POST-LOSS MARKET ANALYSIS ───────────────────────────────────────────────
+// After a loss, the bot refuses to trade until it has observed POST_LOSS_TICKS
+// consecutive ticks of this market with a clean READY signal (gap + volatility
+// in range). Any bad tick restarts the observation window.
+const POST_LOSS_TICKS = 15;
+function processPostLoss() {
+  if (state.bot.postLoss <= 0) return;
+  if (state.analysis.signal === 'READY') {
+    state.bot.postLoss--;
+    if (state.bot.postLoss === 0) {
+      addLog('info','Analysis',`Post-loss analysis complete on ${state.market.symbol} — market stable, trading resumes`);
+      toast('success','Market analysis complete — conditions stable, resuming');
+      if (state.bot.running) { state.bot.state = 'ready'; setBotState('ready'); }
+      document.getElementById('m-pos').textContent = 'Waiting for signal';
+      return;
+    }
+  } else {
+    state.bot.postLoss = POST_LOSS_TICKS; // conditions unstable — restart the window
+  }
+  document.getElementById('m-pos').textContent =
+    `Post-loss analysis: ${POST_LOSS_TICKS - state.bot.postLoss}/${POST_LOSS_TICKS} stable ticks`;
 }
 
 function placeTrade() {
@@ -963,6 +1028,7 @@ function placeTrade() {
     stake: stake,
     entryTime: Date.now(),
     gapWidth: gap,
+    entryTick: state.bot.priceHistory.length, // 1-tick trades: settle on the next tick
   };
   
   state.bot.lastTradeTime = Date.now();
@@ -971,7 +1037,6 @@ function placeTrade() {
   setBotState('trading');
   
   addLog('info','Trade',`OPEN @$${price.toFixed(4)} | Gap: ${gap.toFixed(4)} | Stake $${stake.toFixed(2)}`);
-  toast('info', `Trade opened @ $${price.toFixed(4)} · stake $${stake.toFixed(2)}`);
 
   if (state.conn.ws && state.conn.ws.readyState === 1) {
     sendTradeToDerivAPI(stake);
@@ -981,18 +1046,21 @@ function placeTrade() {
 }
 
 function sendTradeToDerivAPI(stake) {
-  // Immediate buy with inline parameters — single round-trip, no proposal step.
+  // Accumulator contract — immediate buy, single round-trip, no proposal step.
+  // Server-side take-profit (limit_order) closes the contract at the exchange
+  // itself, which is the fastest possible exit — no client round-trip needed.
+  const gr = Math.min(0.05, Math.max(0.01, state.cfg.growthRate || 0.05));
   const req = {
     buy: 1,
     price: stake,
     parameters: {
       amount: stake,
       basis: 'stake',
-      contract_type: 'CALL',
+      contract_type: 'ACCU',
       currency: 'USD',
-      duration: 5,
-      duration_unit: 'm',
+      growth_rate: gr,
       symbol: state.market.symbol || 'R_100',
+      limit_order: { take_profit: Math.max(0.01, state.cfg.exitThreshold) },
     }
   };
   if (state.conn.ws) {
@@ -1070,18 +1138,20 @@ function onContractUpdate(c) {
     closePosition(parseFloat(c.exit_tick || c.current_spot || 0), profit);
     return;
   }
-  // Take profit early: sell as soon as real profit clears the exit threshold
-  if (!pos.selling && c.is_valid_to_sell && !isNaN(profit) && profit >= state.cfg.exitThreshold) {
+  // 1-TICK CLOSE: sell the contract as soon as it has survived one tick
+  // (or instantly if profit already clears the exit threshold).
+  const ticks = c.tick_count ?? (Array.isArray(c.tick_stream) ? c.tick_stream.length : 0);
+  if (!pos.selling && c.is_valid_to_sell && (ticks >= 1 || (!isNaN(profit) && profit >= state.cfg.exitThreshold))) {
     pos.selling = true;
     state.conn.ws.send(JSON.stringify({ sell: c.contract_id, price: 0 }));
-    addLog('info','Trade',`Selling contract #${c.contract_id} @ +$${profit.toFixed(2)}`);
+    addLog('info','Trade',`1-tick close: selling contract #${c.contract_id} @ ${(profit>=0?'+':'')}$${(profit||0).toFixed(2)}`);
   }
 }
 
 function closePosition(exitPrice, realPnl) {
   if (!state.bot.activePosition) return;
   const pos = state.bot.activePosition;
-  const ep = exitPrice || state.bot.priceHistory[state.bot.priceHistory.length - 1];
+  const ep = exitPrice || state.bot.priceHistory[state.bot.priceHistory.length - 1] || pos.entryPrice;
   // Use the real contract profit from Deriv when available; simulate otherwise (demo)
   const pnl = (realPnl !== undefined && !isNaN(realPnl))
     ? parseFloat(realPnl.toFixed(4))
@@ -1101,6 +1171,11 @@ function closePosition(exitPrice, realPnl) {
     toast('warn', `LOSS -$${Math.abs(pnl).toFixed(2)}`);
     if (state.bot.consecutiveLosses < state.cfg.maxConsecutiveLosses) {
       state.bot.currentStake = Math.min(state.bot.currentStake * state.cfg.martingaleFactor, state.cfg.maxStake);
+      addLog('info','Bot',`Martingale ×${state.cfg.martingaleFactor}: next stake $${state.bot.currentStake.toFixed(2)}`);
+      // Spec rule 5: after a loss, run a thorough analysis of this market before re-entering
+      state.bot.postLoss = POST_LOSS_TICKS;
+      addLog('info','Analysis',`Loss recorded — analyzing ${state.market.symbol || 'market'} for ${POST_LOSS_TICKS} stable ticks before next trade`);
+      toast('info', `Analyzing ${state.market.symbol || 'market'} before next trade…`);
     }
   }
 
@@ -1108,8 +1183,11 @@ function closePosition(exitPrice, realPnl) {
     state.bot.state = 'closed';
     setBotState('closed');
     stopTradingUI();
-    addLog('warn','Bot','Max consecutive losses reached — trading stopped.');
-    toast('danger', 'Max consecutive losses reached — trading stopped');
+    addLog('warn','Bot',`${state.cfg.maxConsecutiveLosses} consecutive losses reached — trading stopped.`);
+    toast('danger', `${state.cfg.maxConsecutiveLosses} consecutive losses — trading stopped`);
+  } else if (state.bot.postLoss > 0) {
+    state.bot.state = 'monitoring';
+    setBotState('monitoring');
   } else {
     state.bot.state = 'idle';
     setBotState('idle');
@@ -1130,19 +1208,37 @@ function closePosition(exitPrice, realPnl) {
   updateHistory();
 
   if (state.bot.sessionPnl >= state.bot.targetProfit) {
-    addLog('win','Bot','🎯 Profit target reached — trading stopped.');
-    toast('success', '🎯 Profit target reached — trading stopped');
+    // Spec rule 4: the cumulative total reaching the target counts as ONE trade (a cycle)
+    state.bot.cycles++;
+    addLog('win','Bot',`🎯 Cycle #${state.bot.cycles} complete: +$${state.bot.sessionPnl.toFixed(2)} target reached — counted as 1 trade. Trading stopped.`);
+    toast('success', `🎯 Cycle #${state.bot.cycles} complete (+$${state.bot.sessionPnl.toFixed(2)}) — counted as 1 trade`);
     state.bot.state = 'idle';
     setBotState('idle');
     stopTradingUI();
+    // Start the next cycle fresh: P&L back to zero, stake back to minimum
+    state.bot.sessionPnl = 0;
+    state.bot.currentStake = state.cfg.minStake;
+    state.bot.consecutiveLosses = 0;
+    state.bot.postLoss = 0;
+    updateDashboard();
+    updateHistory();
   }
 
   if (state.bot.sessionPnl <= state.bot.stopLoss) {
-    addLog('warn','Bot','🛑 Stop loss hit — trading stopped.');
-    toast('danger', '🛑 Stop loss hit — trading stopped');
+    // The cumulative total hitting the stop loss also completes ONE trade (a losing cycle)
+    state.bot.cycles++;
+    addLog('warn','Bot',`🛑 Cycle #${state.bot.cycles} complete: $${state.bot.sessionPnl.toFixed(2)} stop loss hit — counted as 1 trade. Trading stopped.`);
+    toast('danger', `🛑 Cycle #${state.bot.cycles} closed at stop loss ($${state.bot.sessionPnl.toFixed(2)}) — counted as 1 trade`);
     state.bot.state = 'closed';
     setBotState('closed');
     stopTradingUI();
+    // Next cycle starts fresh
+    state.bot.sessionPnl = 0;
+    state.bot.currentStake = state.cfg.minStake;
+    state.bot.consecutiveLosses = 0;
+    state.bot.postLoss = 0;
+    updateDashboard();
+    updateHistory();
   }
 }
 
@@ -1172,6 +1268,7 @@ function resetSession() {
   if (state.bot.activePosition) { addLog('warn','Bot','Close position first'); toast('warn','A position is open — close it before resetting'); return; }
   state.bot.consecutiveLosses = 0;
   state.bot.currentStake = state.cfg.minStake;
+  state.bot.postLoss = 0;
   state.bot.sessionPnl = 0;
   state.bot.totalPnl = 0;
   state.bot.positions = [];
@@ -1205,7 +1302,7 @@ function toggleAutoTrade() {
     setBotState('ready');
     startBtn.disabled = true;
     stopBtn.disabled = false;
-    addLog('info','Bot','🤖 Gap-width trading started');
+    addLog('info','Bot','🤖 Accumulator trading started (growth '+Math.round((state.cfg.growthRate||0.05)*100)+'%)');
     toast('success','Trading started — executing on every tick');
   } else {
     state.bot.state = 'idle';
@@ -1225,15 +1322,8 @@ function runBotTick() {
   if (!state.conn.connected && !state.demo) return;
 
   if (shouldPlaceTrade()) placeTrade();
-
-  // Simulated positions (demo mode / no live contract) exit on the local threshold.
-  // Real contracts are exited via proposal_open_contract updates instead.
-  const pos = state.bot.activePosition;
-  if (pos && !pos.contractId) {
-    const price = state.bot.priceHistory[state.bot.priceHistory.length - 1];
-    const upnl = (price - pos.entryPrice) * pos.stake;
-    if (upnl >= state.cfg.exitThreshold) closePosition(price);
-  }
+  // Position exits are handled per-tick: simulated trades settle on the next
+  // tick in handleLiveTick; real contracts are sold via onContractUpdate.
 }
 setInterval(runBotTick, 1000); // watchdog only — ticks drive the fast path
 
@@ -1415,15 +1505,23 @@ function handleLiveTick(tick) {
     chg.className = 'price-change ' + (diff > 0 ? 'up' : 'dn');
   }
 
-  if (state.bot.activePosition && !state.bot.activePosition.contractId) {
-    const pos = state.bot.activePosition;
-    const upnl = (price - pos.entryPrice) * pos.stake;
-    document.getElementById('pos-upnl').textContent = (upnl>=0?'+':'')+upnl.toFixed(4);
-    document.getElementById('pos-upnl').style.color = upnl>=0?'var(--green)':'var(--red)';
+  // 1-TICK SETTLEMENT (simulated positions / demo): every trade closes on the
+  // very next tick after entry. Win = tick stayed inside the accumulator range
+  // (payout ≈ stake × growth rate); loss = range breached (full stake lost).
+  const pos = state.bot.activePosition;
+  if (pos && !pos.contractId && pos.entryTick !== undefined && state.bot.priceHistory.length > pos.entryTick) {
+    const hist = state.bot.priceHistory;
+    let sum = 0, n = 0;
+    for (let i = Math.max(1, hist.length - 11); i < hist.length - 1; i++) { sum += Math.abs(hist[i] - hist[i-1]); n++; }
+    const avgMove = n ? sum / n : Math.abs(price - (prev ?? price));
+    const win = Math.abs(price - (prev ?? price)) <= avgMove * 1.15; // inside the barrier
+    const pnl = win ? pos.stake * (state.cfg.growthRate || 0.05) : -pos.stake;
+    closePosition(price, pnl);
   }
 
   // FAST PATH: analyze and act the moment the tick arrives
   analyzeMarket();
+  processPostLoss();
   runBotTick();
 }
 
@@ -1663,6 +1761,7 @@ function updateHistory() {
   document.getElementById('h-total-pnl').className = 'metric-value ' + (b.totalPnl>=0?'green':'red');
   document.getElementById('h-total-trades').textContent = b.totalTrades;
   document.getElementById('h-wl').textContent = b.wins+' / '+b.losses;
+  document.getElementById('h-cycles').textContent = b.cycles;
 
   const tbody = document.getElementById('history-tbody');
   if (b.positions.length === 0) {
