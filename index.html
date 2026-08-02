@@ -1091,6 +1091,13 @@ function handleWsMessage(msg) {
   if (msg.error) {
     // Surface Deriv's error details — they name the exact offending field
     const det = msg.error.details ? ' — ' + JSON.stringify(msg.error.details) : '';
+    // Balance poll not supported on this connection → stop polling quietly
+    // (no toast spam every 10s)
+    if (msg.echo_req && msg.echo_req.balance !== undefined) {
+      if (state.conn.balancePoll) { clearInterval(state.conn.balancePoll); state.conn.balancePoll = null; }
+      addLog('warn','API','Balance refresh not supported on this connection: ' + (msg.error.message || ''));
+      return;
+    }
     addLog('warn','API', (msg.error.message || 'API error') + det);
     if (msg.echo_req && (msg.echo_req.proposal !== undefined || msg.echo_req.buy !== undefined)) {
       const pos = state.bot.activePosition;
@@ -1256,6 +1263,11 @@ function closePosition(exitPrice, realPnl) {
   const trade = { ...pos, exitPrice: ep, exitTime: Date.now(), pnl };
   state.bot.positions.push(trade);
   state.bot.activePosition = null;
+
+  // Refresh the real account balance immediately after every settled trade
+  if (state.conn.connected && state.conn.ws && state.conn.ws.readyState === 1 && state.conn.balancePoll) {
+    state.conn.ws.send(JSON.stringify({ balance: 1 }));
+  }
 
   pnlData.labels.push('#'+state.bot.positions.length);
   pnlData.data.push(parseFloat(state.bot.totalPnl.toFixed(4)));
