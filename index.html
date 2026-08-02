@@ -174,6 +174,17 @@
   .account-chip .acct-bal { color: var(--green); font-weight: 600; }
   .btn-logout { padding: 5px 12px; font-size: 12px; }
 
+  /* ── Toast notifications ────────────────────────────────────────────────── */
+  .toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+  .toast { display: flex; align-items: center; gap: 9px; background: var(--bg2); border: 0.5px solid var(--border2); border-left: 3px solid var(--teal); border-radius: 10px; padding: 10px 14px; font-size: 12.5px; color: var(--text); box-shadow: 0 12px 32px rgba(0,0,0,0.5); animation: toastIn 0.25s ease; min-width: 220px; max-width: 340px; }
+  .toast i { font-size: 16px; flex-shrink: 0; color: var(--teal); }
+  .toast.success { border-left-color: var(--green); } .toast.success i { color: var(--green); }
+  .toast.danger  { border-left-color: var(--red); }   .toast.danger i  { color: var(--red); }
+  .toast.warn    { border-left-color: var(--amber); } .toast.warn i    { color: var(--amber); }
+  .toast.hide { animation: toastOut 0.3s ease forwards; }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+  @keyframes toastOut { to { opacity: 0; transform: translateX(16px); } }
+
   /* ── Auth gate (login screen before dashboard) ──────────────────────────── */
   body.locked .app { display: none; }
   .auth-gate { display: none; }
@@ -562,6 +573,12 @@
             <div class="slider-row"><input type="range" min="0.01" max="2" step="0.01" id="cfg-exit" oninput="syncSlider(this,'lbl-exit')"><span class="slider-val" id="lbl-exit">$0.10</span></div>
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Trade Cooldown (seconds between trades)</label>
+            <div class="slider-row"><input type="range" min="2" max="300" step="1" id="cfg-cooldown" oninput="syncSlider(this,'lbl-cooldown')"><span class="slider-val" id="lbl-cooldown">10s</span></div>
+          </div>
+        </div>
         <button class="btn btn-primary" onclick="applyConfig()"><i class="ti ti-check"></i> Apply Configuration</button>
       </div>
     </div>
@@ -656,6 +673,8 @@
   </main>
 </div>
 
+<div class="toast-wrap" id="toast-wrap"></div>
+
 <script>
 'use strict';
 
@@ -681,12 +700,13 @@ const state = {
   cfg: {
     minStake: 1.0, maxStake: 50.0,
     growthRate: 0.05, martingaleFactor: 22.0, exitThreshold: 0.1,
-    maxConsecutiveLosses: 3, tradeIntervalMinutes: 5,
+    maxConsecutiveLosses: 3, tradeCooldownSec: 10,
     minGapWidth: 0.2,     // Minimum gap width threshold
     gapCheckPeriod: 5,     // Candles to check for gap
     volMin: 0.5, volMax: 5.0,
   },
   market: { symbol: null, label: null },
+  demo: false,
   conn: { connected: false, ws: null, pingInterval: null },
   logs: [],
   analysis: {
@@ -752,6 +772,7 @@ function syncSlider(el, lblId) {
   else if (el.id === 'cfg-martin') lbl.textContent = v+'×';
   else if (el.id === 'cfg-exit') lbl.textContent = '$'+v.toFixed(2);
   else if (el.id === 'cfg-gap-period') lbl.textContent = Math.round(v);
+  else if (el.id === 'cfg-cooldown') lbl.textContent = Math.round(v)+'s';
   else lbl.textContent = '$'+parseFloat(v).toFixed(2);
 }
 
@@ -767,6 +788,7 @@ function loadConfigToUI(cfg) {
   set('cfg-exit', cfg.exitThreshold);
   set('cfg-vol-min', (cfg.volMin||0.5));
   set('cfg-vol-max', (cfg.volMax||5));
+  set('cfg-cooldown', cfg.tradeCooldownSec||10);
 }
 
 function applyConfig() {
@@ -780,8 +802,10 @@ function applyConfig() {
   state.cfg.exitThreshold = parseFloat(document.getElementById('cfg-exit').value);
   state.cfg.volMin = parseFloat(document.getElementById('cfg-vol-min').value);
   state.cfg.volMax = parseFloat(document.getElementById('cfg-vol-max').value);
+  state.cfg.tradeCooldownSec = parseInt(document.getElementById('cfg-cooldown').value);
   addLog('info','Config','Configuration updated');
   state.bot.currentStake = state.cfg.minStake;
+  toast('success', 'Configuration applied — stake reset to $'+state.cfg.minStake.toFixed(2));
 }
 
 let selectedMarketId = null;
@@ -807,12 +831,13 @@ function filterMarkets() {
 function applyMarket() {
   const custom = document.getElementById('custom-symbol').value.trim();
   const id = custom || selectedMarketId;
-  if (!id) { addLog('warn','Market','Select a market first'); return; }
+  if (!id) { addLog('warn','Market','Select a market first'); toast('warn','Pick a market card or enter a custom symbol first'); return; }
   const found = MARKETS.find(m=>m.id===id);
   state.market.symbol = id;
   state.market.label = found ? found.name : id;
   document.getElementById('market-label').textContent = state.market.label;
   addLog('info','Market','Selected: '+state.market.label);
+  toast('success','Market applied: '+state.market.label);
   document.getElementById('start-btn').disabled = false;
   if (state.conn.connected && state.conn.ws && state.conn.ws.readyState === 1) {
     state.conn.ws.send(JSON.stringify({ forget_all: 'ticks' }));
@@ -914,8 +939,8 @@ function updateAnalysisUI() {
 // ─── BOT TRADING LOGIC ────────────────────────────────────────────────────────
 function canTradeNow() {
   if (!state.bot.lastTradeTime) return true;
-  const minutesAgo = (Date.now() - state.bot.lastTradeTime) / 60000;
-  return minutesAgo >= state.cfg.tradeIntervalMinutes;
+  const secAgo = (Date.now() - state.bot.lastTradeTime) / 1000;
+  return secAgo >= state.cfg.tradeCooldownSec;
 }
 
 function shouldPlaceTrade() {
@@ -946,38 +971,121 @@ function placeTrade() {
   setBotState('trading');
   
   addLog('info','Trade',`OPEN @$${price.toFixed(4)} | Gap: ${gap.toFixed(4)} | Stake $${stake.toFixed(2)}`);
-  
+  toast('info', `Trade opened @ $${price.toFixed(4)} · stake $${stake.toFixed(2)}`);
+
   if (state.conn.ws && state.conn.ws.readyState === 1) {
-    sendTradeToDerivAPI(stake, price);
+    sendTradeToDerivAPI(stake);
   }
-  
+
   updateDashboard();
 }
 
-function sendTradeToDerivAPI(stake, price) {
-  const proposal = {
-    buy: '1',
+function sendTradeToDerivAPI(stake) {
+  // Immediate buy with inline parameters — single round-trip, no proposal step.
+  const req = {
+    buy: 1,
     price: stake,
     parameters: {
       amount: stake,
       basis: 'stake',
       contract_type: 'CALL',
       currency: 'USD',
-      duration: '5m',
+      duration: 5,
       duration_unit: 'm',
       symbol: state.market.symbol || 'R_100',
     }
   };
   if (state.conn.ws) {
-    state.conn.ws.send(JSON.stringify(proposal));
+    state.conn.ws.send(JSON.stringify(req));
   }
 }
 
-function closePosition(exitPrice) {
+// ─── WS MESSAGE HANDLING (shared by legacy + new API) ────────────────────────
+function handleWsMessage(msg) {
+  if (msg.error) {
+    addLog('warn','API', msg.error.message || 'API error');
+    toast('danger', msg.error.message || 'API error');
+    // A rejected buy → cancel the pending local position
+    if (msg.echo_req && msg.echo_req.buy !== undefined) cancelPendingTrade(msg.error.message);
+    return;
+  }
+  switch (msg.msg_type) {
+    case 'tick': handleLiveTick(msg.tick); break;
+    case 'balance': updateBalance(msg.balance); break;
+    case 'buy': onBuyResponse(msg.buy); break;
+    case 'proposal_open_contract': onContractUpdate(msg.proposal_open_contract); break;
+    case 'sell': addLog('info','Trade','Sell order accepted by Deriv'); break;
+  }
+}
+
+function updateBalance(bal) {
+  const balanceVal = bal?.balance ?? bal;
+  if (balanceVal !== undefined && !isNaN(balanceVal)) {
+    const b = parseFloat(balanceVal);
+    document.getElementById('ai-balance').textContent = '$' + b.toFixed(2);
+    document.getElementById('top-balance').textContent = '$' + b.toFixed(2);
+  }
+  const currency = bal?.currency;
+  if (currency) {
+    document.getElementById('ai-currency').textContent = currency;
+    document.getElementById('top-currency').textContent = currency;
+  }
+}
+
+function cancelPendingTrade(reason) {
+  const pos = state.bot.activePosition;
+  if (pos && !pos.contractId) {
+    state.bot.activePosition = null;
+    state.bot.totalTrades = Math.max(0, state.bot.totalTrades - 1);
+    state.bot.state = 'idle';
+    setBotState('idle');
+    addLog('warn','Trade','Order rejected: ' + (reason || 'unknown error'));
+    updateDashboard();
+  }
+}
+
+function onBuyResponse(buy) {
+  const pos = state.bot.activePosition;
+  if (!pos) return;
+  pos.contractId = buy.contract_id;
+  pos.buyPrice = parseFloat(buy.buy_price);
+  addLog('win','Trade',`✓ Contract #${buy.contract_id} confirmed | Cost $${parseFloat(buy.buy_price).toFixed(2)}`);
+  toast('success', `Contract #${buy.contract_id} confirmed`);
+  // Track the real contract so P&L and exit use actual numbers
+  if (state.conn.ws && state.conn.ws.readyState === 1) {
+    state.conn.ws.send(JSON.stringify({ proposal_open_contract: 1, contract_id: buy.contract_id, subscribe: 1 }));
+  }
+}
+
+function onContractUpdate(c) {
+  const pos = state.bot.activePosition;
+  if (!pos || !c || c.contract_id !== pos.contractId) return;
+  const profit = parseFloat(c.profit);
+  if (!isNaN(profit)) {
+    const el = document.getElementById('pos-upnl');
+    el.textContent = (profit>=0?'+':'')+'$'+Math.abs(profit).toFixed(2);
+    el.style.color = profit>=0?'var(--green)':'var(--red)';
+  }
+  if (c.is_sold) {
+    closePosition(parseFloat(c.exit_tick || c.current_spot || 0), profit);
+    return;
+  }
+  // Take profit early: sell as soon as real profit clears the exit threshold
+  if (!pos.selling && c.is_valid_to_sell && !isNaN(profit) && profit >= state.cfg.exitThreshold) {
+    pos.selling = true;
+    state.conn.ws.send(JSON.stringify({ sell: c.contract_id, price: 0 }));
+    addLog('info','Trade',`Selling contract #${c.contract_id} @ +$${profit.toFixed(2)}`);
+  }
+}
+
+function closePosition(exitPrice, realPnl) {
   if (!state.bot.activePosition) return;
   const pos = state.bot.activePosition;
   const ep = exitPrice || state.bot.priceHistory[state.bot.priceHistory.length - 1];
-  const pnl = parseFloat(((ep - pos.entryPrice) * pos.stake).toFixed(4));
+  // Use the real contract profit from Deriv when available; simulate otherwise (demo)
+  const pnl = (realPnl !== undefined && !isNaN(realPnl))
+    ? parseFloat(realPnl.toFixed(4))
+    : parseFloat(((ep - pos.entryPrice) * pos.stake).toFixed(4));
 
   const isWin = pnl > 0;
   if (isWin) {
@@ -985,10 +1093,12 @@ function closePosition(exitPrice) {
     state.bot.consecutiveLosses = 0;
     state.bot.currentStake = state.cfg.minStake;
     addLog('win','Trade',`✓ WIN +$${pnl.toFixed(4)} | Exit @$${ep.toFixed(4)}`);
+    toast('success', `WIN +$${pnl.toFixed(2)}`);
   } else {
     state.bot.losses++;
     state.bot.consecutiveLosses++;
     addLog('loss','Trade',`✗ LOSS -$${Math.abs(pnl).toFixed(4)} | Exit @$${ep.toFixed(4)}`);
+    toast('warn', `LOSS -$${Math.abs(pnl).toFixed(2)}`);
     if (state.bot.consecutiveLosses < state.cfg.maxConsecutiveLosses) {
       state.bot.currentStake = Math.min(state.bot.currentStake * state.cfg.martingaleFactor, state.cfg.maxStake);
     }
@@ -997,7 +1107,9 @@ function closePosition(exitPrice) {
   if (state.bot.consecutiveLosses >= state.cfg.maxConsecutiveLosses) {
     state.bot.state = 'closed';
     setBotState('closed');
-    addLog('warn','Bot','Max consecutive losses reached.');
+    stopTradingUI();
+    addLog('warn','Bot','Max consecutive losses reached — trading stopped.');
+    toast('danger', 'Max consecutive losses reached — trading stopped');
   } else {
     state.bot.state = 'idle';
     setBotState('idle');
@@ -1018,16 +1130,26 @@ function closePosition(exitPrice) {
   updateHistory();
 
   if (state.bot.sessionPnl >= state.bot.targetProfit) {
-    addLog('win','Bot','🎯 Profit target reached!');
+    addLog('win','Bot','🎯 Profit target reached — trading stopped.');
+    toast('success', '🎯 Profit target reached — trading stopped');
     state.bot.state = 'idle';
     setBotState('idle');
+    stopTradingUI();
   }
 
   if (state.bot.sessionPnl <= state.bot.stopLoss) {
-    addLog('warn','Bot','🛑 Stop loss hit!');
+    addLog('warn','Bot','🛑 Stop loss hit — trading stopped.');
+    toast('danger', '🛑 Stop loss hit — trading stopped');
     state.bot.state = 'closed';
     setBotState('closed');
+    stopTradingUI();
   }
+}
+
+function stopTradingUI() {
+  state.bot.running = false;
+  document.getElementById('start-btn').disabled = false;
+  document.getElementById('stop-btn').disabled = true;
 }
 
 function setBotState(s) {
@@ -1043,10 +1165,11 @@ function setTargets() {
   state.bot.targetProfit = parseFloat(document.getElementById('profit-target').value);
   state.bot.stopLoss = parseFloat(document.getElementById('stop-loss').value);
   addLog('info','Bot',`Targets: TP $${state.bot.targetProfit.toFixed(2)} / SL $${state.bot.stopLoss.toFixed(2)}`);
+  toast('success', `Targets set — TP $${state.bot.targetProfit.toFixed(2)} / SL $${state.bot.stopLoss.toFixed(2)}`);
 }
 
 function resetSession() {
-  if (state.bot.activePosition) { addLog('warn','Bot','Close position first'); return; }
+  if (state.bot.activePosition) { addLog('warn','Bot','Close position first'); toast('warn','A position is open — close it before resetting'); return; }
   state.bot.consecutiveLosses = 0;
   state.bot.currentStake = state.cfg.minStake;
   state.bot.sessionPnl = 0;
@@ -1064,13 +1187,14 @@ function resetSession() {
   if (priceChart) priceChart.update();
   if (pnlChart) pnlChart.update();
   addLog('info','Bot','Session reset');
+  toast('success','Session reset — counters and charts cleared');
   updateDashboard();
   updateHistory();
 }
 
 function toggleAutoTrade() {
-  if (!state.market.symbol) { addLog('warn','Bot','Select a market first'); return; }
-  if (!state.conn.connected) { addLog('warn','Bot','Connect to Deriv first'); return; }
+  if (!state.market.symbol) { addLog('warn','Bot','Select a market first'); toast('warn','Select a market first (Market & Symbols)'); return; }
+  if (!state.conn.connected && !state.demo) { addLog('warn','Bot','Connect to Deriv first'); toast('warn','Connect to Deriv first'); return; }
 
   state.bot.running = !state.bot.running;
   const startBtn = document.getElementById('start-btn');
@@ -1082,34 +1206,36 @@ function toggleAutoTrade() {
     startBtn.disabled = true;
     stopBtn.disabled = false;
     addLog('info','Bot','🤖 Gap-width trading started');
+    toast('success','Trading started — executing on every tick');
   } else {
     state.bot.state = 'idle';
     setBotState('idle');
     startBtn.disabled = false;
     stopBtn.disabled = true;
     addLog('info','Bot','Trading stopped');
+    toast('info','Trading stopped');
   }
 }
 
-// ─── CONTINUOUS TRADING LOOP ─────────────────────────────────────────────────
-setInterval(() => {
-  if (!state.bot.running || !state.conn.connected) return;
-  
-  analyzeMarket();
-  
-  if (shouldPlaceTrade()) {
-    placeTrade();
-  }
-  
-  if (state.bot.activePosition) {
+// ─── TRADE EXECUTION ─────────────────────────────────────────────────────────
+// Runs on EVERY incoming tick (fast path) plus a 1s watchdog — decisions are
+// made the instant a price arrives instead of waiting for a polling interval.
+function runBotTick() {
+  if (!state.bot.running) return;
+  if (!state.conn.connected && !state.demo) return;
+
+  if (shouldPlaceTrade()) placeTrade();
+
+  // Simulated positions (demo mode / no live contract) exit on the local threshold.
+  // Real contracts are exited via proposal_open_contract updates instead.
+  const pos = state.bot.activePosition;
+  if (pos && !pos.contractId) {
     const price = state.bot.priceHistory[state.bot.priceHistory.length - 1];
-    const upnl = (price - state.bot.activePosition.entryPrice) * state.bot.activePosition.stake;
-    
-    if (upnl >= state.cfg.exitThreshold) {
-      closePosition(price);
-    }
+    const upnl = (price - pos.entryPrice) * pos.stake;
+    if (upnl >= state.cfg.exitThreshold) closePosition(price);
   }
-}, 2000);
+}
+setInterval(runBotTick, 1000); // watchdog only — ticks drive the fast path
 
 // ─── DERIV API ────────────────────────────────────────────────────────────────
 function switchAuthTab(tab) {
@@ -1126,14 +1252,52 @@ function unlockApp() {
 }
 
 function lockApp() {
+  stopDemoTicks();
+  if (state.bot.running) stopTradingUI();
   document.body.classList.add('locked');
   document.getElementById('logout-btn').style.display = 'none';
   document.getElementById('account-chip').classList.remove('visible');
 }
 
 function enterDemoMode() {
+  state.demo = true;
   unlockApp();
-  addLog('info','Demo','Viewing in demo mode — no account connected. Use Logout to return to the login screen.');
+  // Auto-select a market and start a simulated tick feed so the bot is fully testable
+  if (!state.market.symbol) {
+    state.market.symbol = 'R_100';
+    state.market.label = 'Volatility 100 (demo feed)';
+    document.getElementById('market-label').textContent = state.market.label;
+    document.getElementById('start-btn').disabled = false;
+  }
+  startDemoTicks();
+  addLog('info','Demo','Demo mode — simulated price feed, no real money. Use Logout to return to the login screen.');
+  toast('info','Demo mode — simulated prices, no real money');
+}
+
+let demoTimer = null, demoPrice = 1234.5;
+function startDemoTicks() {
+  if (demoTimer) return;
+  demoTimer = setInterval(() => {
+    demoPrice = Math.max(100, demoPrice + (Math.random() - 0.5) * demoPrice * 0.004);
+    handleLiveTick({ quote: demoPrice, epoch: Math.floor(Date.now()/1000) });
+  }, 1000);
+}
+function stopDemoTicks() {
+  if (demoTimer) { clearInterval(demoTimer); demoTimer = null; }
+  state.demo = false;
+}
+
+// ─── TOASTS (visual feedback for every action) ───────────────────────────────
+function toast(type, msg) {
+  const wrap = document.getElementById('toast-wrap');
+  if (!wrap) return;
+  const icons = { success:'ti-circle-check', danger:'ti-alert-circle', warn:'ti-alert-triangle', info:'ti-info-circle' };
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.innerHTML = `<i class="ti ${icons[type]||icons.info}"></i><span>${msg}</span>`;
+  wrap.appendChild(el);
+  while (wrap.children.length > 4) wrap.firstChild.remove();
+  setTimeout(() => { el.classList.add('hide'); setTimeout(() => el.remove(), 350); }, 3500);
 }
 
 function connectLegacy() {
@@ -1203,15 +1367,7 @@ function connectLegacy() {
       ws.onmessage = (ev) => {
         let msg;
         try { msg = JSON.parse(ev.data); } catch { return; }
-        if (msg.msg_type === 'tick') handleLiveTick(msg.tick);
-        if (msg.msg_type === 'balance') {
-          const balanceVal = msg.balance?.balance || msg.balance;
-          if (balanceVal && !isNaN(balanceVal)) {
-            const newBalance = parseFloat(balanceVal);
-            document.getElementById('ai-balance').textContent = '$' + newBalance.toFixed(2);
-            document.getElementById('top-balance').textContent = '$' + newBalance.toFixed(2);
-          }
-        }
+        handleWsMessage(msg);
       };
     }
   };
@@ -1239,6 +1395,7 @@ function subscribeToTicks(symbol) {
 function handleLiveTick(tick) {
   if (!tick) return;
   const price = parseFloat(tick.quote);
+  const prev = state.bot.priceHistory[state.bot.priceHistory.length - 1];
   state.bot.priceHistory.push(price);
   if (state.bot.priceHistory.length > 200) state.bot.priceHistory.shift();
 
@@ -1248,14 +1405,26 @@ function handleLiveTick(tick) {
   if (priceData.labels.length > 80) { priceData.labels.shift(); priceData.data.shift(); }
   if (priceChart) priceChart.update('none');
 
-  document.getElementById('live-price').textContent = '$'+price.toFixed(4);
+  const priceEl = document.getElementById('live-price');
+  priceEl.textContent = '$'+price.toFixed(4);
+  if (prev !== undefined && prev !== price) {
+    const diff = price - prev;
+    priceEl.style.color = diff > 0 ? 'var(--green)' : 'var(--red)';
+    const chg = document.getElementById('price-chg');
+    chg.textContent = (diff > 0 ? '▲ +' : '▼ −') + Math.abs(diff).toFixed(4);
+    chg.className = 'price-change ' + (diff > 0 ? 'up' : 'dn');
+  }
 
-  if (state.bot.activePosition) {
+  if (state.bot.activePosition && !state.bot.activePosition.contractId) {
     const pos = state.bot.activePosition;
     const upnl = (price - pos.entryPrice) * pos.stake;
     document.getElementById('pos-upnl').textContent = (upnl>=0?'+':'')+upnl.toFixed(4);
     document.getElementById('pos-upnl').style.color = upnl>=0?'var(--green)':'var(--red)';
   }
+
+  // FAST PATH: analyze and act the moment the tick arrives
+  analyzeMarket();
+  runBotTick();
 }
 
 function onAuthSuccess(acc) {
@@ -1281,6 +1450,7 @@ function onAuthSuccess(acc) {
 
   showAuthResult('success', 'Connected: '+acc.loginid);
   addLog('win','Auth','Connected: '+acc.loginid);
+  toast('success', 'Connected as '+acc.loginid);
 
   if (state.market.symbol) subscribeToTicks(state.market.symbol);
   
@@ -1325,9 +1495,13 @@ async function fetchNewAccounts() {
       method: 'GET',
       headers: { 'Authorization': 'Bearer '+token, 'Deriv-App-ID': appId }
     });
-    const body = await res.json();
+    const raw = await res.text();
+    let body = {};
+    try { body = JSON.parse(raw); } catch {}
     if (!res.ok) {
-      showAuthResultNew('danger', 'Failed: '+(body.errors?.[0]?.message || res.statusText));
+      const msg = body.errors?.[0]?.message || body.message || raw.slice(0,200) || res.statusText;
+      showAuthResultNew('danger', `Server error (${res.status}): ${msg}` + (res.status===401 ? ' — check that your PAT token is valid and not expired.' : ''));
+      addLog('warn','Auth (New)',`Accounts request failed (${res.status}): ${msg}`);
       return;
     }
     const accounts = body.data || body.accounts || [];
@@ -1353,9 +1527,13 @@ async function connectNewAPI() {
       method: 'POST',
       headers: { 'Authorization': 'Bearer '+token, 'Deriv-App-ID': appId, 'Content-Type': 'application/json' }
     });
-    const body = await res.json();
+    const raw = await res.text();
+    let body = {};
+    try { body = JSON.parse(raw); } catch {}
     if (!res.ok) {
-      showAuthResultNew('danger', 'OTP request failed: '+(body.errors?.[0]?.message || res.statusText));
+      const msg = body.errors?.[0]?.message || body.message || raw.slice(0,200) || res.statusText;
+      showAuthResultNew('danger', `OTP request failed (${res.status}): ${msg}` + (res.status===401 ? ' — check that your PAT token is valid and not expired.' : ''));
+      addLog('warn','Auth (New)',`OTP request failed (${res.status}): ${msg}`);
       return;
     }
     const wsUrl = body.data?.url || body.url;
@@ -1391,18 +1569,7 @@ async function connectNewAPI() {
       ws.onmessage = (ev) => {
         let msg;
         try { msg = JSON.parse(ev.data); } catch { return; }
-        if (msg.msg_type === 'tick') handleLiveTick(msg.tick);
-        if (msg.msg_type === 'balance') {
-          const balanceVal = msg.balance?.balance || msg.balance;
-          if (balanceVal && !isNaN(balanceVal)) {
-            const newBalance = parseFloat(balanceVal);
-            document.getElementById('ai-balance').textContent = '$' + newBalance.toFixed(2);
-            document.getElementById('top-balance').textContent = '$' + newBalance.toFixed(2);
-            const currency = msg.balance?.currency || 'USD';
-            document.getElementById('ai-currency').textContent = currency;
-            document.getElementById('top-currency').textContent = currency;
-          }
-        }
+        handleWsMessage(msg);
       };
       
       state.conn.pingInterval = setInterval(() => {
@@ -1529,11 +1696,6 @@ document.addEventListener('DOMContentLoaded', () => {
   addLog('info','Setup','1. Sign in on the login screen\n2. Select a market (R_100 recommended)\n3. Config tab → Set minimum gap width threshold\n4. Start Trading');
   updateDashboard();
   updateHistory();
-  setInterval(() => {
-    if (state.bot.running && state.conn.connected) {
-      analyzeMarket();
-    }
-  }, 1000);
 });
 </script>
 </body>
