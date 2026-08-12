@@ -171,7 +171,12 @@
   .account-chip.visible { display: flex; }
   .account-chip .avatar { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--teal)); display: flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; }
   .account-chip .acct-id { font-weight: 600; color: var(--text); }
-  .account-chip .acct-bal { color: var(--green); font-weight: 600; }
+  .account-chip .acct-bal { color: var(--green); font-weight: 600; display: flex; gap: 6px; align-items: center; }
+  .account-chip .acct-bal span.label { color: var(--text3); font-weight: 500; }
+  .balance-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 8px; }
+  .balance-box { min-width: 0; }
+  .balance-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .balance-value { font-size: 24px; font-weight: 700; color: var(--green); }
   .btn-logout { padding: 5px 12px; font-size: 12px; }
 
   /* ── Toast notifications ────────────────────────────────────────────────── */
@@ -315,7 +320,10 @@
       <div class="account-chip" id="account-chip">
         <div class="avatar"><i class="ti ti-user"></i></div>
         <span class="acct-id" id="ai-loginid">—</span>
-        <span class="acct-bal"><span id="ai-balance">$0.00</span> <span id="ai-currency" style="color:var(--text3);font-weight:500;">USD</span></span>
+        <span class="acct-bal">
+          <span class="label">Wallet</span><span id="ai-wallet-balance">—</span>
+          <span class="label">Options</span><span id="ai-options-balance">—</span>
+        </span>
       </div>
       <button class="btn btn-ghost btn-logout" id="logout-btn" onclick="disconnectDeriv()" style="display:none;"><i class="ti ti-logout"></i> Logout</button>
       <div class="conn-status">
@@ -360,8 +368,16 @@
     <div id="panel-dashboard" class="panel active">
 
       <div style="background: linear-gradient(135deg, rgba(108,99,255,0.1), rgba(34,197,94,0.1)); border: 0.5px solid var(--border2); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;">
-        <div style="font-size: 11px; color: var(--text3); margin-bottom: 4px;">💳 Account Balance</div>
-        <div style="font-size: 24px; font-weight: 700; color: var(--green);" id="top-balance">$0.00</div>
+        <div class="balance-grid">
+          <div class="balance-box">
+            <div class="balance-label">Wallet Balance</div>
+            <div class="balance-value" id="top-wallet-balance">—</div>
+          </div>
+          <div class="balance-box">
+            <div class="balance-label">Options Balance</div>
+            <div class="balance-value" id="top-options-balance">—</div>
+          </div>
+        </div>
         <div style="font-size: 12px; color: var(--text2); margin-top: 4px;">
           <span id="top-currency">USD</span> • <span id="top-type">Not connected</span> • <span id="top-loginid">—</span>
         </div>
@@ -726,7 +742,14 @@ const state = {
   },
   market: { symbol: null, label: null },
   demo: false,
-  conn: { connected: false, ws: null, pingInterval: null, balancePoll: null, balanceRetryTimer: null, api: null, loginid: null, currency: 'USD', balanceModeIndex: 0, balanceLoaded: false },
+  conn: {
+    connected: false, ws: null, pingInterval: null, balancePoll: null, balanceRetryTimer: null,
+    api: null, loginid: null, currency: 'USD', balanceModeIndex: 0, balanceLoaded: false,
+    balances: {
+      wallet: { amount: null, currency: 'USD', loaded: false },
+      options: { amount: null, currency: 'USD', loaded: false },
+    },
+  },
   logs: [],
   analysis: {
     priceHistory: [],
@@ -1184,11 +1207,18 @@ function normalizeBalancePayload(payload) {
   return null;
 }
 
-function setDisplayedBalance(amount, currency = state.conn.currency || 'USD') {
+function setDisplayedBalance(kind, amount, currency = state.conn.currency || 'USD') {
+  const target = state.conn.balances[kind];
+  if (target) {
+    target.amount = Number.isFinite(Number(amount)) ? Number(amount) : null;
+    target.currency = currency;
+    target.loaded = Number.isFinite(Number(amount));
+  }
   const formatted = formatBalanceAmount(amount, currency);
-  document.getElementById('ai-balance').textContent = formatted;
-  document.getElementById('top-balance').textContent = formatted;
-  document.getElementById('ai-currency').textContent = currency;
+  const aiEl = document.getElementById(`ai-${kind}-balance`);
+  const topEl = document.getElementById(`top-${kind}-balance`);
+  if (aiEl) aiEl.textContent = formatted;
+  if (topEl) topEl.textContent = formatted;
   document.getElementById('top-currency').textContent = currency;
 }
 
@@ -1274,11 +1304,6 @@ function updateBalance(msg) {
   const amount = Number(normalized.balance);
   if (Number.isFinite(amount)) {
     const currency = normalized.currency || state.conn.currency || 'USD';
-    const currentAmount = Number(String(document.getElementById('top-balance').textContent).replace(/[^\d.-]/g, ''));
-    if (state.conn.api === 'new' && state.conn.balanceLoaded && amount === 0 && Number.isFinite(currentAmount) && currentAmount > 0) {
-      addLog('info','Balance','Ignoring zero WebSocket balance because REST account balance is already loaded');
-      return;
-    }
     const wasLoaded = state.conn.balanceLoaded;
     state.conn.currency = currency;
     state.conn.balanceLoaded = true;
@@ -1286,8 +1311,8 @@ function updateBalance(msg) {
       clearTimeout(state.conn.balanceRetryTimer);
       state.conn.balanceRetryTimer = null;
     }
-    setDisplayedBalance(amount, currency);
-    if (!wasLoaded) addLog('win','Balance',`Balance fetched: ${formatBalanceAmount(amount, currency)}`);
+    setDisplayedBalance('wallet', amount, currency);
+    if (!wasLoaded) addLog('win','Balance',`Wallet balance fetched: ${formatBalanceAmount(amount, currency)}`);
   }
 }
 
@@ -1304,12 +1329,11 @@ function applyRestAccountBalance(account, source = 'REST accounts') {
   if (!Number.isFinite(amount)) return false;
   const currency = normalized.currency || account?.currency || state.conn.currency || 'USD';
   state.conn.currency = currency;
-  state.conn.balanceLoaded = true;
   if (state.conn.balanceRetryTimer) {
     clearTimeout(state.conn.balanceRetryTimer);
     state.conn.balanceRetryTimer = null;
   }
-  setDisplayedBalance(amount, currency);
+  setDisplayedBalance('options', amount, currency);
   addLog('win','Balance',`${source}: ${formatBalanceAmount(amount, currency)}`);
   return true;
 }
@@ -1758,9 +1782,9 @@ function onAuthSuccess(acc) {
 
   if (acc.balance !== undefined && acc.balance !== '—') {
     const balanceNum = Number(acc.balance);
-    if (Number.isFinite(balanceNum)) setDisplayedBalance(balanceNum, state.conn.currency);
+    if (Number.isFinite(balanceNum)) setDisplayedBalance('wallet', balanceNum, state.conn.currency);
   } else {
-    setDisplayedBalance(undefined, state.conn.currency);
+    setDisplayedBalance('wallet', undefined, state.conn.currency);
   }
 
   document.getElementById('ai-loginid').textContent = acc.loginid || '—';
@@ -1796,6 +1820,8 @@ function disconnectDeriv() {
   state.conn.balanceModeIndex = 0;
   state.conn.balanceLoaded = false;
   state.conn.balanceRetryTimer = null;
+  state.conn.balances.wallet = { amount: null, currency: 'USD', loaded: false };
+  state.conn.balances.options = { amount: null, currency: 'USD', loaded: false };
   state.bot.running = false;
   state.bot.state = 'idle';
 
@@ -1804,6 +1830,8 @@ function disconnectDeriv() {
   lockApp();
   document.getElementById('top-type').textContent = 'Not connected';
   document.getElementById('top-loginid').textContent = '—';
+  setDisplayedBalance('wallet', undefined, 'USD');
+  setDisplayedBalance('options', undefined, 'USD');
   document.getElementById('start-btn').disabled = false;
   document.getElementById('stop-btn').disabled = true;
 
