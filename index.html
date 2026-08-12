@@ -177,6 +177,11 @@
   .balance-box { min-width: 0; }
   .balance-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
   .balance-value { font-size: 24px; font-weight: 700; color: var(--green); }
+  .funding-actions { display: flex; gap: 8px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+  .funding-flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+  .flow-step { background: var(--bg3); border: 0.5px solid var(--border); border-radius: 8px; padding: 10px; min-width: 0; }
+  .flow-step strong { display: block; font-size: 12px; color: var(--text); margin-bottom: 4px; }
+  .flow-step span { display: block; font-size: 11px; color: var(--text3); line-height: 1.4; }
   .btn-logout { padding: 5px 12px; font-size: 12px; }
 
   /* ── Toast notifications ────────────────────────────────────────────────── */
@@ -229,6 +234,8 @@
     .sidebar-section { display: none; }
     .metrics { grid-template-columns: 1fr 1fr; }
     .grid2, .grid3 { grid-template-columns: 1fr; }
+    .balance-grid, .funding-flow { grid-template-columns: 1fr !important; }
+    .funding-actions { justify-content: flex-start; }
     .market-grid { grid-template-columns: 1fr 1fr; }
     .col-span2 { grid-column: span 1; }
   }
@@ -372,7 +379,7 @@
     <div id="panel-dashboard" class="panel active">
 
       <div style="background: linear-gradient(135deg, rgba(108,99,255,0.1), rgba(34,197,94,0.1)); border: 0.5px solid var(--border2); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;">
-        <div class="balance-grid">
+        <div class="balance-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(220px, auto); align-items:center;">
           <div class="balance-box">
             <div class="balance-label">Wallet Balance</div>
             <div class="balance-value" id="top-wallet-balance">—</div>
@@ -380,6 +387,10 @@
           <div class="balance-box">
             <div class="balance-label">Options Balance</div>
             <div class="balance-value" id="top-options-balance">—</div>
+          </div>
+          <div class="funding-actions">
+            <button class="btn btn-primary" onclick="openFundingPortal('deposit')"><i class="ti ti-arrow-down-to-arc"></i> Deposit</button>
+            <button class="btn btn-ghost" onclick="openFundingPortal('withdrawal')"><i class="ti ti-arrow-up-from-arc"></i> Withdraw</button>
           </div>
         </div>
         <div style="font-size: 12px; color: var(--text2); margin-top: 4px;">
@@ -517,7 +528,7 @@
         <div class="card-title"><i class="ti ti-wallet"></i> Deposit & Withdraw</div>
         <div class="alert info" style="margin-bottom:14px;">
           <i class="ti ti-info-circle"></i>
-          <div>Deposits and withdrawals open in Deriv Cashier so payment method selection, account verification, and withdrawal email confirmation stay inside Deriv's secure flow.</div>
+          <div>Deposits and withdrawals open in the Dcash funding portal. Complete the funding flow there, then return here and reconnect or refresh balances.</div>
         </div>
         <div class="balance-grid">
           <div class="balance-box">
@@ -528,14 +539,36 @@
             <div class="balance-label">Options Balance</div>
             <div class="balance-value" id="funds-options-balance">—</div>
           </div>
+          <div class="balance-box">
+            <div class="balance-label">Total Deposits</div>
+            <div class="balance-value" id="funds-total-deposits">—</div>
+          </div>
+          <div class="balance-box">
+            <div class="balance-label">Total Withdrawals</div>
+            <div class="balance-value" id="funds-total-withdrawals">—</div>
+          </div>
         </div>
         <div class="btn-row" style="margin-top:14px;">
-          <button class="btn btn-primary" onclick="openDerivCashier('deposit')"><i class="ti ti-arrow-down-to-arc"></i> Deposit</button>
-          <button class="btn btn-ghost" onclick="openDerivCashier('withdrawal')"><i class="ti ti-arrow-up-from-arc"></i> Withdraw</button>
-          <button class="btn btn-ghost" onclick="openDerivCashier('cashier')"><i class="ti ti-external-link"></i> Open Cashier</button>
+          <button class="btn btn-primary" onclick="openFundingPortal('deposit')"><i class="ti ti-arrow-down-to-arc"></i> Deposit</button>
+          <button class="btn btn-ghost" onclick="openFundingPortal('withdrawal')"><i class="ti ti-arrow-up-from-arc"></i> Withdraw</button>
+          <button class="btn btn-ghost" onclick="openFundingPortal('portal')"><i class="ti ti-external-link"></i> Open Dcash</button>
+        </div>
+        <div class="funding-flow">
+          <div class="flow-step">
+            <strong>1. Open Dcash</strong>
+            <span>Choose Deposit or Withdraw and sign in to the funding portal.</span>
+          </div>
+          <div class="flow-step">
+            <strong>2. Complete Request</strong>
+            <span>Follow the portal instructions for payment method, amount, and confirmation.</span>
+          </div>
+          <div class="flow-step">
+            <strong>3. Refresh Bot</strong>
+            <span>Reconnect the bot after the transaction settles to update balances.</span>
+          </div>
         </div>
         <div style="font-size:12px;color:var(--text3);margin-top:12px;line-height:1.5;">
-          Withdrawals may require account verification and Deriv's email confirmation step. Available payment methods and limits depend on your country, currency, and account status.
+          Totals are shown when the funding portal exposes transaction history to this app. Until then, use the Dcash portal for deposit and withdrawal history.
         </div>
       </div>
     </div>
@@ -1272,15 +1305,16 @@ function setBalanceStatus(kind, label, currency = state.conn.currency || 'USD') 
   if (fundsEl) fundsEl.textContent = label;
 }
 
-function openDerivCashier(action = 'cashier') {
+function openFundingPortal(action = 'portal') {
+  const baseUrl = 'https://app.dcash.africa';
   const paths = {
-    deposit: 'https://app.deriv.com/cashier/deposit',
-    withdrawal: 'https://app.deriv.com/cashier/withdrawal',
-    cashier: 'https://app.deriv.com/cashier',
+    deposit: baseUrl,
+    withdrawal: baseUrl,
+    portal: baseUrl,
   };
-  const url = paths[action] || paths.cashier;
+  const url = paths[action] || baseUrl;
   window.open(url, '_blank', 'noopener,noreferrer');
-  addLog('info','Funds',`Opening Deriv Cashier: ${action}`);
+  addLog('info','Funds',`Opening Dcash funding portal: ${action}`);
 }
 
 // ─── WS MESSAGE HANDLING (shared by legacy + new API) ────────────────────────
