@@ -726,7 +726,7 @@ const state = {
   },
   market: { symbol: null, label: null },
   demo: false,
-  conn: { connected: false, ws: null, pingInterval: null, balancePoll: null, api: null, loginid: null, currency: 'USD', balanceAccount: 'current', balanceFallbackTried: false },
+  conn: { connected: false, ws: null, pingInterval: null, balancePoll: null, api: null, loginid: null, currency: 'USD', balanceModeIndex: 0 },
   logs: [],
   analysis: {
     priceHistory: [],
@@ -1087,16 +1087,37 @@ function onProposalResponse(prop) {
   addLog('info','Trade',`Quote received (ask $${parseFloat(prop.ask_price).toFixed(2)}) — buying…`);
 }
 
-function balanceRequest(subscribe = false, account = 'current') {
-  const req = { balance: 1, account };
+function balanceModes() {
+  const modes = [];
+  if (state.conn.loginid) modes.push(state.conn.loginid);
+  modes.push(undefined, 'current', 'all');
+  return modes;
+}
+
+function balanceRequest(subscribe = false, account) {
+  const req = { balance: 1 };
+  if (account) req.account = account;
   if (subscribe) req.subscribe = 1;
   return req;
 }
 
-function requestAccountBalance(subscribe = false, account = state.conn.balanceAccount || 'current') {
+function requestAccountBalance(subscribe = false, account = balanceModes()[state.conn.balanceModeIndex]) {
   const ws = state.conn.ws;
   if (!ws || ws.readyState !== 1) return;
   ws.send(JSON.stringify(balanceRequest(subscribe, account)));
+  addLog('info','Balance',`Fetching balance${account ? ' for '+account : ''}`);
+}
+
+function retryAccountBalance(subscribe = false, errorMessage = '') {
+  const modes = balanceModes();
+  if (state.conn.balanceModeIndex < modes.length - 1) {
+    state.conn.balanceModeIndex += 1;
+    const next = modes[state.conn.balanceModeIndex];
+    addLog('info','Balance',`Balance fetch failed${errorMessage ? ': '+errorMessage : ''} — retrying${next ? ' with '+next : ' without account filter'}`);
+    requestAccountBalance(subscribe, next);
+    return true;
+  }
+  return false;
 }
 
 function formatBalanceAmount(amount, currency = state.conn.currency || 'USD') {
@@ -1160,12 +1181,7 @@ function handleWsMessage(msg) {
     // Balance poll not supported on this connection → stop polling quietly
     // (no toast spam every 10s)
     if (msg.echo_req && msg.echo_req.balance !== undefined) {
-      if (!state.conn.balanceFallbackTried && msg.echo_req.account !== 'all') {
-        state.conn.balanceFallbackTried = true;
-        state.conn.balanceAccount = 'all';
-        addLog('info','API','Balance request failed — retrying with all accounts');
-        requestAccountBalance(Boolean(msg.echo_req.subscribe), 'all');
-      } else {
+      if (!retryAccountBalance(Boolean(msg.echo_req.subscribe), msg.error.message || '')) {
         if (state.conn.balancePoll) { clearInterval(state.conn.balancePoll); state.conn.balancePoll = null; }
         addLog('warn','API','Balance refresh not supported on this connection: ' + (msg.error.message || ''));
       }
@@ -1224,7 +1240,10 @@ function handleWsMessage(msg) {
 
 function updateBalance(bal) {
   const normalized = normalizeBalancePayload(bal);
-  if (!normalized) return;
+  if (!normalized) {
+    addLog('warn','Balance','Received balance response in an unknown format');
+    return;
+  }
   const amount = Number(normalized.balance);
   if (Number.isFinite(amount)) {
     const currency = normalized.currency || state.conn.currency || 'USD';
