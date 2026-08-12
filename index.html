@@ -350,6 +350,9 @@
     <button class="nav-item" onclick="showPanel('config')">
       <i class="ti ti-settings-2"></i> Bot Config
     </button>
+    <button class="nav-item" onclick="showPanel('funds')">
+      <i class="ti ti-wallet"></i> Deposit & Withdraw
+    </button>
     <div class="sidebar-section">Analysis</div>
     <button class="nav-item" onclick="showPanel('analysis')">
       <i class="ti ti-brain"></i> Gap Analysis
@@ -506,6 +509,35 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- FUNDS -->
+    <div id="panel-funds" class="panel">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-wallet"></i> Deposit & Withdraw</div>
+        <div class="alert info" style="margin-bottom:14px;">
+          <i class="ti ti-info-circle"></i>
+          <div>Deposits and withdrawals open in Deriv Cashier so payment method selection, account verification, and withdrawal email confirmation stay inside Deriv's secure flow.</div>
+        </div>
+        <div class="balance-grid">
+          <div class="balance-box">
+            <div class="balance-label">Wallet Balance</div>
+            <div class="balance-value" id="funds-wallet-balance">—</div>
+          </div>
+          <div class="balance-box">
+            <div class="balance-label">Options Balance</div>
+            <div class="balance-value" id="funds-options-balance">—</div>
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn btn-primary" onclick="openDerivCashier('deposit')"><i class="ti ti-arrow-down-to-arc"></i> Deposit</button>
+          <button class="btn btn-ghost" onclick="openDerivCashier('withdrawal')"><i class="ti ti-arrow-up-from-arc"></i> Withdraw</button>
+          <button class="btn btn-ghost" onclick="openDerivCashier('cashier')"><i class="ti ti-external-link"></i> Open Cashier</button>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-top:12px;line-height:1.5;">
+          Withdrawals may require account verification and Deriv's email confirmation step. Available payment methods and limits depend on your country, currency, and account status.
+        </div>
+      </div>
     </div>
 
     <!-- MARKET -->
@@ -1218,8 +1250,10 @@ function setDisplayedBalance(kind, amount, currency = state.conn.currency || 'US
   const formatted = formatBalanceAmount(amount, currency);
   const aiEl = document.getElementById(`ai-${kind}-balance`);
   const topEl = document.getElementById(`top-${kind}-balance`);
+  const fundsEl = document.getElementById(`funds-${kind}-balance`);
   if (aiEl) aiEl.textContent = formatted;
   if (topEl) topEl.textContent = formatted;
+  if (fundsEl) fundsEl.textContent = formatted;
   document.getElementById('top-currency').textContent = currency;
 }
 
@@ -1232,8 +1266,21 @@ function setBalanceStatus(kind, label, currency = state.conn.currency || 'USD') 
   }
   const aiEl = document.getElementById(`ai-${kind}-balance`);
   const topEl = document.getElementById(`top-${kind}-balance`);
+  const fundsEl = document.getElementById(`funds-${kind}-balance`);
   if (aiEl) aiEl.textContent = label;
   if (topEl) topEl.textContent = label;
+  if (fundsEl) fundsEl.textContent = label;
+}
+
+function openDerivCashier(action = 'cashier') {
+  const paths = {
+    deposit: 'https://app.deriv.com/cashier/deposit',
+    withdrawal: 'https://app.deriv.com/cashier/withdrawal',
+    cashier: 'https://app.deriv.com/cashier',
+  };
+  const url = paths[action] || paths.cashier;
+  window.open(url, '_blank', 'noopener,noreferrer');
+  addLog('info','Funds',`Opening Deriv Cashier: ${action}`);
 }
 
 // ─── WS MESSAGE HANDLING (shared by legacy + new API) ────────────────────────
