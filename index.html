@@ -726,7 +726,7 @@ const state = {
   },
   market: { symbol: null, label: null },
   demo: false,
-  conn: { connected: false, ws: null, pingInterval: null, balancePoll: null, api: null, loginid: null, currency: 'USD', balanceModeIndex: 0 },
+  conn: { connected: false, ws: null, pingInterval: null, balancePoll: null, balanceRetryTimer: null, api: null, loginid: null, currency: 'USD', balanceModeIndex: 0, balanceLoaded: false },
   logs: [],
   analysis: {
     priceHistory: [],
@@ -1106,6 +1106,13 @@ function requestAccountBalance(subscribe = false, account = balanceModes()[state
   if (!ws || ws.readyState !== 1) return;
   ws.send(JSON.stringify(balanceRequest(subscribe, account)));
   addLog('info','Balance',`Fetching balance${account ? ' for '+account : ''}`);
+  if (!state.conn.balanceLoaded) {
+    if (state.conn.balanceRetryTimer) clearTimeout(state.conn.balanceRetryTimer);
+    state.conn.balanceRetryTimer = setTimeout(() => {
+      state.conn.balanceRetryTimer = null;
+      if (!state.conn.balanceLoaded) retryAccountBalance(subscribe, 'no response');
+    }, 2500);
+  }
 }
 
 function retryAccountBalance(subscribe = false, errorMessage = '') {
@@ -1247,8 +1254,15 @@ function updateBalance(bal) {
   const amount = Number(normalized.balance);
   if (Number.isFinite(amount)) {
     const currency = normalized.currency || state.conn.currency || 'USD';
+    const wasLoaded = state.conn.balanceLoaded;
     state.conn.currency = currency;
+    state.conn.balanceLoaded = true;
+    if (state.conn.balanceRetryTimer) {
+      clearTimeout(state.conn.balanceRetryTimer);
+      state.conn.balanceRetryTimer = null;
+    }
     setDisplayedBalance(amount, currency);
+    if (!wasLoaded) addLog('win','Balance',`Balance fetched: ${formatBalanceAmount(amount, currency)}`);
   }
 }
 
@@ -1597,8 +1611,8 @@ function connectLegacy() {
       state.conn.connected = true;
       state.conn.api = 'v3';
       state.conn.loginid = acc.loginid;
-      state.conn.balanceAccount = 'current';
-      state.conn.balanceFallbackTried = false;
+      state.conn.balanceModeIndex = 0;
+      state.conn.balanceLoaded = false;
       
       const initialBalance = acc.balance ?? acc.account_balance;
       
@@ -1728,12 +1742,14 @@ function disconnectDeriv() {
   if (state.conn.ws) { try { state.conn.ws.close(); } catch {} }
   if (state.conn.pingInterval) clearInterval(state.conn.pingInterval);
   if (state.conn.balancePoll) clearInterval(state.conn.balancePoll);
+  if (state.conn.balanceRetryTimer) clearTimeout(state.conn.balanceRetryTimer);
   state.conn.connected = false;
   state.conn.api = null;
   state.conn.loginid = null;
   state.conn.currency = 'USD';
-  state.conn.balanceAccount = 'current';
-  state.conn.balanceFallbackTried = false;
+  state.conn.balanceModeIndex = 0;
+  state.conn.balanceLoaded = false;
+  state.conn.balanceRetryTimer = null;
   state.bot.running = false;
   state.bot.state = 'idle';
 
@@ -1823,8 +1839,8 @@ async function connectNewAPI() {
       state.conn.connected = true;
       state.conn.api = 'new';
       state.conn.loginid = accountId;
-      state.conn.balanceAccount = 'current';
-      state.conn.balanceFallbackTried = false;
+      state.conn.balanceModeIndex = 0;
+      state.conn.balanceLoaded = false;
       
       // Set status to connected
       document.getElementById('conn-dot').style.background = 'var(--green)';
