@@ -1311,8 +1311,8 @@ function updateBalance(msg) {
       clearTimeout(state.conn.balanceRetryTimer);
       state.conn.balanceRetryTimer = null;
     }
-    setDisplayedBalance('wallet', amount, currency);
-    if (!wasLoaded) addLog('win','Balance',`Wallet balance fetched: ${formatBalanceAmount(amount, currency)}`);
+    addLog('info','Balance',`Trading balance stream: ${formatBalanceAmount(amount, currency)}`);
+    if (!wasLoaded) addLog('info','Balance','Wallet balance requires Wallet REST API access');
   }
 }
 
@@ -1336,6 +1336,76 @@ function applyRestAccountBalance(account, source = 'REST accounts') {
   setDisplayedBalance('options', amount, currency);
   addLog('win','Balance',`${source}: ${formatBalanceAmount(amount, currency)}`);
   return true;
+}
+
+function walletAmountOf(wallet) {
+  const candidates = [
+    wallet?.balance,
+    wallet?.available_balance,
+    wallet?.converted_balance,
+    wallet?.converted_amount,
+    wallet?.balances?.available,
+    wallet?.balances?.total,
+    wallet?.balances?.balance,
+    wallet?.amount,
+    wallet?.total,
+  ];
+  for (const value of candidates) {
+    if (value && typeof value === 'object') {
+      const nested = value.amount ?? value.value ?? value.balance ?? value.total;
+      if (Number.isFinite(Number(nested))) return Number(nested);
+    } else if (Number.isFinite(Number(value))) {
+      return Number(value);
+    }
+  }
+  return NaN;
+}
+
+function walletCurrencyOf(wallet) {
+  return wallet?.currency || wallet?.wallet_currency || wallet?.converted_currency || wallet?.balance?.currency || wallet?.balances?.currency || state.conn.currency || 'USD';
+}
+
+function findWallet(wallets) {
+  return wallets.find(wallet => walletCurrencyOf(wallet) === 'USD') || wallets[0];
+}
+
+async function getWallets(token, appId) {
+  const res = await fetch('https://api.derivws.com/wallet/v1/wallets?conversion_currency=USD', {
+    method: 'GET',
+    headers: { 'Authorization': 'Bearer '+token, 'Deriv-App-ID': appId }
+  });
+  const raw = await res.text();
+  let body = {};
+  try { body = JSON.parse(raw); } catch {}
+  if (!res.ok) {
+    const msg = body.errors?.[0]?.message || body.message || raw.slice(0,200) || res.statusText;
+    throw new Error(`Wallet request failed (${res.status}): ${msg}` + (res.status===403 ? ' — token needs payment scope.' : ''));
+  }
+  const data = body.data || body.wallets || body.items || [];
+  return Array.isArray(data) ? data : [data];
+}
+
+function applyWalletBalance(wallet, source = 'Wallet REST') {
+  const amount = walletAmountOf(wallet);
+  if (!Number.isFinite(amount)) return false;
+  const currency = walletCurrencyOf(wallet);
+  setDisplayedBalance('wallet', amount, currency);
+  addLog('win','Balance',`${source}: ${formatBalanceAmount(amount, currency)}`);
+  return true;
+}
+
+async function refreshWalletBalance(token, appId) {
+  try {
+    const wallets = await getWallets(token, appId);
+    if (!wallets.length) {
+      addLog('warn','Balance','No wallets returned by Wallet REST API');
+      return false;
+    }
+    return applyWalletBalance(findWallet(wallets));
+  } catch (e) {
+    addLog('warn','Balance',e.message);
+    return false;
+  }
 }
 
 function cancelPendingTrade(reason) {
@@ -1881,6 +1951,7 @@ async function fetchNewAccounts() {
     showAuthResultNew('success', `Found ${accounts.length} account(s). Account ID auto-filled: ${accountIdOf(first)}`);
     addLog('info','Auth (New)','Accounts fetched: '+accounts.map(a=>accountIdOf(a)).filter(Boolean).join(', '));
     applyRestAccountBalance(first, 'REST account preview');
+    await refreshWalletBalance(token, appId);
   } catch(e) {
     showAuthResultNew('danger', 'Request failed: '+e.message+'. This may be a CORS issue — the new REST API may need a backend proxy.');
     addLog('warn','Auth (New)','Fetch error: '+e.message);
@@ -1904,6 +1975,7 @@ async function connectNewAPI() {
     } catch (e) {
       addLog('warn','Auth (New)','Could not prefetch REST account balance: '+e.message);
     }
+    await refreshWalletBalance(token, appId);
 
     const res = await fetch(`https://api.derivws.com/trading/v1/options/accounts/${accountId}/otp`, {
       method: 'POST',
