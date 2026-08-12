@@ -1088,6 +1088,7 @@ function onProposalResponse(prop) {
 }
 
 function balanceModes() {
+  if (state.conn.api === 'new') return [undefined];
   const modes = [];
   const loginid = state.conn.loginid || '';
   if (loginid) modes.push(loginid);
@@ -1100,7 +1101,8 @@ function balanceModes() {
 }
 
 function balanceRequest(subscribe = false, account) {
-  const req = { balance: 1, passthrough: { balance_account: account || 'default' } };
+  const req = { balance: 1 };
+  if (state.conn.api !== 'new') req.passthrough = { balance_account: account || 'default' };
   if (account) req.account = account;
   if (subscribe) req.subscribe = 1;
   return req;
