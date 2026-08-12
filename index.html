@@ -1089,7 +1089,12 @@ function onProposalResponse(prop) {
 
 function balanceModes() {
   const modes = [];
-  if (state.conn.loginid) modes.push(state.conn.loginid);
+  const loginid = state.conn.loginid || '';
+  if (loginid) modes.push(loginid);
+  if (/^ROT/i.test(loginid)) {
+    modes.push('all');
+    return modes;
+  }
   modes.push(undefined, 'current', 'all');
   return modes;
 }
@@ -1256,7 +1261,7 @@ function updateBalance(msg) {
     addLog('warn','Balance','Received balance response in an unknown format');
     return;
   }
-  const responseLoginId = normalized.loginid || msg.balance?.loginid || msg.balance?.account || msg.balance?.account_id;
+  const responseLoginId = normalized.loginid || msg.balance?.loginid || msg.balance?.account || msg.balance?.account_id || msg.echo_req?.account;
   const requestedAccount = msg.echo_req?.account || msg.passthrough?.balance_account || msg.echo_req?.passthrough?.balance_account;
   const exactAccountRequested = requestedAccount && requestedAccount !== 'default' && requestedAccount !== 'current' && requestedAccount !== 'all';
   if (responseLoginId && state.conn.loginid && !accountIdsMatch(responseLoginId, state.conn.loginid)) {
