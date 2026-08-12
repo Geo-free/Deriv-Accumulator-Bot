@@ -285,6 +285,7 @@
         <div class="form-group">
           <label>Personal Access Token (PAT)</label>
           <input type="password" id="new-api-token" placeholder="Your PAT token…" autocomplete="off">
+          <div style="font-size:11px;color:var(--text3);margin-top:6px;">Wallet balance requires a PAT with <code>payment</code> scope. Options balance requires <code>trade</code> scope.</div>
         </div>
         <div class="form-group">
           <label>App ID</label>
@@ -1222,6 +1223,19 @@ function setDisplayedBalance(kind, amount, currency = state.conn.currency || 'US
   document.getElementById('top-currency').textContent = currency;
 }
 
+function setBalanceStatus(kind, label, currency = state.conn.currency || 'USD') {
+  const target = state.conn.balances[kind];
+  if (target) {
+    target.amount = null;
+    target.currency = currency;
+    target.loaded = false;
+  }
+  const aiEl = document.getElementById(`ai-${kind}-balance`);
+  const topEl = document.getElementById(`top-${kind}-balance`);
+  if (aiEl) aiEl.textContent = label;
+  if (topEl) topEl.textContent = label;
+}
+
 // ─── WS MESSAGE HANDLING (shared by legacy + new API) ────────────────────────
 function handleWsMessage(msg) {
   if (msg.error) {
@@ -1339,14 +1353,26 @@ function applyRestAccountBalance(account, source = 'REST accounts') {
 }
 
 function walletAmountOf(wallet) {
+  const attrs = wallet?.attributes || {};
   const candidates = [
     wallet?.balance,
     wallet?.available_balance,
+    wallet?.available,
     wallet?.converted_balance,
     wallet?.converted_amount,
     wallet?.balances?.available,
     wallet?.balances?.total,
     wallet?.balances?.balance,
+    wallet?.balance?.available,
+    wallet?.balance?.amount,
+    wallet?.balance?.total,
+    wallet?.balance?.value,
+    wallet?.balance?.balance,
+    attrs.balance,
+    attrs.available_balance,
+    attrs.available,
+    attrs.converted_balance,
+    attrs.converted_amount,
     wallet?.amount,
     wallet?.total,
   ];
@@ -1362,7 +1388,8 @@ function walletAmountOf(wallet) {
 }
 
 function walletCurrencyOf(wallet) {
-  return wallet?.currency || wallet?.wallet_currency || wallet?.converted_currency || wallet?.balance?.currency || wallet?.balances?.currency || state.conn.currency || 'USD';
+  const attrs = wallet?.attributes || {};
+  return wallet?.currency || wallet?.wallet_currency || wallet?.converted_currency || wallet?.balance?.currency || wallet?.balances?.currency || attrs.currency || attrs.wallet_currency || state.conn.currency || 'USD';
 }
 
 function findWallet(wallets) {
@@ -1381,7 +1408,7 @@ async function getWallets(token, appId) {
     const msg = body.errors?.[0]?.message || body.message || raw.slice(0,200) || res.statusText;
     throw new Error(`Wallet request failed (${res.status}): ${msg}` + (res.status===403 ? ' — token needs payment scope.' : ''));
   }
-  const data = body.data || body.wallets || body.items || [];
+  const data = body.data?.wallets || body.data?.items || body.data || body.wallets || body.items || [];
   return Array.isArray(data) ? data : [data];
 }
 
@@ -1398,11 +1425,19 @@ async function refreshWalletBalance(token, appId) {
   try {
     const wallets = await getWallets(token, appId);
     if (!wallets.length) {
+      setBalanceStatus('wallet', 'No wallet');
       addLog('warn','Balance','No wallets returned by Wallet REST API');
       return false;
     }
-    return applyWalletBalance(findWallet(wallets));
+    const wallet = findWallet(wallets);
+    if (!applyWalletBalance(wallet)) {
+      setBalanceStatus('wallet', 'Format?');
+      addLog('warn','Balance','Wallet REST response shape not recognized: '+Object.keys(wallet || {}).join(', '));
+      return false;
+    }
+    return true;
   } catch (e) {
+    setBalanceStatus('wallet', /payment scope|403/i.test(e.message) ? 'No scope' : 'Error');
     addLog('warn','Balance',e.message);
     return false;
   }
