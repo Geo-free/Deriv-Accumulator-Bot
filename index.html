@@ -1274,6 +1274,11 @@ function updateBalance(msg) {
   const amount = Number(normalized.balance);
   if (Number.isFinite(amount)) {
     const currency = normalized.currency || state.conn.currency || 'USD';
+    const currentAmount = Number(String(document.getElementById('top-balance').textContent).replace(/[^\d.-]/g, ''));
+    if (state.conn.api === 'new' && state.conn.balanceLoaded && amount === 0 && Number.isFinite(currentAmount) && currentAmount > 0) {
+      addLog('info','Balance','Ignoring zero WebSocket balance because REST account balance is already loaded');
+      return;
+    }
     const wasLoaded = state.conn.balanceLoaded;
     state.conn.currency = currency;
     state.conn.balanceLoaded = true;
@@ -1284,6 +1289,29 @@ function updateBalance(msg) {
     setDisplayedBalance(amount, currency);
     if (!wasLoaded) addLog('win','Balance',`Balance fetched: ${formatBalanceAmount(amount, currency)}`);
   }
+}
+
+function accountIdOf(account) {
+  return account?.account_id || account?.id || account?.loginid || account?.account;
+}
+
+function applyRestAccountBalance(account, source = 'REST accounts') {
+  const normalized = normalizeBalancePayload(account);
+  if (!normalized) return false;
+  const accountId = accountIdOf(account) || normalized.loginid;
+  if (state.conn.loginid && accountId && !accountIdsMatch(accountId, state.conn.loginid)) return false;
+  const amount = Number(normalized.balance);
+  if (!Number.isFinite(amount)) return false;
+  const currency = normalized.currency || account?.currency || state.conn.currency || 'USD';
+  state.conn.currency = currency;
+  state.conn.balanceLoaded = true;
+  if (state.conn.balanceRetryTimer) {
+    clearTimeout(state.conn.balanceRetryTimer);
+    state.conn.balanceRetryTimer = null;
+  }
+  setDisplayedBalance(amount, currency);
+  addLog('win','Balance',`${source}: ${formatBalanceAmount(amount, currency)}`);
+  return true;
 }
 
 function cancelPendingTrade(reason) {
@@ -1792,31 +1820,39 @@ function showAuthResult(type, msg) {
 }
 
 // ─── New REST + OTP API ───────────────────────────────────────────────────────
+async function getNewAccounts(token, appId) {
+  const res = await fetch('https://api.derivws.com/trading/v1/options/accounts', {
+    method: 'GET',
+    headers: { 'Authorization': 'Bearer '+token, 'Deriv-App-ID': appId }
+  });
+  const raw = await res.text();
+  let body = {};
+  try { body = JSON.parse(raw); } catch {}
+  if (!res.ok) {
+    const msg = body.errors?.[0]?.message || body.message || raw.slice(0,200) || res.statusText;
+    throw new Error(`Server error (${res.status}): ${msg}` + (res.status===401 ? ' — check that your PAT token is valid and not expired.' : ''));
+  }
+  const data = body.data || body.accounts || [];
+  return Array.isArray(data) ? data : [data];
+}
+
+function findNewAccount(accounts, accountId) {
+  return accounts.find(account => accountIdsMatch(accountIdOf(account), accountId)) || accounts[0];
+}
+
 async function fetchNewAccounts() {
   const token = document.getElementById('new-api-token').value.trim();
   const appId = document.getElementById('new-app-id').value.trim();
   if (!token || !appId) { showAuthResultNew('danger', 'Enter your PAT token and App ID first.'); return; }
   showAuthResultNew('info', 'Fetching accounts…');
   try {
-    const res = await fetch('https://api.derivws.com/trading/v1/options/accounts', {
-      method: 'GET',
-      headers: { 'Authorization': 'Bearer '+token, 'Deriv-App-ID': appId }
-    });
-    const raw = await res.text();
-    let body = {};
-    try { body = JSON.parse(raw); } catch {}
-    if (!res.ok) {
-      const msg = body.errors?.[0]?.message || body.message || raw.slice(0,200) || res.statusText;
-      showAuthResultNew('danger', `Server error (${res.status}): ${msg}` + (res.status===401 ? ' — check that your PAT token is valid and not expired.' : ''));
-      addLog('warn','Auth (New)',`Accounts request failed (${res.status}): ${msg}`);
-      return;
-    }
-    const accounts = body.data || body.accounts || [];
+    const accounts = await getNewAccounts(token, appId);
     if (!accounts.length) { showAuthResultNew('info', 'No accounts found. The account may not exist yet.'); return; }
     const first = accounts[0];
-    document.getElementById('new-account-id').value = first.account_id || first.id || '';
-    showAuthResultNew('success', `Found ${accounts.length} account(s). Account ID auto-filled: ${first.account_id || first.id}`);
-    addLog('info','Auth (New)','Accounts fetched: '+accounts.map(a=>a.account_id||a.id).join(', '));
+    document.getElementById('new-account-id').value = accountIdOf(first) || '';
+    showAuthResultNew('success', `Found ${accounts.length} account(s). Account ID auto-filled: ${accountIdOf(first)}`);
+    addLog('info','Auth (New)','Accounts fetched: '+accounts.map(a=>accountIdOf(a)).filter(Boolean).join(', '));
+    applyRestAccountBalance(first, 'REST account preview');
   } catch(e) {
     showAuthResultNew('danger', 'Request failed: '+e.message+'. This may be a CORS issue — the new REST API may need a backend proxy.');
     addLog('warn','Auth (New)','Fetch error: '+e.message);
@@ -1830,6 +1866,17 @@ async function connectNewAPI() {
   if (!token||!appId||!accountId) { showAuthResultNew('danger', 'Fill in token, App ID, and Account ID.'); return; }
   showAuthResultNew('info', 'Requesting one-time WebSocket URL…');
   try {
+    let selectedAccount = null;
+    try {
+      const accounts = await getNewAccounts(token, appId);
+      selectedAccount = findNewAccount(accounts, accountId);
+      if (selectedAccount && accountIdOf(selectedAccount)) {
+        addLog('info','Auth (New)',`Selected REST account: ${accountIdOf(selectedAccount)}`);
+      }
+    } catch (e) {
+      addLog('warn','Auth (New)','Could not prefetch REST account balance: '+e.message);
+    }
+
     const res = await fetch(`https://api.derivws.com/trading/v1/options/accounts/${accountId}/otp`, {
       method: 'POST',
       headers: { 'Authorization': 'Bearer '+token, 'Deriv-App-ID': appId, 'Content-Type': 'application/json' }
@@ -1868,9 +1915,10 @@ async function connectNewAPI() {
       onAuthSuccess({ 
         loginid: accountId, 
         balance: '—', 
-        currency: 'USD', 
+        currency: selectedAccount?.currency || 'USD',
         isVirtual: accountId.startsWith('D') 
       });
+      if (selectedAccount) applyRestAccountBalance(selectedAccount, 'REST account balance');
       showAuthResultNew('success', 'Connected via new OTP API!');
       addLog('win','Auth (New)','Connected: '+accountId);
       
