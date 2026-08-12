@@ -1095,7 +1095,7 @@ function balanceModes() {
 }
 
 function balanceRequest(subscribe = false, account) {
-  const req = { balance: 1 };
+  const req = { balance: 1, passthrough: { balance_account: account || 'default' } };
   if (account) req.account = account;
   if (subscribe) req.subscribe = 1;
   return req;
@@ -1142,6 +1142,10 @@ function formatBalanceAmount(amount, currency = state.conn.currency || 'USD') {
   }
 }
 
+function accountIdsMatch(a, b) {
+  return String(a || '').toUpperCase() === String(b || '').toUpperCase();
+}
+
 function normalizeBalancePayload(payload) {
   if (payload === null || payload === undefined) return null;
   if (typeof payload === 'number' || typeof payload === 'string') {
@@ -1150,6 +1154,7 @@ function normalizeBalancePayload(payload) {
 
   const directBalance = payload.balance ?? payload.account_balance ?? payload.cash_balance;
   if (directBalance !== undefined) {
+    if (directBalance && typeof directBalance === 'object') return normalizeBalancePayload(directBalance);
     return {
       balance: directBalance,
       currency: payload.currency || state.conn.currency || 'USD',
@@ -1237,7 +1242,7 @@ function handleWsMessage(msg) {
   }
   switch (msg.msg_type) {
     case 'tick': handleLiveTick(msg.tick); break;
-    case 'balance': updateBalance(msg.balance); break;
+    case 'balance': updateBalance(msg); break;
     case 'proposal': onProposalResponse(msg.proposal); break;
     case 'buy': onBuyResponse(msg.buy); break;
     case 'proposal_open_contract': onContractUpdate(msg.proposal_open_contract); break;
@@ -1245,10 +1250,18 @@ function handleWsMessage(msg) {
   }
 }
 
-function updateBalance(bal) {
-  const normalized = normalizeBalancePayload(bal);
+function updateBalance(msg) {
+  const normalized = normalizeBalancePayload(msg.balance ?? msg);
   if (!normalized) {
     addLog('warn','Balance','Received balance response in an unknown format');
+    return;
+  }
+  const responseLoginId = normalized.loginid || msg.balance?.loginid || msg.balance?.account || msg.balance?.account_id;
+  const requestedAccount = msg.echo_req?.account || msg.passthrough?.balance_account || msg.echo_req?.passthrough?.balance_account;
+  const exactAccountRequested = requestedAccount && requestedAccount !== 'default' && requestedAccount !== 'current' && requestedAccount !== 'all';
+  if (responseLoginId && state.conn.loginid && !accountIdsMatch(responseLoginId, state.conn.loginid)) {
+    addLog('info','Balance',`Ignoring balance for ${responseLoginId}; connected account is ${state.conn.loginid}`);
+    if (!state.conn.balanceLoaded && exactAccountRequested) retryAccountBalance(Boolean(msg.echo_req?.subscribe), 'different account returned');
     return;
   }
   const amount = Number(normalized.balance);
@@ -1614,11 +1627,9 @@ function connectLegacy() {
       state.conn.balanceModeIndex = 0;
       state.conn.balanceLoaded = false;
       
-      const initialBalance = acc.balance ?? acc.account_balance;
-      
       onAuthSuccess({
         loginid: acc.loginid,
-        balance: initialBalance,
+        balance: '—',
         currency: acc.currency,
         isVirtual: acc.is_virtual,
       });
