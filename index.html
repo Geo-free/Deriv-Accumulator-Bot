@@ -1581,7 +1581,7 @@ function connectLegacy() {
       state.conn.balanceAccount = 'current';
       state.conn.balanceFallbackTried = false;
       
-      const initialBalance = acc.balance || acc.account_balance || '0';
+      const initialBalance = acc.balance ?? acc.account_balance;
       
       onAuthSuccess({
         loginid: acc.loginid,
@@ -1590,17 +1590,17 @@ function connectLegacy() {
         isVirtual: acc.is_virtual,
       });
       
-      requestAccountBalance(true);
-      
-      state.conn.pingInterval = setInterval(() => {
-        if (ws.readyState === 1) ws.send(JSON.stringify({ ping: 1 }));
-      }, 30000);
-      
       ws.onmessage = (ev) => {
         let msg;
         try { msg = JSON.parse(ev.data); } catch { return; }
         handleWsMessage(msg);
       };
+
+      requestAccountBalance(true);
+
+      state.conn.pingInterval = setInterval(() => {
+        if (ws.readyState === 1) ws.send(JSON.stringify({ ping: 1 }));
+      }, 30000);
     }
   };
 
@@ -1821,14 +1821,14 @@ async function connectNewAPI() {
       showAuthResultNew('success', 'Connected via new OTP API!');
       addLog('win','Auth (New)','Connected: '+accountId);
       
-      // Request balance subscription
-      requestAccountBalance(true);
-      
       ws.onmessage = (ev) => {
         let msg;
         try { msg = JSON.parse(ev.data); } catch { return; }
         handleWsMessage(msg);
       };
+
+      // Request balance subscription
+      requestAccountBalance(true);
       
       state.conn.pingInterval = setInterval(() => {
         if (ws.readyState === 1) ws.send(JSON.stringify({ ping: 1 }));
