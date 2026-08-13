@@ -1,5 +1,6 @@
 const FXMACRO_BASE = 'https://api.fxmacrodata.com/v1/calendar';
 const TICKATLAS_BASE = 'https://tickatlas.com/v1/calendar';
+const FOREXFACTORY_THIS_WEEK = 'https://nfs.faireconomy.media/ff_calendar_thisweek.json';
 
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -28,7 +29,9 @@ module.exports = async function handler(req, res) {
   let upstream;
   let headers = { accept: 'application/json' };
 
-  if (provider === 'tickatlas') {
+  if (provider === 'forexfactory') {
+    upstream = FOREXFACTORY_THIS_WEEK;
+  } else if (provider === 'tickatlas') {
     if (!apiKey) {
       res.status(400).json({ error: 'TickAtlas API key is required for forecast and previous values.' });
       return;

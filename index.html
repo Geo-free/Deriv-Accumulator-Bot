@@ -693,12 +693,13 @@
         <div class="card-title"><i class="ti ti-calendar-event"></i> Economic Calendar</div>
         <div class="alert info">
           <i class="ti ti-info-circle"></i>
-          <div>Use TickAtlas for forecast, previous, and actual values. FXMacroData is no-key, but only provides scheduled release times.</div>
+          <div>ForexFactory Free is the default source for forecast and previous values. FXMacroData is kept as a no-key schedule-only fallback.</div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Provider</label>
             <select id="cal-provider">
+              <option value="forexfactory">ForexFactory Free</option>
               <option value="tickatlas">TickAtlas Values Calendar</option>
               <option value="fxmacrodata">FXMacroData Schedule Only</option>
               <option value="businessquant">BusinessQuant Free</option>
@@ -708,7 +709,7 @@
           </div>
           <div class="form-group">
             <label>API Key</label>
-            <input type="password" id="cal-api-key" placeholder="Paste TickAtlas key for forecast/previous values">
+            <input type="password" id="cal-api-key" placeholder="Only needed for TickAtlas, FMP, or Trading Economics">
           </div>
         </div>
         <div class="form-row">
@@ -935,7 +936,7 @@ const state = {
   },
   calendar: {
     events: [],
-    provider: 'tickatlas',
+    provider: 'forexfactory',
     lastFetched: null,
     lastBlockKey: null,
     settings: {
@@ -1053,7 +1054,7 @@ function formatYMD(date) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-const CALENDAR_SETTINGS_VERSION = 'tickatlas-values-v1';
+const CALENDAR_SETTINGS_VERSION = 'forexfactory-values-v1';
 
 function calendarSettingsFromUI() {
   return {
@@ -1092,8 +1093,8 @@ function saveCalendarSettings(silent = false) {
 function loadCalendarSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem('derivBotCalendarSettings') || '{}');
-    if (saved.version !== CALENDAR_SETTINGS_VERSION && !['tickatlas','fxmacrodata'].includes(saved.provider)) {
-      saved.provider = 'tickatlas';
+    if (saved.version !== CALENDAR_SETTINGS_VERSION && saved.provider !== 'forexfactory') {
+      saved.provider = 'forexfactory';
       saved.countries = 'US';
       saved.currencies = 'USD';
       saved.importance = 1;
@@ -1190,7 +1191,7 @@ function calendarImpactParam(importance) {
 
 async function fetchEconomicCalendar() {
   const settings = calendarSettingsFromUI();
-  if (!settings.apiKey && !['fxmacrodata'].includes(settings.provider)) { toast('warn','Enter calendar API key first'); return; }
+  if (!settings.apiKey && !['forexfactory','fxmacrodata'].includes(settings.provider)) { toast('warn','Enter calendar API key first'); return; }
   saveCalendarSettings(true);
   const start = new Date();
   start.setHours(0,0,0,0);
@@ -1199,7 +1200,9 @@ async function fetchEconomicCalendar() {
   const from = formatYMD(start);
   const to = formatYMD(end);
   let url;
-  if (settings.provider === 'tickatlas') {
+  if (settings.provider === 'forexfactory') {
+    url = `${calendarProxyBase()}?provider=forexfactory&from=${from}&to=${to}`;
+  } else if (settings.provider === 'tickatlas') {
     const currencies = encodeURIComponent(settings.currencies || 'USD');
     const impact = calendarImpactParam(settings.importance);
     url = `${calendarProxyBase()}?provider=tickatlas&currency=${currencies}&from=${from}&to=${to}&apiKey=${encodeURIComponent(settings.apiKey)}${impact ? `&impact=${impact}` : ''}`;
@@ -1228,7 +1231,11 @@ async function fetchEconomicCalendar() {
       throw new Error(apiMessage);
     }
     const data = Array.isArray(body) ? body : (body.economicCalendar || body.data?.events || body.data || body.calendar || body.results || []);
-    const enriched = data.map(item => settings.provider === 'fxmacrodata' ? { ...item, currency: body.currency || settings.currencies, country: body.currency || settings.countries } : item);
+    const enriched = data.map(item => {
+      if (settings.provider === 'fxmacrodata') return { ...item, currency: body.currency || settings.currencies, country: body.currency || settings.countries };
+      if (settings.provider === 'forexfactory') return { ...item, currency: item.country, country: item.country };
+      return item;
+    });
     state.calendar.events = filteredCalendarEvents(enriched.map(item => normalizeCalendarEvent(item, settings.provider)).filter(Boolean), settings);
     state.calendar.lastFetched = Date.now();
     addLog('win','Calendar',`Loaded ${state.calendar.events.length} economic events from ${settings.provider}`);
