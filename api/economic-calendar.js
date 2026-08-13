@@ -1,4 +1,5 @@
 const FXMACRO_BASE = 'https://api.fxmacrodata.com/v1/calendar';
+const TICKATLAS_BASE = 'https://tickatlas.com/v1/calendar';
 
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,8 +20,32 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const currency = String(req.query.currency || 'USD').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6) || 'USD';
-  const upstream = `${FXMACRO_BASE}/${encodeURIComponent(currency)}`;
+  const provider = String(req.query.provider || 'fxmacrodata').toLowerCase();
+  const currency = String(req.query.currency || 'USD').toUpperCase().replace(/[^A-Z,]/g, '').slice(0, 40) || 'USD';
+  const impact = String(req.query.impact || '').toLowerCase().replace(/[^a-z]/g, '');
+  const apiKey = String(req.query.apiKey || '');
+
+  let upstream;
+  let headers = { accept: 'application/json' };
+
+  if (provider === 'tickatlas') {
+    if (!apiKey) {
+      res.status(400).json({ error: 'TickAtlas API key is required for forecast and previous values.' });
+      return;
+    }
+    const params = new URLSearchParams({
+      currencies: currency,
+      from: String(req.query.from || ''),
+      to: String(req.query.to || ''),
+      offset: '0',
+      limit: '100',
+    });
+    if (impact) params.set('impact', impact);
+    upstream = `${TICKATLAS_BASE}?${params.toString()}`;
+    headers['X-API-Key'] = apiKey;
+  } else {
+    upstream = `${FXMACRO_BASE}/${encodeURIComponent(currency.split(',')[0] || 'USD')}`;
+  }
 
   try {
     const upstreamRes = await fetch(upstream, {
