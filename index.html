@@ -693,14 +693,14 @@
         <div class="card-title"><i class="ti ti-calendar-event"></i> Economic Calendar</div>
         <div class="alert info">
           <i class="ti ti-info-circle"></i>
-          <div>ForexFactory Free is the default source for forecast and previous values. FXMacroData is kept as a no-key schedule-only fallback.</div>
+          <div>TickAtlas is the live-actual source. It needs an API key and auto-refreshes around release time; ForexFactory is forecast/previous only.</div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Provider</label>
             <select id="cal-provider">
-              <option value="forexfactory">ForexFactory Free</option>
-              <option value="tickatlas">TickAtlas Values Calendar</option>
+              <option value="tickatlas">TickAtlas Live Actual</option>
+              <option value="forexfactory">ForexFactory Forecast/Previous Only</option>
               <option value="fxmacrodata">FXMacroData Schedule Only</option>
               <option value="businessquant">BusinessQuant Free</option>
               <option value="fmp">Financial Modeling Prep (restricted)</option>
@@ -709,7 +709,7 @@
           </div>
           <div class="form-group">
             <label>API Key</label>
-            <input type="password" id="cal-api-key" placeholder="Only needed for TickAtlas, FMP, or Trading Economics">
+            <input type="password" id="cal-api-key" placeholder="Paste TickAtlas key for live actual values">
           </div>
         </div>
         <div class="form-row">
@@ -936,9 +936,10 @@ const state = {
   },
   calendar: {
     events: [],
-    provider: 'forexfactory',
+    provider: 'tickatlas',
     lastFetched: null,
     lastBlockKey: null,
+    lastAutoFetch: 0,
     settings: {
       countries: 'US',
       currencies: 'USD',
@@ -1054,7 +1055,7 @@ function formatYMD(date) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-const CALENDAR_SETTINGS_VERSION = 'forexfactory-values-v1';
+const CALENDAR_SETTINGS_VERSION = 'tickatlas-live-actual-v1';
 
 function calendarSettingsFromUI() {
   return {
@@ -1093,8 +1094,8 @@ function saveCalendarSettings(silent = false) {
 function loadCalendarSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem('derivBotCalendarSettings') || '{}');
-    if (saved.version !== CALENDAR_SETTINGS_VERSION && saved.provider !== 'forexfactory') {
-      saved.provider = 'forexfactory';
+    if (saved.version !== CALENDAR_SETTINGS_VERSION && saved.provider !== 'tickatlas') {
+      saved.provider = 'tickatlas';
       saved.countries = 'US';
       saved.currencies = 'USD';
       saved.importance = 1;
@@ -1189,7 +1190,7 @@ function calendarImpactParam(importance) {
   return '';
 }
 
-async function fetchEconomicCalendar() {
+async function fetchEconomicCalendar(silent = false) {
   const settings = calendarSettingsFromUI();
   if (!settings.apiKey && !['forexfactory','fxmacrodata'].includes(settings.provider)) { toast('warn','Enter calendar API key first'); return; }
   saveCalendarSettings(true);
@@ -1219,7 +1220,9 @@ async function fetchEconomicCalendar() {
     const country = encodeURIComponent(fmpCountryParam(settings.countries));
     url = `https://financialmodelingprep.com/stable/economic-calendar?country=${country}&from=${from}&to=${to}&apikey=${encodeURIComponent(settings.apiKey)}`;
   }
-  document.getElementById('calendar-list').innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px 0;">Fetching calendar…</div>';
+  if (!silent) {
+    document.getElementById('calendar-list').innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px 0;">Fetching calendar…</div>';
+  }
   try {
     const res = await fetch(url);
     const raw = await res.text();
@@ -1230,7 +1233,7 @@ async function fetchEconomicCalendar() {
       if (settings.provider === 'fmp' && res.status === 402) throw new Error('FMP says this economic calendar endpoint is restricted for this key. Choose BusinessQuant Free or upgrade the FMP plan.');
       throw new Error(apiMessage);
     }
-    const data = Array.isArray(body) ? body : (body.economicCalendar || body.data?.events || body.data || body.calendar || body.results || []);
+    const data = Array.isArray(body) ? body : (body.events || body.economicCalendar || body.data?.events || body.data || body.calendar || body.results || []);
     const enriched = data.map(item => {
       if (settings.provider === 'fxmacrodata') return { ...item, currency: body.currency || settings.currencies, country: body.currency || settings.countries };
       if (settings.provider === 'forexfactory') return { ...item, currency: item.country, country: item.country };
@@ -1238,16 +1241,33 @@ async function fetchEconomicCalendar() {
     });
     state.calendar.events = filteredCalendarEvents(enriched.map(item => normalizeCalendarEvent(item, settings.provider)).filter(Boolean), settings);
     state.calendar.lastFetched = Date.now();
-    addLog('win','Calendar',`Loaded ${state.calendar.events.length} economic events from ${settings.provider}`);
-    toast('success',`Loaded ${state.calendar.events.length} calendar events`);
+    if (!silent) {
+      addLog('win','Calendar',`Loaded ${state.calendar.events.length} economic events from ${settings.provider}`);
+      toast('success',`Loaded ${state.calendar.events.length} calendar events`);
+    }
     renderCalendar();
   } catch (e) {
-    state.calendar.events = [];
+    if (!silent) state.calendar.events = [];
     renderCalendar();
-    addLog('warn','Calendar','Calendar fetch failed: '+e.message);
-    document.getElementById('calendar-list').innerHTML = `<div style="color:var(--danger);font-size:13px;padding:12px 0;">${escapeHTML(e.message || 'Calendar fetch failed')}</div>`;
-    toast('danger', e.message || 'Calendar fetch failed');
+    if (!silent) addLog('warn','Calendar','Calendar fetch failed: '+e.message);
+    if (!silent) document.getElementById('calendar-list').innerHTML = `<div style="color:var(--danger);font-size:13px;padding:12px 0;">${escapeHTML(e.message || 'Calendar fetch failed')}</div>`;
+    if (!silent) toast('danger', e.message || 'Calendar fetch failed');
   }
+}
+
+function eventNeedsActualRefresh(event, now = Date.now()) {
+  if (state.calendar.provider !== 'tickatlas') return false;
+  if (event.actual !== '' && event.actual !== null && event.actual !== undefined) return false;
+  return now >= event.timestamp - 2 * 60000 && now <= event.timestamp + 30 * 60000;
+}
+
+function autoRefreshCalendarActuals() {
+  if (state.calendar.provider !== 'tickatlas') return;
+  if (!state.calendar.events.length) return;
+  if (Date.now() - state.calendar.lastAutoFetch < 30000) return;
+  if (!state.calendar.events.some(event => eventNeedsActualRefresh(event))) return;
+  state.calendar.lastAutoFetch = Date.now();
+  fetchEconomicCalendar(true);
 }
 
 function clearCalendarEvents() {
@@ -1284,12 +1304,13 @@ function renderCalendar() {
   }
   list.innerHTML = state.calendar.events.slice(0, 80).map(event => {
     const badge = event.importance >= 3 ? 'red' : event.importance === 2 ? 'amber' : 'gray';
+    const actualText = event.actual || (Date.now() < event.timestamp ? 'Pending' : 'Pending update');
     return `<div class="calendar-event">
       <div class="time">${event.date.toLocaleString([], {month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit'})}</div>
       <div>
         <div class="name">${escapeHTML(event.event)}</div>
         <div class="meta">${escapeHTML(event.country || 'Global')}${event.currency ? ' • '+escapeHTML(event.currency) : ''}${event.category ? ' • '+escapeHTML(event.category) : ''}</div>
-        <div class="calendar-values"><span>Forecast: ${escapeHTML(event.forecast || '—')}</span><span>Previous: ${escapeHTML(event.previous || '—')}</span><span>Actual: ${escapeHTML(event.actual || '—')}</span></div>
+        <div class="calendar-values"><span>Forecast: ${escapeHTML(event.forecast || '—')}</span><span>Previous: ${escapeHTML(event.previous || '—')}</span><span>Actual: ${escapeHTML(actualText)}</span></div>
       </div>
       <span class="badge ${badge}">${event.importance >= 3 ? 'High' : event.importance === 2 ? 'Medium' : 'Low'}</span>
     </div>`;
@@ -2139,6 +2160,7 @@ function runBotTick() {
 }
 setInterval(runBotTick, 1000); // watchdog only — ticks drive the fast path
 setInterval(renderCalendar, 60000);
+setInterval(autoRefreshCalendarActuals, 30000);
 
 // ─── DERIV API ────────────────────────────────────────────────────────────────
 function switchAuthTab(tab) {

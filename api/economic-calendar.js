@@ -52,7 +52,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const upstreamRes = await fetch(upstream, {
-      headers: { accept: 'application/json' },
+      headers,
     });
     const text = await upstreamRes.text();
     res.status(upstreamRes.status);
