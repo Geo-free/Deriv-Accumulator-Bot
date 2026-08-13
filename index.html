@@ -693,13 +693,14 @@
         <div class="card-title"><i class="ti ti-calendar-event"></i> Economic Calendar</div>
         <div class="alert info">
           <i class="ti ti-info-circle"></i>
-          <div>Financial Modeling Prep Basic Free is the default calendar source. Paste your FMP key, use a country code like US, then fetch events to activate the news guard.</div>
+          <div>BusinessQuant is the recommended free economic calendar source. FMP currently restricts this endpoint on some Basic Free keys.</div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Provider</label>
             <select id="cal-provider">
-              <option value="fmp">Financial Modeling Prep</option>
+              <option value="businessquant">BusinessQuant Free</option>
+              <option value="fmp">Financial Modeling Prep (restricted)</option>
               <option value="tradingeconomics">Trading Economics</option>
             </select>
           </div>
@@ -932,7 +933,7 @@ const state = {
   },
   calendar: {
     events: [],
-    provider: 'fmp',
+    provider: 'businessquant',
     lastFetched: null,
     lastBlockKey: null,
     settings: {
@@ -1050,7 +1051,7 @@ function formatYMD(date) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-const CALENDAR_SETTINGS_VERSION = 'fmp-free-v1';
+const CALENDAR_SETTINGS_VERSION = 'businessquant-free-v1';
 
 function calendarSettingsFromUI() {
   return {
@@ -1089,8 +1090,8 @@ function saveCalendarSettings(silent = false) {
 function loadCalendarSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem('derivBotCalendarSettings') || '{}');
-    if (saved.version !== CALENDAR_SETTINGS_VERSION && saved.provider !== 'fmp') {
-      saved.provider = 'fmp';
+    if (saved.version !== CALENDAR_SETTINGS_VERSION && saved.provider !== 'businessquant') {
+      saved.provider = 'businessquant';
       saved.countries = 'US';
       saved.currencies = 'USD';
       saved.importance = 1;
@@ -1128,21 +1129,21 @@ function escapeHTML(value) {
 }
 
 function normalizeCalendarEvent(raw, provider) {
-  const date = raw.Date || raw.date || raw.time || raw.releaseDate || raw.release_date;
+  const date = raw.Date || raw.date || raw.time || raw.releaseDate || raw.release_date || raw.next_release || raw.nextRelease || raw.release_at || raw.scheduled_at;
   const timestamp = Date.parse(String(date).replace(' ', 'T'));
   if (!Number.isFinite(timestamp)) return null;
   return {
-    id: String(raw.CalendarId || raw.CalendarID || raw.id || raw.eventId || `${provider}-${timestamp}-${raw.Event || raw.event || raw.title}`),
+    id: String(raw.CalendarId || raw.CalendarID || raw.id || raw.eventId || raw.code || `${provider}-${timestamp}-${raw.Event || raw.event || raw.title || raw.name}`),
     provider,
     timestamp,
     date: new Date(timestamp),
-    country: raw.Country || raw.country || '',
-    currency: String(raw.Currency || raw.currency || '').toUpperCase(),
-    category: raw.Category || raw.category || '',
-    event: raw.Event || raw.event || raw.title || raw.name || 'Economic event',
-    actual: raw.Actual ?? raw.actual ?? '',
-    previous: raw.Previous ?? raw.previous ?? raw.prev ?? '',
-    forecast: raw.Forecast ?? raw.forecast ?? raw.estimate ?? raw.consensus ?? '',
+    country: raw.Country || raw.country || raw.country_code || raw.countryCode || '',
+    currency: String(raw.Currency || raw.currency || raw.currency_code || raw.currencyCode || '').toUpperCase(),
+    category: raw.Category || raw.category || raw.category_name || '',
+    event: raw.Event || raw.event || raw.title || raw.name || raw.indicator || raw.code || 'Economic event',
+    actual: raw.Actual ?? raw.actual ?? raw.latest_value ?? raw.latestValue ?? '',
+    previous: raw.Previous ?? raw.previous ?? raw.prev ?? raw.prior_value ?? raw.priorValue ?? '',
+    forecast: raw.Forecast ?? raw.forecast ?? raw.estimate ?? raw.consensus ?? raw.expected ?? '',
     importance: impactToNumber(raw.Importance ?? raw.importance ?? raw.impact),
     source: raw.Source || raw.source || provider,
   };
@@ -1183,7 +1184,10 @@ async function fetchEconomicCalendar() {
   const from = formatYMD(start);
   const to = formatYMD(end);
   let url;
-  if (settings.provider === 'tradingeconomics') {
+  if (settings.provider === 'businessquant') {
+    const country = encodeURIComponent(fmpCountryParam(settings.countries));
+    url = `https://data.businessquant.com/calendar/economic?from_date=${from}&till_date=${to}&country=${country}&api_key=${encodeURIComponent(settings.apiKey)}`;
+  } else if (settings.provider === 'tradingeconomics') {
     const countries = encodeURIComponent(settings.countries || 'all');
     url = `https://api.tradingeconomics.com/calendar/country/${countries}/${from}/${to}?c=${encodeURIComponent(settings.apiKey)}&importance=${settings.importance}&values=true&f=json`;
   } else {
@@ -1196,8 +1200,12 @@ async function fetchEconomicCalendar() {
     const raw = await res.text();
     let body;
     try { body = JSON.parse(raw); } catch { body = []; }
-    if (!res.ok) throw new Error((body && (body.message || body.error)) || raw.slice(0,160) || res.statusText);
-    const data = Array.isArray(body) ? body : (body.economicCalendar || body.data || body.calendar || []);
+    const apiMessage = (body && (body.message || body.error || body['Error Message'])) || raw.slice(0,180) || res.statusText;
+    if (!res.ok) {
+      if (settings.provider === 'fmp' && res.status === 402) throw new Error('FMP says this economic calendar endpoint is restricted for this key. Choose BusinessQuant Free or upgrade the FMP plan.');
+      throw new Error(apiMessage);
+    }
+    const data = Array.isArray(body) ? body : (body.economicCalendar || body.data || body.calendar || body.results || []);
     state.calendar.events = filteredCalendarEvents(data.map(item => normalizeCalendarEvent(item, settings.provider)).filter(Boolean), settings);
     state.calendar.lastFetched = Date.now();
     addLog('win','Calendar',`Loaded ${state.calendar.events.length} economic events from ${settings.provider}`);
@@ -1207,7 +1215,8 @@ async function fetchEconomicCalendar() {
     state.calendar.events = [];
     renderCalendar();
     addLog('warn','Calendar','Calendar fetch failed: '+e.message);
-    toast('danger','Calendar fetch failed');
+    document.getElementById('calendar-list').innerHTML = `<div style="color:var(--danger);font-size:13px;padding:12px 0;">${escapeHTML(e.message || 'Calendar fetch failed')}</div>`;
+    toast('danger', e.message || 'Calendar fetch failed');
   }
 }
 
