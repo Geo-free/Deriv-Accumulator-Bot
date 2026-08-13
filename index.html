@@ -693,12 +693,13 @@
         <div class="card-title"><i class="ti ti-calendar-event"></i> Economic Calendar</div>
         <div class="alert info">
           <i class="ti ti-info-circle"></i>
-          <div>BusinessQuant is the recommended free economic calendar source. FMP currently restricts this endpoint on some Basic Free keys.</div>
+          <div>FXMacroData is the default free calendar source and does not need an API key. Push the app to Vercel so the built-in proxy can fetch events reliably.</div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Provider</label>
             <select id="cal-provider">
+              <option value="fxmacrodata">FXMacroData Free</option>
               <option value="businessquant">BusinessQuant Free</option>
               <option value="fmp">Financial Modeling Prep (restricted)</option>
               <option value="tradingeconomics">Trading Economics</option>
@@ -706,7 +707,7 @@
           </div>
           <div class="form-group">
             <label>API Key</label>
-            <input type="password" id="cal-api-key" placeholder="Paste provider API key">
+            <input type="password" id="cal-api-key" placeholder="Only needed for paid/key providers">
           </div>
         </div>
         <div class="form-row">
@@ -933,7 +934,7 @@ const state = {
   },
   calendar: {
     events: [],
-    provider: 'businessquant',
+    provider: 'fxmacrodata',
     lastFetched: null,
     lastBlockKey: null,
     settings: {
@@ -1051,7 +1052,7 @@ function formatYMD(date) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-const CALENDAR_SETTINGS_VERSION = 'businessquant-free-v1';
+const CALENDAR_SETTINGS_VERSION = 'fxmacrodata-free-v1';
 
 function calendarSettingsFromUI() {
   return {
@@ -1090,8 +1091,8 @@ function saveCalendarSettings(silent = false) {
 function loadCalendarSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem('derivBotCalendarSettings') || '{}');
-    if (saved.version !== CALENDAR_SETTINGS_VERSION && saved.provider !== 'businessquant') {
-      saved.provider = 'businessquant';
+    if (saved.version !== CALENDAR_SETTINGS_VERSION && saved.provider !== 'fxmacrodata') {
+      saved.provider = 'fxmacrodata';
       saved.countries = 'US';
       saved.currencies = 'USD';
       saved.importance = 1;
@@ -1118,6 +1119,9 @@ function loadCalendarSettings() {
 function impactToNumber(value) {
   if (Number.isFinite(Number(value))) return Number(value);
   const text = String(value || '').toLowerCase();
+  if (text.includes('tier 1')) return 3;
+  if (text.includes('tier 2')) return 2;
+  if (text.includes('tier 3')) return 1;
   if (text.includes('high')) return 3;
   if (text.includes('medium') || text.includes('moderate')) return 2;
   if (text.includes('low')) return 1;
@@ -1129,22 +1133,22 @@ function escapeHTML(value) {
 }
 
 function normalizeCalendarEvent(raw, provider) {
-  const date = raw.Date || raw.date || raw.time || raw.releaseDate || raw.release_date || raw.next_release || raw.nextRelease || raw.release_at || raw.scheduled_at;
+  const date = raw.Date || raw.date || raw.time || raw.releaseDate || raw.release_date || raw.next_release || raw.nextRelease || raw.release_at || raw.scheduled_at || raw.announcement_datetime_utc || raw.announcement_datetime_local;
   const timestamp = Date.parse(String(date).replace(' ', 'T'));
   if (!Number.isFinite(timestamp)) return null;
   return {
-    id: String(raw.CalendarId || raw.CalendarID || raw.id || raw.eventId || raw.code || `${provider}-${timestamp}-${raw.Event || raw.event || raw.title || raw.name}`),
+    id: String(raw.CalendarId || raw.CalendarID || raw.id || raw.eventId || raw.code || raw.release || `${provider}-${timestamp}-${raw.Event || raw.event || raw.title || raw.name}`),
     provider,
     timestamp,
     date: new Date(timestamp),
     country: raw.Country || raw.country || raw.country_code || raw.countryCode || '',
     currency: String(raw.Currency || raw.currency || raw.currency_code || raw.currencyCode || '').toUpperCase(),
     category: raw.Category || raw.category || raw.category_name || '',
-    event: raw.Event || raw.event || raw.title || raw.name || raw.indicator || raw.code || 'Economic event',
+    event: raw.Event || raw.event || raw.title || raw.name || raw.indicator || raw.code || raw.release || 'Economic event',
     actual: raw.Actual ?? raw.actual ?? raw.latest_value ?? raw.latestValue ?? '',
     previous: raw.Previous ?? raw.previous ?? raw.prev ?? raw.prior_value ?? raw.priorValue ?? '',
     forecast: raw.Forecast ?? raw.forecast ?? raw.estimate ?? raw.consensus ?? raw.expected ?? '',
-    importance: impactToNumber(raw.Importance ?? raw.importance ?? raw.impact),
+    importance: impactToNumber(raw.Importance ?? raw.importance ?? raw.impact ?? raw.event_importance ?? raw.market_tier),
     source: raw.Source || raw.source || provider,
   };
 }
@@ -1175,7 +1179,7 @@ function fmpCountryParam(countries) {
 
 async function fetchEconomicCalendar() {
   const settings = calendarSettingsFromUI();
-  if (!settings.apiKey) { toast('warn','Enter calendar API key first'); return; }
+  if (!settings.apiKey && !['fxmacrodata'].includes(settings.provider)) { toast('warn','Enter calendar API key first'); return; }
   saveCalendarSettings(true);
   const start = new Date();
   start.setHours(0,0,0,0);
@@ -1184,7 +1188,11 @@ async function fetchEconomicCalendar() {
   const from = formatYMD(start);
   const to = formatYMD(end);
   let url;
-  if (settings.provider === 'businessquant') {
+  if (settings.provider === 'fxmacrodata') {
+    const currency = encodeURIComponent((settings.currencies.split(',').map(s => s.trim()).filter(Boolean)[0] || 'USD').toUpperCase());
+    const proxyBase = location.protocol === 'file:' ? 'https://deriv-accumulator-bot.vercel.app/api/economic-calendar' : '/api/economic-calendar';
+    url = `${proxyBase}?currency=${currency}&from=${from}&to=${to}`;
+  } else if (settings.provider === 'businessquant') {
     const country = encodeURIComponent(fmpCountryParam(settings.countries));
     url = `https://data.businessquant.com/calendar/economic?from_date=${from}&till_date=${to}&country=${country}&api_key=${encodeURIComponent(settings.apiKey)}`;
   } else if (settings.provider === 'tradingeconomics') {
@@ -1206,7 +1214,8 @@ async function fetchEconomicCalendar() {
       throw new Error(apiMessage);
     }
     const data = Array.isArray(body) ? body : (body.economicCalendar || body.data || body.calendar || body.results || []);
-    state.calendar.events = filteredCalendarEvents(data.map(item => normalizeCalendarEvent(item, settings.provider)).filter(Boolean), settings);
+    const enriched = data.map(item => settings.provider === 'fxmacrodata' ? { ...item, currency: body.currency || settings.currencies, country: body.currency || settings.countries } : item);
+    state.calendar.events = filteredCalendarEvents(enriched.map(item => normalizeCalendarEvent(item, settings.provider)).filter(Boolean), settings);
     state.calendar.lastFetched = Date.now();
     addLog('win','Calendar',`Loaded ${state.calendar.events.length} economic events from ${settings.provider}`);
     toast('success',`Loaded ${state.calendar.events.length} calendar events`);
