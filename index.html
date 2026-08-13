@@ -693,14 +693,14 @@
         <div class="card-title"><i class="ti ti-calendar-event"></i> Economic Calendar</div>
         <div class="alert info">
           <i class="ti ti-info-circle"></i>
-          <div>Trading Economics is the richest provider. FMP is included as a simpler free-tier fallback. Enable the news guard to pause new entries around high-impact releases.</div>
+          <div>Financial Modeling Prep Basic Free is the default calendar source. Paste your FMP key, use a country code like US, then fetch events to activate the news guard.</div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Provider</label>
             <select id="cal-provider">
-              <option value="tradingeconomics">Trading Economics</option>
               <option value="fmp">Financial Modeling Prep</option>
+              <option value="tradingeconomics">Trading Economics</option>
             </select>
           </div>
           <div class="form-group">
@@ -710,8 +710,8 @@
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Countries</label>
-            <input type="text" id="cal-countries" value="united states,euro area,united kingdom,japan" placeholder="comma-separated countries">
+            <label>Country</label>
+            <input type="text" id="cal-countries" value="US" placeholder="US">
           </div>
           <div class="form-group">
             <label>Currencies</label>
@@ -932,13 +932,13 @@ const state = {
   },
   calendar: {
     events: [],
-    provider: 'tradingeconomics',
+    provider: 'fmp',
     lastFetched: null,
     lastBlockKey: null,
     settings: {
-      countries: 'united states,euro area,united kingdom,japan',
-      currencies: 'USD,EUR,GBP,JPY',
-      importance: 3,
+      countries: 'US',
+      currencies: 'USD',
+      importance: 1,
       rangeDays: 1,
       guardEnabled: true,
       beforeMin: 15,
@@ -1050,6 +1050,8 @@ function formatYMD(date) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
+const CALENDAR_SETTINGS_VERSION = 'fmp-free-v1';
+
 function calendarSettingsFromUI() {
   return {
     provider: document.getElementById('cal-provider').value,
@@ -1076,7 +1078,7 @@ function saveCalendarSettings(silent = false) {
     beforeMin: settings.beforeMin,
     afterMin: settings.afterMin,
   };
-  localStorage.setItem('derivBotCalendarSettings', JSON.stringify({ ...state.calendar.settings, provider: settings.provider, apiKey: settings.apiKey }));
+  localStorage.setItem('derivBotCalendarSettings', JSON.stringify({ ...state.calendar.settings, provider: settings.provider, apiKey: settings.apiKey, version: CALENDAR_SETTINGS_VERSION }));
   if (!silent) {
     addLog('info','Calendar','Calendar settings saved');
     toast('success','Calendar settings saved');
@@ -1087,6 +1089,14 @@ function saveCalendarSettings(silent = false) {
 function loadCalendarSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem('derivBotCalendarSettings') || '{}');
+    if (saved.version !== CALENDAR_SETTINGS_VERSION && saved.provider !== 'fmp') {
+      saved.provider = 'fmp';
+      saved.countries = 'US';
+      saved.currencies = 'USD';
+      saved.importance = 1;
+      saved.apiKey = '';
+      saved.version = CALENDAR_SETTINGS_VERSION;
+    }
     if (saved.provider) state.calendar.provider = saved.provider;
     state.calendar.settings = { ...state.calendar.settings, ...saved };
     const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
@@ -1148,6 +1158,20 @@ function filteredCalendarEvents(events, settings) {
   }).sort((a,b) => a.timestamp - b.timestamp);
 }
 
+function fmpCountryParam(countries) {
+  const first = String(countries || 'US').split(',').map(s => s.trim()).filter(Boolean)[0] || 'US';
+  const aliases = {
+    'united states': 'US',
+    usa: 'US',
+    us: 'US',
+    uk: 'GB',
+    'united kingdom': 'GB',
+    japan: 'JP',
+    'euro area': 'EU',
+  };
+  return (aliases[first.toLowerCase()] || first).toUpperCase();
+}
+
 async function fetchEconomicCalendar() {
   const settings = calendarSettingsFromUI();
   if (!settings.apiKey) { toast('warn','Enter calendar API key first'); return; }
@@ -1163,7 +1187,8 @@ async function fetchEconomicCalendar() {
     const countries = encodeURIComponent(settings.countries || 'all');
     url = `https://api.tradingeconomics.com/calendar/country/${countries}/${from}/${to}?c=${encodeURIComponent(settings.apiKey)}&importance=${settings.importance}&values=true&f=json`;
   } else {
-    url = `https://financialmodelingprep.com/stable/economic-calendar?from=${from}&to=${to}&apikey=${encodeURIComponent(settings.apiKey)}`;
+    const country = encodeURIComponent(fmpCountryParam(settings.countries));
+    url = `https://financialmodelingprep.com/stable/economic-calendar?country=${country}&from=${from}&to=${to}&apikey=${encodeURIComponent(settings.apiKey)}`;
   }
   document.getElementById('calendar-list').innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px 0;">Fetching calendar…</div>';
   try {
