@@ -182,6 +182,12 @@
   .flow-step { background: var(--bg3); border: 0.5px solid var(--border); border-radius: 8px; padding: 10px; min-width: 0; }
   .flow-step strong { display: block; font-size: 12px; color: var(--text); margin-bottom: 4px; }
   .flow-step span { display: block; font-size: 11px; color: var(--text3); line-height: 1.4; }
+  .calendar-list { display: flex; flex-direction: column; gap: 8px; }
+  .calendar-event { display: grid; grid-template-columns: 132px 1fr 90px; gap: 10px; align-items: center; padding: 10px; background: var(--bg3); border: 0.5px solid var(--border); border-radius: 8px; }
+  .calendar-event .time { color: var(--text2); font-size: 12px; }
+  .calendar-event .name { color: var(--text); font-size: 13px; font-weight: 600; }
+  .calendar-event .meta { color: var(--text3); font-size: 11px; margin-top: 3px; }
+  .calendar-values { color: var(--text2); font-size: 11px; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
   .btn-logout { padding: 5px 12px; font-size: 12px; }
 
   /* ── Toast notifications ────────────────────────────────────────────────── */
@@ -236,6 +242,7 @@
     .grid2, .grid3 { grid-template-columns: 1fr; }
     .balance-grid, .funding-flow { grid-template-columns: 1fr !important; }
     .funding-actions { justify-content: flex-start; }
+    .calendar-event { grid-template-columns: 1fr; }
     .market-grid { grid-template-columns: 1fr 1fr; }
     .col-span2 { grid-column: span 1; }
   }
@@ -361,6 +368,9 @@
       <i class="ti ti-wallet"></i> Deposit & Withdraw
     </button>
     <div class="sidebar-section">Analysis</div>
+    <button class="nav-item" onclick="showPanel('calendar')">
+      <i class="ti ti-calendar-event"></i> Economic Calendar
+    </button>
     <button class="nav-item" onclick="showPanel('analysis')">
       <i class="ti ti-brain"></i> Gap Analysis
     </button>
@@ -677,6 +687,101 @@
       </div>
     </div>
 
+    <!-- ECONOMIC CALENDAR -->
+    <div id="panel-calendar" class="panel">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-calendar-event"></i> Economic Calendar</div>
+        <div class="alert info">
+          <i class="ti ti-info-circle"></i>
+          <div>Trading Economics is the richest provider. FMP is included as a simpler free-tier fallback. Enable the news guard to pause new entries around high-impact releases.</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Provider</label>
+            <select id="cal-provider">
+              <option value="tradingeconomics">Trading Economics</option>
+              <option value="fmp">Financial Modeling Prep</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>API Key</label>
+            <input type="password" id="cal-api-key" placeholder="Paste provider API key">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Countries</label>
+            <input type="text" id="cal-countries" value="united states,euro area,united kingdom,japan" placeholder="comma-separated countries">
+          </div>
+          <div class="form-group">
+            <label>Currencies</label>
+            <input type="text" id="cal-currencies" value="USD,EUR,GBP,JPY" placeholder="USD,EUR,GBP">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date Range</label>
+            <select id="cal-range">
+              <option value="1">Today + tomorrow</option>
+              <option value="3">Next 3 days</option>
+              <option value="7">Next 7 days</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Minimum Importance</label>
+            <select id="cal-importance">
+              <option value="3">High only</option>
+              <option value="2">Medium + high</option>
+              <option value="1">All events</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label><input type="checkbox" id="cal-guard-enabled" checked style="width:auto;margin-right:6px;"> Pause bot around news</label>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">Blocks new entries only. Existing positions still manage normally.</div>
+          </div>
+          <div class="form-group">
+            <label>Guard Window</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <input type="number" id="cal-before" value="15" min="0" step="1" placeholder="minutes before">
+              <input type="number" id="cal-after" value="10" min="0" step="1" placeholder="minutes after">
+            </div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="fetchEconomicCalendar()"><i class="ti ti-refresh"></i> Fetch Calendar</button>
+          <button class="btn btn-ghost" onclick="saveCalendarSettings()"><i class="ti ti-device-floppy"></i> Save Settings</button>
+          <button class="btn btn-ghost" onclick="clearCalendarEvents()"><i class="ti ti-trash"></i> Clear</button>
+        </div>
+      </div>
+
+      <div class="metrics" style="grid-template-columns:repeat(3,1fr);">
+        <div class="metric">
+          <div class="metric-label">News Guard</div>
+          <div class="metric-value" id="cal-guard-status" style="font-size:16px;">—</div>
+          <div class="metric-sub" id="cal-guard-sub">Fetch calendar to activate</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Loaded Events</div>
+          <div class="metric-value" id="cal-count">0</div>
+          <div class="metric-sub" id="cal-count-sub">No calendar loaded</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Next High Impact</div>
+          <div class="metric-value" id="cal-next" style="font-size:16px;">—</div>
+          <div class="metric-sub" id="cal-next-sub">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="ti ti-list-details"></i> Upcoming Events</div>
+        <div class="calendar-list" id="calendar-list">
+          <div style="color:var(--text3);font-size:13px;padding:12px 0;">No events loaded.</div>
+        </div>
+      </div>
+    </div>
+
     <!-- ANALYSIS -->
     <div id="panel-analysis" class="panel">
       <div class="card">
@@ -825,6 +930,21 @@ const state = {
     signal: 'neutral',
     recentGaps: [],
   },
+  calendar: {
+    events: [],
+    provider: 'tradingeconomics',
+    lastFetched: null,
+    lastBlockKey: null,
+    settings: {
+      countries: 'united states,euro area,united kingdom,japan',
+      currencies: 'USD,EUR,GBP,JPY',
+      importance: 3,
+      rangeDays: 1,
+      guardEnabled: true,
+      beforeMin: 15,
+      afterMin: 10,
+    },
+  },
 };
 
 // ─── MARKETS ─────────────────────────────────────────────────────────────────
@@ -923,6 +1043,193 @@ function loadConfigToUI(cfg) {
   set('cfg-vol-min', (cfg.volMin||0.5));
   set('cfg-vol-max', (cfg.volMax||5));
   set('cfg-cooldown', cfg.tradeCooldownSec||10);
+}
+
+function formatYMD(date) {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function calendarSettingsFromUI() {
+  return {
+    provider: document.getElementById('cal-provider').value,
+    apiKey: document.getElementById('cal-api-key').value.trim(),
+    countries: document.getElementById('cal-countries').value.trim(),
+    currencies: document.getElementById('cal-currencies').value.trim().toUpperCase(),
+    importance: parseInt(document.getElementById('cal-importance').value, 10),
+    rangeDays: parseInt(document.getElementById('cal-range').value, 10),
+    guardEnabled: document.getElementById('cal-guard-enabled').checked,
+    beforeMin: Math.max(0, parseInt(document.getElementById('cal-before').value, 10) || 0),
+    afterMin: Math.max(0, parseInt(document.getElementById('cal-after').value, 10) || 0),
+  };
+}
+
+function saveCalendarSettings(silent = false) {
+  const settings = calendarSettingsFromUI();
+  state.calendar.provider = settings.provider;
+  state.calendar.settings = {
+    countries: settings.countries,
+    currencies: settings.currencies,
+    importance: settings.importance,
+    rangeDays: settings.rangeDays,
+    guardEnabled: settings.guardEnabled,
+    beforeMin: settings.beforeMin,
+    afterMin: settings.afterMin,
+  };
+  localStorage.setItem('derivBotCalendarSettings', JSON.stringify({ ...state.calendar.settings, provider: settings.provider, apiKey: settings.apiKey }));
+  if (!silent) {
+    addLog('info','Calendar','Calendar settings saved');
+    toast('success','Calendar settings saved');
+  }
+  renderCalendar();
+}
+
+function loadCalendarSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('derivBotCalendarSettings') || '{}');
+    if (saved.provider) state.calendar.provider = saved.provider;
+    state.calendar.settings = { ...state.calendar.settings, ...saved };
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
+    set('cal-provider', state.calendar.provider);
+    set('cal-api-key', saved.apiKey || '');
+    set('cal-countries', state.calendar.settings.countries);
+    set('cal-currencies', state.calendar.settings.currencies);
+    set('cal-importance', state.calendar.settings.importance);
+    set('cal-range', state.calendar.settings.rangeDays);
+    document.getElementById('cal-guard-enabled').checked = Boolean(state.calendar.settings.guardEnabled);
+    set('cal-before', state.calendar.settings.beforeMin);
+    set('cal-after', state.calendar.settings.afterMin);
+  } catch {
+    addLog('warn','Calendar','Could not load saved calendar settings');
+  }
+}
+
+function impactToNumber(value) {
+  if (Number.isFinite(Number(value))) return Number(value);
+  const text = String(value || '').toLowerCase();
+  if (text.includes('high')) return 3;
+  if (text.includes('medium') || text.includes('moderate')) return 2;
+  if (text.includes('low')) return 1;
+  return 1;
+}
+
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function normalizeCalendarEvent(raw, provider) {
+  const date = raw.Date || raw.date || raw.time || raw.releaseDate || raw.release_date;
+  const timestamp = Date.parse(String(date).replace(' ', 'T'));
+  if (!Number.isFinite(timestamp)) return null;
+  return {
+    id: String(raw.CalendarId || raw.CalendarID || raw.id || raw.eventId || `${provider}-${timestamp}-${raw.Event || raw.event || raw.title}`),
+    provider,
+    timestamp,
+    date: new Date(timestamp),
+    country: raw.Country || raw.country || '',
+    currency: String(raw.Currency || raw.currency || '').toUpperCase(),
+    category: raw.Category || raw.category || '',
+    event: raw.Event || raw.event || raw.title || raw.name || 'Economic event',
+    actual: raw.Actual ?? raw.actual ?? '',
+    previous: raw.Previous ?? raw.previous ?? raw.prev ?? '',
+    forecast: raw.Forecast ?? raw.forecast ?? raw.estimate ?? raw.consensus ?? '',
+    importance: impactToNumber(raw.Importance ?? raw.importance ?? raw.impact),
+    source: raw.Source || raw.source || provider,
+  };
+}
+
+function filteredCalendarEvents(events, settings) {
+  const currencies = settings.currencies.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+  const countries = settings.countries.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  return events.filter(e => {
+    const currencyOk = !currencies.length || !e.currency || currencies.includes(e.currency);
+    const countryOk = !countries.length || countries.some(country => e.country.toLowerCase().includes(country));
+    return e.importance >= settings.importance && currencyOk && countryOk;
+  }).sort((a,b) => a.timestamp - b.timestamp);
+}
+
+async function fetchEconomicCalendar() {
+  const settings = calendarSettingsFromUI();
+  if (!settings.apiKey) { toast('warn','Enter calendar API key first'); return; }
+  saveCalendarSettings(true);
+  const start = new Date();
+  start.setHours(0,0,0,0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + settings.rangeDays);
+  const from = formatYMD(start);
+  const to = formatYMD(end);
+  let url;
+  if (settings.provider === 'tradingeconomics') {
+    const countries = encodeURIComponent(settings.countries || 'all');
+    url = `https://api.tradingeconomics.com/calendar/country/${countries}/${from}/${to}?c=${encodeURIComponent(settings.apiKey)}&importance=${settings.importance}&values=true&f=json`;
+  } else {
+    url = `https://financialmodelingprep.com/stable/economic-calendar?from=${from}&to=${to}&apikey=${encodeURIComponent(settings.apiKey)}`;
+  }
+  document.getElementById('calendar-list').innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px 0;">Fetching calendar…</div>';
+  try {
+    const res = await fetch(url);
+    const raw = await res.text();
+    let body;
+    try { body = JSON.parse(raw); } catch { body = []; }
+    if (!res.ok) throw new Error((body && (body.message || body.error)) || raw.slice(0,160) || res.statusText);
+    const data = Array.isArray(body) ? body : (body.economicCalendar || body.data || body.calendar || []);
+    state.calendar.events = filteredCalendarEvents(data.map(item => normalizeCalendarEvent(item, settings.provider)).filter(Boolean), settings);
+    state.calendar.lastFetched = Date.now();
+    addLog('win','Calendar',`Loaded ${state.calendar.events.length} economic events from ${settings.provider}`);
+    toast('success',`Loaded ${state.calendar.events.length} calendar events`);
+    renderCalendar();
+  } catch (e) {
+    state.calendar.events = [];
+    renderCalendar();
+    addLog('warn','Calendar','Calendar fetch failed: '+e.message);
+    toast('danger','Calendar fetch failed');
+  }
+}
+
+function clearCalendarEvents() {
+  state.calendar.events = [];
+  state.calendar.lastFetched = null;
+  state.calendar.lastBlockKey = null;
+  renderCalendar();
+  addLog('info','Calendar','Calendar cleared');
+}
+
+function getCalendarBlock(now = Date.now()) {
+  const settings = state.calendar.settings;
+  if (!settings.guardEnabled || !state.calendar.events.length) return null;
+  const before = settings.beforeMin * 60000;
+  const after = settings.afterMin * 60000;
+  return state.calendar.events.find(event => event.importance >= settings.importance && now >= event.timestamp - before && now <= event.timestamp + after) || null;
+}
+
+function renderCalendar() {
+  const list = document.getElementById('calendar-list');
+  if (!list) return;
+  const block = getCalendarBlock();
+  const future = state.calendar.events.filter(e => e.timestamp >= Date.now() - state.calendar.settings.afterMin * 60000);
+  document.getElementById('cal-guard-status').innerHTML = block ? '<span class="badge red">BLOCKED</span>' : '<span class="badge green">CLEAR</span>';
+  document.getElementById('cal-guard-sub').textContent = block ? `${block.event} (${block.country})` : (state.calendar.events.length ? 'No active news window' : 'Fetch calendar to activate');
+  document.getElementById('cal-count').textContent = state.calendar.events.length;
+  document.getElementById('cal-count-sub').textContent = state.calendar.lastFetched ? `Updated ${new Date(state.calendar.lastFetched).toLocaleTimeString()}` : 'No calendar loaded';
+  const nextHigh = future.find(e => e.importance >= 3);
+  document.getElementById('cal-next').textContent = nextHigh ? nextHigh.date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '—';
+  document.getElementById('cal-next-sub').textContent = nextHigh ? `${nextHigh.country} • ${nextHigh.event}` : 'No high-impact event loaded';
+  if (!state.calendar.events.length) {
+    list.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px 0;">No events loaded.</div>';
+    return;
+  }
+  list.innerHTML = state.calendar.events.slice(0, 80).map(event => {
+    const badge = event.importance >= 3 ? 'red' : event.importance === 2 ? 'amber' : 'gray';
+    return `<div class="calendar-event">
+      <div class="time">${event.date.toLocaleString([], {month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit'})}</div>
+      <div>
+        <div class="name">${escapeHTML(event.event)}</div>
+        <div class="meta">${escapeHTML(event.country || 'Global')}${event.currency ? ' • '+escapeHTML(event.currency) : ''}${event.category ? ' • '+escapeHTML(event.category) : ''}</div>
+        <div class="calendar-values"><span>Forecast: ${escapeHTML(event.forecast || '—')}</span><span>Previous: ${escapeHTML(event.previous || '—')}</span><span>Actual: ${escapeHTML(event.actual || '—')}</span></div>
+      </div>
+      <span class="badge ${badge}">${event.importance >= 3 ? 'High' : event.importance === 2 ? 'Medium' : 'Low'}</span>
+    </div>`;
+  }).join('');
 }
 
 function applyConfig() {
@@ -1086,6 +1393,18 @@ function shouldPlaceTrade() {
   if (!canTradeNow()) return false;
   if (state.bot.postLoss > 0) return false; // post-loss market analysis in progress
   if (state.bot.consecutiveLosses >= state.cfg.maxConsecutiveLosses) return false;
+  const newsBlock = getCalendarBlock();
+  if (newsBlock) {
+    const key = `${newsBlock.id}-${Math.floor(Date.now()/60000)}`;
+    if (state.calendar.lastBlockKey !== key) {
+      state.calendar.lastBlockKey = key;
+      addLog('warn','Calendar',`News guard active: ${newsBlock.country} ${newsBlock.event}`);
+      toast('warn','News guard active — new entries paused');
+      document.getElementById('m-pos').textContent = `News guard: ${newsBlock.event}`;
+      renderCalendar();
+    }
+    return false;
+  }
   if (state.analysis.signal !== 'READY') return false;
   return true;
 }
@@ -1755,6 +2074,7 @@ function runBotTick() {
   // tick in handleLiveTick; real contracts are sold via onContractUpdate.
 }
 setInterval(runBotTick, 1000); // watchdog only — ticks drive the fast path
+setInterval(renderCalendar, 60000);
 
 // ─── DERIV API ────────────────────────────────────────────────────────────────
 function switchAuthTab(tab) {
@@ -2280,6 +2600,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof Chart !== 'undefined') initCharts();
   buildMarketGrid('all');
   loadConfigToUI(state.cfg);
+  loadCalendarSettings();
+  renderCalendar();
   switchAuthTab('legacy');
   document.getElementById('start-btn').disabled = true;
   addLog('info','Bot','Deriv Bot Pro (Gap-Width Strategy) initialized');
