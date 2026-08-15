@@ -30,6 +30,8 @@ void OnDeinit(const int reason)
 
 void OnTimer()
 {
+   ReportPositions();
+
    string json = HttpGet(InpSignalUrl);
    if(json == "" || StringFind(json, "\"signal\":null") >= 0)
       return;
@@ -40,9 +42,22 @@ void OnTimer()
 
    string action = JsonString(json, "action");
    string symbol = JsonString(json, "symbol");
+   ulong ticket = (ulong)JsonNumber(json, "ticket", 0);
    double lot = JsonNumber(json, "lot", 0.01);
    double sl_points = JsonNumber(json, "sl_points", 0);
    double tp_points = JsonNumber(json, "tp_points", 0);
+
+   if(action == "close")
+   {
+      ClosePositionCommand(id, ticket);
+      return;
+   }
+
+   if(action == "modify")
+   {
+      ModifyPositionCommand(id, ticket, JsonNumber(json, "sl", -1), JsonNumber(json, "tp", -1));
+      return;
+   }
 
    if(symbol == "" || (action != "buy" && action != "sell"))
    {
@@ -96,6 +111,50 @@ void OnTimer()
    }
 }
 
+void ClosePositionCommand(string id, ulong ticket)
+{
+   if(ticket == 0 || !PositionSelectByTicket(ticket))
+   {
+      Print("Close failed. Position not found: ", ticket);
+      return;
+   }
+   string symbol = PositionGetString(POSITION_SYMBOL);
+   if(trade.PositionClose(symbol))
+   {
+      last_signal_id = id;
+      Print("Closed MT5 position ", ticket, " on ", symbol);
+      AckSignal(id);
+   }
+   else
+   {
+      Print("Close failed for ", ticket, ". Retcode=", trade.ResultRetcode(), " ", trade.ResultRetcodeDescription());
+   }
+}
+
+void ModifyPositionCommand(string id, ulong ticket, double sl, double tp)
+{
+   if(ticket == 0 || !PositionSelectByTicket(ticket))
+   {
+      Print("Modify failed. Position not found: ", ticket);
+      return;
+   }
+   string symbol = PositionGetString(POSITION_SYMBOL);
+   double current_sl = PositionGetDouble(POSITION_SL);
+   double current_tp = PositionGetDouble(POSITION_TP);
+   double next_sl = sl >= 0 ? sl : current_sl;
+   double next_tp = tp >= 0 ? tp : current_tp;
+   if(trade.PositionModify(symbol, next_sl, next_tp))
+   {
+      last_signal_id = id;
+      Print("Modified MT5 position ", ticket, " SL=", DoubleToString(next_sl, _Digits), " TP=", DoubleToString(next_tp, _Digits));
+      AckSignal(id);
+   }
+   else
+   {
+      Print("Modify failed for ", ticket, ". Retcode=", trade.ResultRetcode(), " ", trade.ResultRetcodeDescription());
+   }
+}
+
 string HttpGet(string url)
 {
    char data[];
@@ -114,6 +173,40 @@ string HttpGet(string url)
 void AckSignal(string id)
 {
    string payload = "{\"executed_id\":\"" + id + "\"}";
+   char data[];
+   char result[];
+   string result_headers;
+   StringToCharArray(payload, data, 0, WHOLE_ARRAY, CP_UTF8);
+   WebRequest("POST", InpSignalUrl, "Content-Type: application/json\r\n", 5000, data, result, result_headers);
+}
+
+void ReportPositions()
+{
+   string payload = "{\"positions\":[";
+   int added = 0;
+   for(int i = 0; i < PositionsTotal(); i++)
+   {
+      ulong ticket = PositionGetTicket(i);
+      if(ticket == 0 || !PositionSelectByTicket(ticket))
+         continue;
+      if(added > 0) payload += ",";
+      string symbol = PositionGetString(POSITION_SYMBOL);
+      long type = PositionGetInteger(POSITION_TYPE);
+      string side = type == POSITION_TYPE_BUY ? "buy" : "sell";
+      payload += "{";
+      payload += "\"ticket\":\"" + IntegerToString((long)ticket) + "\",";
+      payload += "\"symbol\":\"" + symbol + "\",";
+      payload += "\"type\":\"" + side + "\",";
+      payload += "\"volume\":" + DoubleToString(PositionGetDouble(POSITION_VOLUME), 2) + ",";
+      payload += "\"price_open\":" + DoubleToString(PositionGetDouble(POSITION_PRICE_OPEN), (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS)) + ",";
+      payload += "\"profit\":" + DoubleToString(PositionGetDouble(POSITION_PROFIT), 2) + ",";
+      payload += "\"sl\":" + DoubleToString(PositionGetDouble(POSITION_SL), (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS)) + ",";
+      payload += "\"tp\":" + DoubleToString(PositionGetDouble(POSITION_TP), (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS));
+      payload += "}";
+      added++;
+   }
+   payload += "]}";
+
    char data[];
    char result[];
    string result_headers;

@@ -1,4 +1,7 @@
 let latestSignal = null;
+let latestCommand = null;
+let positions = [];
+let bridgeStatus = { connected: false, updated_at: null };
 const executed = new Set();
 
 function setCors(res) {
@@ -27,17 +30,23 @@ function readBody(req) {
 
 function cleanSignal(raw) {
   const action = String(raw.action || '').toLowerCase();
-  if (!['buy', 'sell'].includes(action)) throw new Error('Signal action must be buy or sell');
+  if (!['buy', 'sell', 'close', 'modify'].includes(action)) throw new Error('Signal action must be buy, sell, close, or modify');
   const symbol = String(raw.symbol || '').trim();
-  if (!symbol) throw new Error('Signal symbol is required');
+  const ticket = String(raw.ticket || '').trim();
+  if (['buy', 'sell'].includes(action) && !symbol) throw new Error('Signal symbol is required');
+  if (['close', 'modify'].includes(action) && !ticket) throw new Error('Position ticket is required');
   const id = String(raw.id || `sig_${Date.now()}`).replace(/[^a-zA-Z0-9_.:-]/g, '').slice(0, 80);
   return {
     id,
     action,
     symbol,
+    ticket,
     lot: Math.max(0.01, Number(raw.lot) || 0.01),
     sl_points: Math.max(0, Number(raw.sl_points) || 0),
     tp_points: Math.max(0, Number(raw.tp_points) || 0),
+    sl: raw.sl === undefined ? undefined : Number(raw.sl),
+    tp: raw.tp === undefined ? undefined : Number(raw.tp),
+    mode: String(raw.mode || 'auto').slice(0, 20),
     strategy: String(raw.strategy || 'unknown').slice(0, 40),
     confidence: Math.max(0, Math.min(100, Number(raw.confidence) || 0)),
     source_symbol: String(raw.source_symbol || '').slice(0, 40),
@@ -54,11 +63,8 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
-    if (!latestSignal || executed.has(latestSignal.id)) {
-      res.status(200).json({ signal: null });
-      return;
-    }
-    res.status(200).json({ signal: latestSignal });
+    const command = latestCommand && !executed.has(latestCommand.id) ? latestCommand : null;
+    res.status(200).json({ signal: command, command, positions, bridge: bridgeStatus });
     return;
   }
 
@@ -70,8 +76,15 @@ module.exports = async function handler(req, res) {
         res.status(200).json({ ok: true, executed_id: body.executed_id });
         return;
       }
+      if (Array.isArray(body.positions)) {
+        positions = body.positions.slice(0, 100);
+        bridgeStatus = { connected: true, updated_at: new Date().toISOString() };
+        res.status(200).json({ ok: true, positions });
+        return;
+      }
       latestSignal = cleanSignal(body);
-      res.status(200).json({ ok: true, signal: latestSignal });
+      latestCommand = latestSignal;
+      res.status(200).json({ ok: true, signal: latestSignal, command: latestCommand });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }

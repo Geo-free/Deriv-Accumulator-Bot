@@ -361,11 +361,14 @@
     <button class="nav-item" onclick="showPanel('market')">
       <i class="ti ti-chart-candle"></i> Market & Symbols
     </button>
+    <button class="nav-item" onclick="showPanel('platform')">
+      <i class="ti ti-binary-tree"></i> Options Trading
+    </button>
+    <button class="nav-item" onclick="showPanel('mt5')">
+      <i class="ti ti-terminal-2"></i> MT5 Trading
+    </button>
     <button class="nav-item" onclick="showPanel('config')">
       <i class="ti ti-settings-2"></i> Bot Config
-    </button>
-    <button class="nav-item" onclick="showPanel('platform')">
-      <i class="ti ti-route"></i> Easy Setup
     </button>
     <button class="nav-item" onclick="showPanel('funds')">
       <i class="ti ti-wallet"></i> Deposit & Withdraw
@@ -414,12 +417,12 @@
       <div class="card">
         <div class="card-title"><i class="ti ti-sparkles"></i> Quick Setup</div>
         <div class="grid3">
-          <button class="btn btn-primary" onclick="useSimplePreset('deriv')"><i class="ti ti-bolt"></i> Trade My Deriv Account</button>
-          <button class="btn btn-ghost" onclick="useSimplePreset('mt5')"><i class="ti ti-terminal-2"></i> Trade My MT5 Account</button>
+          <button class="btn btn-primary" onclick="showPanel('platform')"><i class="ti ti-bolt"></i> Options Trading</button>
+          <button class="btn btn-ghost" onclick="showPanel('mt5')"><i class="ti ti-terminal-2"></i> MT5 Trading</button>
           <button class="btn btn-ghost" onclick="showPanel('platform')"><i class="ti ti-adjustments"></i> Advanced Setup</button>
         </div>
         <div style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.5;" id="quick-setup-note">
-          Link your Deriv account, select a market, then start the bot. MT5 users need the EA bridge because Deriv tokens cannot place MT5 terminal orders directly.
+          Options trading uses the linked Deriv account. MT5 trading uses a linked MT5 bridge, with manual alerts or auto execution from the bot.
         </div>
       </div>
 
@@ -552,29 +555,17 @@
 
     </div>
 
-    <!-- EASY SETUP -->
+    <!-- OPTIONS TRADING -->
     <div id="panel-platform" class="panel">
       <div class="card">
-        <div class="card-title"><i class="ti ti-route"></i> Easy Trading Setup</div>
+        <div class="card-title"><i class="ti ti-binary-tree"></i> Options Trading</div>
         <div class="alert info">
           <i class="ti ti-info-circle"></i>
-          <div>For Deriv Options, users link their Deriv account and the bot executes directly from the browser WebSocket. For MT5, the bot sends signals to the MT5 Expert Advisor bridge.</div>
-        </div>
-        <div class="grid2" style="margin-bottom:14px;">
-          <button class="btn btn-primary" onclick="useSimplePreset('deriv')"><i class="ti ti-login-2"></i> Use Linked Deriv Account</button>
-          <button class="btn btn-ghost" onclick="useSimplePreset('mt5')"><i class="ti ti-plug-connected"></i> Use MT5 Bridge</button>
+          <div>Options trading executes directly on the linked Deriv account. Choose the contract type the trader wants, then the bot routes supported contracts through the Deriv WebSocket.</div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Where should trades execute?</label>
-            <select id="cfg-execution-venue">
-              <option value="deriv">Linked Deriv account - instant Options trades</option>
-              <option value="mt5">MT5 account - through EA bridge</option>
-              <option value="paper">Paper mode - analyze only</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Trading strategy</label>
+            <label>Options contract type</label>
             <select id="cfg-strategy-engine">
               <option value="accumulator">Accumulator</option>
               <option value="risefall">Rise / Fall</option>
@@ -583,84 +574,92 @@
               <option value="evenodd">Even / Odd</option>
             </select>
           </div>
+          <div class="form-group">
+            <label>Options execution</label>
+            <select id="cfg-execution-venue">
+              <option value="deriv">Auto trade linked Deriv account</option>
+              <option value="paper">Signal alerts only</option>
+              <option value="mt5" hidden>MT5 account - through EA bridge</option>
+            </select>
+          </div>
         </div>
-        <details style="margin-top:4px;">
-          <summary style="cursor:pointer;color:var(--text2);font-size:13px;">MT5 bridge settings</summary>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="useOptionsPreset()"><i class="ti ti-check"></i> Use Options Trading</button>
+          <button class="btn btn-ghost" onclick="showPanel('config')"><i class="ti ti-sliders"></i> Risk Settings</button>
+        </div>
+        <div style="font-size:12px;color:var(--text3);line-height:1.5;margin-top:10px;">Accumulator has live order routing in this build. Other contract types are selectable as strategy modules and remain signal-only until their Deriv contract routing is backtested.</div>
+      </div>
+    </div>
+
+    <!-- MT5 TRADING -->
+    <div id="panel-mt5" class="panel">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-terminal-2"></i> MT5 Trading</div>
+        <div class="alert info">
+          <i class="ti ti-info-circle"></i>
+          <div>MT5 traders link the MT5 bridge once, then trade from this bot. Manual mode shows signals for selected markets; auto mode queues trades with the lot size, SL, TP, and max-open-trades rules below.</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>MT5 Mode</label>
+            <select id="cfg-mt5-mode">
+              <option value="manual">Manual - show signals only</option>
+              <option value="auto">Auto - place trades from signals</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Selected MT5 Markets</label>
+            <input type="text" id="cfg-mt5-markets" value="EURUSD,GBPUSD,USDJPY" placeholder="EURUSD,GBPUSD,XAUUSD">
+          </div>
+        </div>
         <div class="form-row">
           <div class="form-group">
             <label>MT5 Signal URL</label>
             <input type="text" id="cfg-mt5-url" placeholder="/api/mt5-signal">
           </div>
           <div class="form-group">
-            <label>MT5 Symbol</label>
+            <label>Default Symbol</label>
             <input type="text" id="cfg-mt5-symbol" placeholder="EURUSD" value="EURUSD">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>MT5 Lot Size</label>
+            <label>Lot Size</label>
             <input type="number" id="cfg-mt5-lot" min="0.01" step="0.01" value="0.01">
           </div>
           <div class="form-group">
-            <label>MT5 SL / TP Points</label>
+            <label>Max Open Trades</label>
+            <input type="number" id="cfg-mt5-max-open" min="1" max="20" step="1" value="1">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Stop Loss / Take Profit Points</label>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
               <input type="number" id="cfg-mt5-sl" min="0" step="1" value="0" placeholder="SL">
               <input type="number" id="cfg-mt5-tp" min="0" step="1" value="0" placeholder="TP">
             </div>
           </div>
-        </div>
-        </details>
-      </div>
-
-      <div class="card">
-        <div class="card-title"><i class="ti ti-shield-lock"></i> Risk Engine</div>
-        <div class="form-row">
           <div class="form-group">
-            <label>Max Daily Loss ($)</label>
-            <input type="number" id="cfg-daily-loss" min="0" step="1" value="20">
-          </div>
-          <div class="form-group">
-            <label>Max Recovery Levels</label>
-            <input type="number" id="cfg-recovery-levels" min="0" max="5" step="1" value="1">
+            <label>Signal Confidence (%)</label>
+            <input type="number" id="cfg-mt5-confidence" min="50" max="99" step="1" value="75">
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Normal Confidence Threshold (%)</label>
-            <input type="number" id="cfg-normal-confidence" min="50" max="99" step="1" value="70">
-          </div>
-          <div class="form-group">
-            <label>Recovery Confidence Threshold (%)</label>
-            <input type="number" id="cfg-recovery-confidence" min="50" max="99" step="1" value="85">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label><input type="checkbox" id="cfg-stop-after-loss" checked> Stop normal trading after one loss</label>
-          </div>
-          <div class="form-group">
-            <label><input type="checkbox" id="cfg-llm-advisory"> LLM advisory layer enabled</label>
-          </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="applyMT5Config()"><i class="ti ti-check"></i> Link MT5 Bridge</button>
+          <button class="btn btn-ghost" onclick="refreshMT5Status()"><i class="ti ti-refresh"></i> Refresh Positions</button>
+          <button class="btn btn-ghost" onclick="queueManualMT5Signal()"><i class="ti ti-bell-ringing"></i> Test Signal</button>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-title"><i class="ti ti-stack-2"></i> Engine Recovery Factors</div>
-        <div class="form-row">
-          <div class="form-group"><label>Accumulator</label><input type="number" id="cfg-mf-accumulator" min="1" max="50" step="0.1" value="22"></div>
-          <div class="form-group"><label>Rise / Fall</label><input type="number" id="cfg-mf-risefall" min="1" max="50" step="0.1" value="11"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Over / Under</label><input type="number" id="cfg-mf-overunder" min="1" max="50" step="0.1" value="11"></div>
-          <div class="form-group"><label>Matches / Differs</label><input type="number" id="cfg-mf-matchesdiffers" min="1" max="50" step="0.1" value="9"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Even / Odd</label><input type="number" id="cfg-mf-evenodd" min="1" max="50" step="0.1" value="9"></div>
-          <div class="form-group" style="display:flex;align-items:flex-end;">
-            <button class="btn btn-primary" onclick="applyConfig()"><i class="ti ti-check"></i> Apply Orchestrator</button>
-          </div>
-        </div>
-        <div style="font-size:12px;color:var(--text3);line-height:1.5;">For linked Deriv accounts, this build executes Accumulator live. Other strategies stay behind the risk gate until their contract routing is backtested. MT5 bridge mode can receive buy/sell signals from the selected engine.</div>
+        <div class="card-title"><i class="ti ti-bell"></i> MT5 Signals</div>
+        <div id="mt5-signals" style="font-size:12px;color:var(--text3);">No MT5 signals yet.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="ti ti-briefcase"></i> MT5 Open Positions</div>
+        <div id="mt5-positions" style="font-size:12px;color:var(--text3);">No position snapshot from EA yet.</div>
       </div>
     </div>
 
@@ -1060,6 +1059,10 @@ const state = {
     mt5Lot: 0.01,
     mt5SlPoints: 0,
     mt5TpPoints: 0,
+    mt5Mode: 'manual',
+    mt5Markets: 'EURUSD,GBPUSD,USDJPY',
+    mt5MaxOpenTrades: 1,
+    mt5Confidence: 75,
     recoveryFactors: {
       accumulator: 22,
       risefall: 11,
@@ -1069,6 +1072,12 @@ const state = {
     },
   },
   market: { symbol: null, label: null },
+  mt5: {
+    linked: false,
+    positions: [],
+    signals: [],
+    lastStatus: null,
+  },
   demo: false,
   conn: {
     connected: false, ws: null, pingInterval: null, balancePoll: null, balanceRetryTimer: null,
@@ -1197,6 +1206,158 @@ function useSimplePreset(mode) {
   showPanel('dashboard');
 }
 
+function useOptionsPreset() {
+  const set = (id, value) => { const el = document.getElementById(id); if (el) el.value = value; };
+  set('cfg-execution-venue', 'deriv');
+  state.cfg.executionVenue = 'deriv';
+  applyConfig();
+  toast('success','Options trading selected');
+  showPanel('dashboard');
+}
+
+function applyMT5Config() {
+  const set = (id, value) => { const el = document.getElementById(id); if (el) el.value = value; };
+  set('cfg-execution-venue', 'mt5');
+  applyConfig();
+  state.mt5.linked = true;
+  state.cfg.executionVenue = 'mt5';
+  renderMT5Panel();
+  toast('success','MT5 bridge linked in bot');
+}
+
+async function mt5BridgeRequest(payload = null) {
+  const url = state.cfg.mt5SignalUrl || '/api/mt5-signal';
+  if (!payload) {
+    const res = await fetch(url);
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || res.statusText);
+    return body;
+  }
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || res.statusText);
+  return body;
+}
+
+async function refreshMT5Status(silent = false) {
+  try {
+    const body = await mt5BridgeRequest();
+    state.mt5.positions = Array.isArray(body.positions) ? body.positions : [];
+    state.mt5.lastStatus = Date.now();
+    renderMT5Panel();
+    if (!silent) toast('success','MT5 status refreshed');
+  } catch (error) {
+    if (!silent) {
+      toast('danger','Could not refresh MT5 status');
+      addLog('warn','MT5','Status refresh failed: '+error.message);
+    }
+  }
+}
+
+function autoRefreshMT5Status() {
+  if (!state.mt5.linked && state.cfg.executionVenue !== 'mt5') return;
+  refreshMT5Status(true);
+}
+
+async function queueManualMT5Signal(symbol = state.cfg.mt5Symbol, action = deriveTradeSide()) {
+  const confidence = currentSignalConfidence();
+  const signal = {
+    id: `mt5_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+    action,
+    symbol,
+    lot: state.cfg.mt5Lot,
+    sl_points: state.cfg.mt5SlPoints,
+    tp_points: state.cfg.mt5TpPoints,
+    mode: state.cfg.mt5Mode,
+    strategy: state.cfg.strategyEngine,
+    confidence,
+    source_symbol: state.market.symbol || symbol,
+    created_at: new Date().toISOString(),
+  };
+  state.mt5.signals.unshift(signal);
+  state.mt5.signals = state.mt5.signals.slice(0, 20);
+  renderMT5Panel();
+  if (state.cfg.mt5Mode === 'manual') {
+    toast('info',`${action.toUpperCase()} signal available for ${symbol}`);
+    return;
+  }
+  if (confidence < state.cfg.mt5Confidence) {
+    toast('warn',`Signal ${confidence}% below MT5 threshold`);
+    return;
+  }
+  if (state.mt5.positions.length >= state.cfg.mt5MaxOpenTrades) {
+    toast('warn','MT5 max open trades reached');
+    return;
+  }
+  await queueMT5Command(signal);
+}
+
+async function queueMT5Command(command) {
+  try {
+    const body = await mt5BridgeRequest(command);
+    addLog('win','MT5',`Queued ${command.action} ${command.symbol || command.ticket || ''}`);
+    toast('success','MT5 command queued');
+    return body;
+  } catch (error) {
+    addLog('loss','MT5','Command failed: '+error.message);
+    toast('danger','MT5 command failed');
+    throw error;
+  }
+}
+
+function closeMT5Position(ticket) {
+  queueMT5Command({ id:`close_${ticket}_${Date.now()}`, action:'close', ticket:String(ticket), created_at:new Date().toISOString() });
+}
+
+function modifyMT5Position(ticket) {
+  const sl = prompt('New SL price, or blank to keep current');
+  const tp = prompt('New TP price, or blank to keep current');
+  queueMT5Command({
+    id:`modify_${ticket}_${Date.now()}`,
+    action:'modify',
+    ticket:String(ticket),
+    sl: sl === '' ? undefined : Number(sl),
+    tp: tp === '' ? undefined : Number(tp),
+    created_at:new Date().toISOString(),
+  });
+}
+
+function sendMT5SignalById(id) {
+  const signal = state.mt5.signals.find(s => s.id === id);
+  if (signal) queueMT5Command(signal);
+}
+
+function renderMT5Panel() {
+  const sig = document.getElementById('mt5-signals');
+  const pos = document.getElementById('mt5-positions');
+  if (sig) {
+    sig.innerHTML = state.mt5.signals.length ? state.mt5.signals.map(s => `
+      <div class="position-row">
+        <span>${escapeHTML(new Date(s.created_at).toLocaleTimeString())}</span>
+        <span>${escapeHTML(s.action.toUpperCase())} ${escapeHTML(s.symbol)}</span>
+        <span>${escapeHTML(String(s.confidence))}%</span>
+        <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="sendMT5SignalById('${escapeHTML(s.id)}')"><i class="ti ti-send"></i> Send</button>
+      </div>`).join('') : '<span style="color:var(--text3);">No MT5 signals yet.</span>';
+  }
+  if (pos) {
+    pos.innerHTML = state.mt5.positions.length ? state.mt5.positions.map(p => {
+      const profit = Number(p.profit || 0);
+      return `<div class="position-row">
+        <span>${escapeHTML(p.symbol || '')}</span>
+        <span>${escapeHTML(p.type || p.action || '')} ${escapeHTML(String(p.volume || p.lot || ''))}</span>
+        <span style="color:${profit >= 0 ? 'var(--green)' : 'var(--red)'};">${profit >= 0 ? '+' : '-'}$${Math.abs(profit).toFixed(2)}</span>
+        <span>SL ${escapeHTML(p.sl ?? '—')} / TP ${escapeHTML(p.tp ?? '—')}</span>
+        <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px;" onclick="modifyMT5Position('${escapeHTML(p.ticket || p.id || '')}')"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="closeMT5Position('${escapeHTML(p.ticket || p.id || '')}')"><i class="ti ti-x"></i></button>
+      </div>`;
+    }).join('') : '<span style="color:var(--text3);">No open positions reported by the EA yet.</span>';
+  }
+}
+
 function syncSlider(el, lblId) {
   const v = parseFloat(el.value);
   const lbl = document.getElementById(lblId);
@@ -1232,6 +1393,10 @@ function loadConfigToUI(cfg) {
   setPlain('cfg-mt5-lot', cfg.mt5Lot);
   setPlain('cfg-mt5-sl', cfg.mt5SlPoints);
   setPlain('cfg-mt5-tp', cfg.mt5TpPoints);
+  setPlain('cfg-mt5-mode', cfg.mt5Mode);
+  setPlain('cfg-mt5-markets', cfg.mt5Markets);
+  setPlain('cfg-mt5-max-open', cfg.mt5MaxOpenTrades);
+  setPlain('cfg-mt5-confidence', cfg.mt5Confidence);
   setPlain('cfg-daily-loss', cfg.maxDailyLoss);
   setPlain('cfg-recovery-levels', cfg.maxRecoveryLevels);
   setPlain('cfg-normal-confidence', cfg.normalConfidence);
@@ -1543,6 +1708,10 @@ function applyConfig() {
   state.cfg.mt5Lot = Math.max(0.01, getNum('cfg-mt5-lot', state.cfg.mt5Lot));
   state.cfg.mt5SlPoints = Math.max(0, getNum('cfg-mt5-sl', state.cfg.mt5SlPoints));
   state.cfg.mt5TpPoints = Math.max(0, getNum('cfg-mt5-tp', state.cfg.mt5TpPoints));
+  state.cfg.mt5Mode = getVal('cfg-mt5-mode', state.cfg.mt5Mode);
+  state.cfg.mt5Markets = getVal('cfg-mt5-markets', state.cfg.mt5Markets).trim() || 'EURUSD';
+  state.cfg.mt5MaxOpenTrades = Math.max(1, Math.floor(getNum('cfg-mt5-max-open', state.cfg.mt5MaxOpenTrades)));
+  state.cfg.mt5Confidence = Math.max(50, Math.min(99, getNum('cfg-mt5-confidence', state.cfg.mt5Confidence)));
   state.cfg.maxDailyLoss = Math.max(0, getNum('cfg-daily-loss', state.cfg.maxDailyLoss));
   state.cfg.maxRecoveryLevels = Math.max(0, Math.floor(getNum('cfg-recovery-levels', state.cfg.maxRecoveryLevels)));
   state.cfg.normalConfidence = Math.max(50, Math.min(99, getNum('cfg-normal-confidence', state.cfg.normalConfidence)));
@@ -1793,6 +1962,17 @@ function placeTrade() {
   const stake = state.bot.currentStake;
   const price = state.bot.priceHistory[state.bot.priceHistory.length - 1];
   const gap = state.analysis.gapWidth;
+
+  if (state.cfg.executionVenue === 'mt5') {
+    state.bot.lastTradeTime = Date.now();
+    state.bot.totalTrades++;
+    state.bot.state = state.cfg.mt5Mode === 'auto' ? 'trading' : 'ready';
+    setBotState(state.bot.state);
+    queueManualMT5Signal(state.cfg.mt5Symbol, deriveTradeSide());
+    addLog('info','MT5',`Signal generated for ${state.cfg.mt5Mode} mode (${state.cfg.mt5Symbol})`);
+    updateDashboard();
+    return;
+  }
   
   state.bot.activePosition = {
     id: `sig_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
@@ -1815,8 +1995,6 @@ function placeTrade() {
 
   if (state.cfg.executionVenue === 'deriv' && state.conn.ws && state.conn.ws.readyState === 1) {
     sendTradeToDerivAPI(stake);
-  } else if (state.cfg.executionVenue === 'mt5') {
-    sendTradeToMT5Bridge(state.bot.activePosition);
   } else if (state.cfg.executionVenue === 'paper') {
     addLog('info','Trade','Paper mode signal recorded — no broker order sent');
   }
@@ -2483,6 +2661,7 @@ function runBotTick() {
 setInterval(runBotTick, 1000); // watchdog only — ticks drive the fast path
 setInterval(renderCalendar, 60000);
 setInterval(autoRefreshCalendarActuals, 30000);
+setInterval(autoRefreshMT5Status, 5000);
 
 // ─── DERIV API ────────────────────────────────────────────────────────────────
 function switchAuthTab(tab) {
@@ -2936,7 +3115,9 @@ function clearLogs() {
 function updateDashboard() {
   const b = state.bot;
   const pnl = b.sessionPnl;
-  const venueLabel = state.cfg.executionVenue === 'mt5' ? 'MT5 Bridge' : state.cfg.executionVenue === 'paper' ? 'Paper' : 'Deriv';
+  const venueLabel = state.cfg.executionVenue === 'mt5'
+    ? `MT5 ${state.cfg.mt5Mode === 'auto' ? 'Auto' : 'Manual'}`
+    : state.cfg.executionVenue === 'paper' ? 'Options Signals' : 'Options Auto';
   const engineLabel = {
     accumulator: 'Accumulator',
     risefall: 'Rise/Fall',
