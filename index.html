@@ -364,6 +364,9 @@
     <button class="nav-item" onclick="showPanel('config')">
       <i class="ti ti-settings-2"></i> Bot Config
     </button>
+    <button class="nav-item" onclick="showPanel('platform')">
+      <i class="ti ti-route"></i> Orchestrator
+    </button>
     <button class="nav-item" onclick="showPanel('funds')">
       <i class="ti ti-wallet"></i> Deposit & Withdraw
     </button>
@@ -409,6 +412,11 @@
       </div>
 
       <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Execution Engine</div>
+          <div class="metric-value" id="m-engine" style="font-size:16px;margin-top:4px;">Deriv</div>
+          <div class="metric-sub" id="m-engine-sub">Accumulator engine</div>
+        </div>
         <div class="metric">
           <div class="metric-label">Session P&L</div>
           <div class="metric-value" id="m-pnl">$0.00</div>
@@ -530,6 +538,111 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- ORCHESTRATOR -->
+    <div id="panel-platform" class="panel">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-route"></i> Trading Orchestrator</div>
+        <div class="alert info">
+          <i class="ti ti-info-circle"></i>
+          <div>The bot uses deterministic code for live execution. The LLM layer is advisory only, and MT5 trades are sent through an Expert Advisor bridge.</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Execution Venue</label>
+            <select id="cfg-execution-venue">
+              <option value="deriv">Deriv Options WebSocket</option>
+              <option value="mt5">MT5 Expert Advisor Bridge</option>
+              <option value="paper">Paper / Analysis Only</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Strategy Engine</label>
+            <select id="cfg-strategy-engine">
+              <option value="accumulator">Accumulator</option>
+              <option value="risefall">Rise / Fall</option>
+              <option value="overunder">Over / Under</option>
+              <option value="matchesdiffers">Matches / Differs</option>
+              <option value="evenodd">Even / Odd</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>MT5 Signal URL</label>
+            <input type="text" id="cfg-mt5-url" placeholder="/api/mt5-signal">
+          </div>
+          <div class="form-group">
+            <label>MT5 Symbol</label>
+            <input type="text" id="cfg-mt5-symbol" placeholder="EURUSD" value="EURUSD">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>MT5 Lot Size</label>
+            <input type="number" id="cfg-mt5-lot" min="0.01" step="0.01" value="0.01">
+          </div>
+          <div class="form-group">
+            <label>MT5 SL / TP Points</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <input type="number" id="cfg-mt5-sl" min="0" step="1" value="0" placeholder="SL">
+              <input type="number" id="cfg-mt5-tp" min="0" step="1" value="0" placeholder="TP">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="ti ti-shield-lock"></i> Risk Engine</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Max Daily Loss ($)</label>
+            <input type="number" id="cfg-daily-loss" min="0" step="1" value="20">
+          </div>
+          <div class="form-group">
+            <label>Max Recovery Levels</label>
+            <input type="number" id="cfg-recovery-levels" min="0" max="5" step="1" value="1">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Normal Confidence Threshold (%)</label>
+            <input type="number" id="cfg-normal-confidence" min="50" max="99" step="1" value="70">
+          </div>
+          <div class="form-group">
+            <label>Recovery Confidence Threshold (%)</label>
+            <input type="number" id="cfg-recovery-confidence" min="50" max="99" step="1" value="85">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label><input type="checkbox" id="cfg-stop-after-loss" checked> Stop normal trading after one loss</label>
+          </div>
+          <div class="form-group">
+            <label><input type="checkbox" id="cfg-llm-advisory"> LLM advisory layer enabled</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="ti ti-stack-2"></i> Engine Recovery Factors</div>
+        <div class="form-row">
+          <div class="form-group"><label>Accumulator</label><input type="number" id="cfg-mf-accumulator" min="1" max="50" step="0.1" value="22"></div>
+          <div class="form-group"><label>Rise / Fall</label><input type="number" id="cfg-mf-risefall" min="1" max="50" step="0.1" value="11"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Over / Under</label><input type="number" id="cfg-mf-overunder" min="1" max="50" step="0.1" value="11"></div>
+          <div class="form-group"><label>Matches / Differs</label><input type="number" id="cfg-mf-matchesdiffers" min="1" max="50" step="0.1" value="9"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Even / Odd</label><input type="number" id="cfg-mf-evenodd" min="1" max="50" step="0.1" value="9"></div>
+          <div class="form-group" style="display:flex;align-items:flex-end;">
+            <button class="btn btn-primary" onclick="applyConfig()"><i class="ti ti-check"></i> Apply Orchestrator</button>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text3);line-height:1.5;">Only Accumulator has live Deriv execution in this build. Other Deriv engines are configured as isolated modules and must pass backtesting before live order routing is enabled.</div>
+      </div>
     </div>
 
     <!-- FUNDS -->
@@ -898,6 +1011,7 @@ const state = {
     postLoss: 0,        // ticks of market analysis remaining after a loss
     consecutiveLosses: 0,
     totalTrades: 0,
+    recoveryLevel: 0,
     wins: 0,
     losses: 0,
     sessionPnl: 0.0,
@@ -914,6 +1028,26 @@ const state = {
     minGapWidth: 0.2,     // Minimum gap width threshold
     gapCheckPeriod: 5,     // Candles to check for gap
     volMin: 0.01, volMax: 2.0,
+    executionVenue: 'deriv',
+    strategyEngine: 'accumulator',
+    maxDailyLoss: 20,
+    maxRecoveryLevels: 1,
+    normalConfidence: 70,
+    recoveryConfidence: 85,
+    stopAfterLoss: true,
+    llmAdvisory: false,
+    mt5SignalUrl: '/api/mt5-signal',
+    mt5Symbol: 'EURUSD',
+    mt5Lot: 0.01,
+    mt5SlPoints: 0,
+    mt5TpPoints: 0,
+    recoveryFactors: {
+      accumulator: 22,
+      risefall: 11,
+      overunder: 11,
+      matchesdiffers: 9,
+      evenodd: 9,
+    },
   },
   market: { symbol: null, label: null },
   demo: false,
@@ -1037,6 +1171,8 @@ function syncSlider(el, lblId) {
 
 function loadConfigToUI(cfg) {
   const set = (id, val) => { const el=document.getElementById(id); if(el){ el.value=val; const lbl = id.replace('cfg-', 'lbl-'); syncSlider(el, lbl); } };
+  const setPlain = (id, val) => { const el=document.getElementById(id); if(el && val !== undefined) el.value=val; };
+  const setChecked = (id, val) => { const el=document.getElementById(id); if(el) el.checked=Boolean(val); };
   set('cfg-min-gap', cfg.minGapWidth);
   set('cfg-gap-period', cfg.gapCheckPeriod);
   set('cfg-min-stake', cfg.minStake);
@@ -1048,6 +1184,24 @@ function loadConfigToUI(cfg) {
   set('cfg-vol-min', (cfg.volMin||0.5));
   set('cfg-vol-max', (cfg.volMax||5));
   set('cfg-cooldown', cfg.tradeCooldownSec||10);
+  setPlain('cfg-execution-venue', cfg.executionVenue);
+  setPlain('cfg-strategy-engine', cfg.strategyEngine);
+  setPlain('cfg-mt5-url', cfg.mt5SignalUrl);
+  setPlain('cfg-mt5-symbol', cfg.mt5Symbol);
+  setPlain('cfg-mt5-lot', cfg.mt5Lot);
+  setPlain('cfg-mt5-sl', cfg.mt5SlPoints);
+  setPlain('cfg-mt5-tp', cfg.mt5TpPoints);
+  setPlain('cfg-daily-loss', cfg.maxDailyLoss);
+  setPlain('cfg-recovery-levels', cfg.maxRecoveryLevels);
+  setPlain('cfg-normal-confidence', cfg.normalConfidence);
+  setPlain('cfg-recovery-confidence', cfg.recoveryConfidence);
+  setChecked('cfg-stop-after-loss', cfg.stopAfterLoss);
+  setChecked('cfg-llm-advisory', cfg.llmAdvisory);
+  setPlain('cfg-mf-accumulator', cfg.recoveryFactors.accumulator);
+  setPlain('cfg-mf-risefall', cfg.recoveryFactors.risefall);
+  setPlain('cfg-mf-overunder', cfg.recoveryFactors.overunder);
+  setPlain('cfg-mf-matchesdiffers', cfg.recoveryFactors.matchesdiffers);
+  setPlain('cfg-mf-evenodd', cfg.recoveryFactors.evenodd);
 }
 
 function formatYMD(date) {
@@ -1318,6 +1472,18 @@ function renderCalendar() {
 }
 
 function applyConfig() {
+  const getVal = (id, fallback = '') => {
+    const el = document.getElementById(id);
+    return el ? el.value : fallback;
+  };
+  const getNum = (id, fallback = 0) => {
+    const n = parseFloat(getVal(id, fallback));
+    return Number.isFinite(n) ? n : fallback;
+  };
+  const getChecked = (id, fallback = false) => {
+    const el = document.getElementById(id);
+    return el ? el.checked : fallback;
+  };
   state.cfg.minGapWidth = parseFloat(document.getElementById('cfg-min-gap').value);
   state.cfg.gapCheckPeriod = parseInt(document.getElementById('cfg-gap-period').value);
   state.cfg.minStake = parseFloat(document.getElementById('cfg-min-stake').value);
@@ -1329,8 +1495,31 @@ function applyConfig() {
   state.cfg.volMin = parseFloat(document.getElementById('cfg-vol-min').value);
   state.cfg.volMax = parseFloat(document.getElementById('cfg-vol-max').value);
   state.cfg.tradeCooldownSec = parseInt(document.getElementById('cfg-cooldown').value);
-  addLog('info','Config','Configuration updated');
+  state.cfg.executionVenue = getVal('cfg-execution-venue', state.cfg.executionVenue);
+  state.cfg.strategyEngine = getVal('cfg-strategy-engine', state.cfg.strategyEngine);
+  state.cfg.mt5SignalUrl = getVal('cfg-mt5-url', state.cfg.mt5SignalUrl).trim() || '/api/mt5-signal';
+  state.cfg.mt5Symbol = getVal('cfg-mt5-symbol', state.cfg.mt5Symbol).trim() || 'EURUSD';
+  state.cfg.mt5Lot = Math.max(0.01, getNum('cfg-mt5-lot', state.cfg.mt5Lot));
+  state.cfg.mt5SlPoints = Math.max(0, getNum('cfg-mt5-sl', state.cfg.mt5SlPoints));
+  state.cfg.mt5TpPoints = Math.max(0, getNum('cfg-mt5-tp', state.cfg.mt5TpPoints));
+  state.cfg.maxDailyLoss = Math.max(0, getNum('cfg-daily-loss', state.cfg.maxDailyLoss));
+  state.cfg.maxRecoveryLevels = Math.max(0, Math.floor(getNum('cfg-recovery-levels', state.cfg.maxRecoveryLevels)));
+  state.cfg.normalConfidence = Math.max(50, Math.min(99, getNum('cfg-normal-confidence', state.cfg.normalConfidence)));
+  state.cfg.recoveryConfidence = Math.max(50, Math.min(99, getNum('cfg-recovery-confidence', state.cfg.recoveryConfidence)));
+  state.cfg.stopAfterLoss = getChecked('cfg-stop-after-loss', state.cfg.stopAfterLoss);
+  state.cfg.llmAdvisory = getChecked('cfg-llm-advisory', state.cfg.llmAdvisory);
+  state.cfg.recoveryFactors = {
+    accumulator: Math.max(1, getNum('cfg-mf-accumulator', 22)),
+    risefall: Math.max(1, getNum('cfg-mf-risefall', 11)),
+    overunder: Math.max(1, getNum('cfg-mf-overunder', 11)),
+    matchesdiffers: Math.max(1, getNum('cfg-mf-matchesdiffers', 9)),
+    evenodd: Math.max(1, getNum('cfg-mf-evenodd', 9)),
+  };
+  state.cfg.martingaleFactor = state.cfg.recoveryFactors[state.cfg.strategyEngine] || state.cfg.recoveryFactors.accumulator;
+  addLog('info','Config',`Configuration updated (${state.cfg.strategyEngine} → ${state.cfg.executionVenue})`);
   state.bot.currentStake = state.cfg.minStake;
+  state.bot.recoveryLevel = 0;
+  updateDashboard();
   toast('success', 'Configuration applied — stake reset to $'+state.cfg.minStake.toFixed(2));
 }
 
@@ -1473,6 +1662,41 @@ function canTradeNow() {
   return secAgo >= state.cfg.tradeCooldownSec;
 }
 
+function currentSignalConfidence() {
+  const gap = state.analysis.gapWidth || 0;
+  const avgGap = state.analysis.avgGapWidth || state.cfg.minGapWidth || 1;
+  const vol = state.analysis.volatility || 0;
+  const gapScore = Math.min(35, Math.max(0, (gap / Math.max(state.cfg.minGapWidth, 0.0001)) * 20));
+  const avgScore = gap >= avgGap ? 15 : 5;
+  const volMid = (state.cfg.volMin + state.cfg.volMax) / 2;
+  const volRange = Math.max(0.01, state.cfg.volMax - state.cfg.volMin);
+  const volScore = vol >= state.cfg.volMin && vol <= state.cfg.volMax
+    ? Math.max(15, 35 - Math.abs(vol - volMid) / volRange * 20)
+    : 0;
+  return Math.round(Math.max(0, Math.min(99, 20 + gapScore + avgScore + volScore)));
+}
+
+function riskGate() {
+  if (state.bot.sessionPnl <= -Math.abs(state.cfg.maxDailyLoss || 0) && state.cfg.maxDailyLoss > 0) {
+    return { ok: false, reason: `Daily loss limit reached ($${Math.abs(state.bot.sessionPnl).toFixed(2)})` };
+  }
+  if (state.bot.recoveryLevel > state.cfg.maxRecoveryLevels) {
+    return { ok: false, reason: 'Maximum recovery level reached' };
+  }
+  if (state.cfg.stopAfterLoss && state.bot.consecutiveLosses > 0 && state.bot.recoveryLevel >= state.cfg.maxRecoveryLevels) {
+    return { ok: false, reason: 'One-loss stop is active' };
+  }
+  const confidence = currentSignalConfidence();
+  const threshold = state.bot.consecutiveLosses > 0 ? state.cfg.recoveryConfidence : state.cfg.normalConfidence;
+  if (confidence < threshold) {
+    return { ok: false, reason: `Signal confidence ${confidence}% < ${threshold}%` };
+  }
+  if (state.cfg.executionVenue === 'deriv' && state.cfg.strategyEngine !== 'accumulator') {
+    return { ok: false, reason: `${state.cfg.strategyEngine} live Deriv routing is locked until backtested` };
+  }
+  return { ok: true, confidence };
+}
+
 function shouldPlaceTrade() {
   if (!state.market.symbol || state.bot.activePosition) return false;
   if (!canTradeNow()) return false;
@@ -1491,6 +1715,11 @@ function shouldPlaceTrade() {
     return false;
   }
   if (state.analysis.signal !== 'READY') return false;
+  const gate = riskGate();
+  if (!gate.ok) {
+    document.getElementById('m-pos').textContent = gate.reason;
+    return false;
+  }
   return true;
 }
 
@@ -1525,10 +1754,14 @@ function placeTrade() {
   const gap = state.analysis.gapWidth;
   
   state.bot.activePosition = {
+    id: `sig_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
     entryPrice: price,
     stake: stake,
     entryTime: Date.now(),
     gapWidth: gap,
+    engine: state.cfg.strategyEngine,
+    venue: state.cfg.executionVenue,
+    confidence: currentSignalConfidence(),
     entryTick: state.bot.priceHistory.length, // 1-tick trades: settle on the next tick
   };
   
@@ -1537,13 +1770,57 @@ function placeTrade() {
   state.bot.state = 'trading';
   setBotState('trading');
   
-  addLog('info','Trade',`OPEN @$${price.toFixed(4)} | Gap: ${gap.toFixed(4)} | Stake $${stake.toFixed(2)}`);
+  addLog('info','Trade',`OPEN ${state.cfg.strategyEngine}/${state.cfg.executionVenue} @$${price.toFixed(4)} | Gap: ${gap.toFixed(4)} | Stake $${stake.toFixed(2)}`);
 
-  if (state.conn.ws && state.conn.ws.readyState === 1) {
+  if (state.cfg.executionVenue === 'deriv' && state.conn.ws && state.conn.ws.readyState === 1) {
     sendTradeToDerivAPI(stake);
+  } else if (state.cfg.executionVenue === 'mt5') {
+    sendTradeToMT5Bridge(state.bot.activePosition);
+  } else if (state.cfg.executionVenue === 'paper') {
+    addLog('info','Trade','Paper mode signal recorded — no broker order sent');
   }
 
   updateDashboard();
+}
+
+async function sendTradeToMT5Bridge(pos) {
+  const side = deriveTradeSide();
+  const payload = {
+    id: pos.id,
+    action: side,
+    symbol: state.cfg.mt5Symbol,
+    lot: state.cfg.mt5Lot,
+    sl_points: state.cfg.mt5SlPoints,
+    tp_points: state.cfg.mt5TpPoints,
+    strategy: state.cfg.strategyEngine,
+    confidence: pos.confidence,
+    source_symbol: state.market.symbol,
+    created_at: new Date().toISOString(),
+  };
+  try {
+    const res = await fetch(state.cfg.mt5SignalUrl || '/api/mt5-signal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || res.statusText);
+    addLog('win','MT5',`Signal ${payload.id} queued: ${payload.action.toUpperCase()} ${payload.symbol} ${payload.lot}`);
+    toast('success','MT5 signal queued for EA');
+  } catch (error) {
+    addLog('loss','MT5','Signal bridge failed: '+error.message);
+    toast('danger','MT5 bridge failed');
+    state.bot.activePosition = null;
+    state.bot.state = 'idle';
+    setBotState('idle');
+    updateDashboard();
+  }
+}
+
+function deriveTradeSide() {
+  const prices = state.bot.priceHistory;
+  if (prices.length < 2) return 'buy';
+  return prices[prices.length - 1] >= prices[prices.length - 2] ? 'buy' : 'sell';
 }
 
 function sendTradeToDerivAPI(stake) {
@@ -1989,17 +2266,20 @@ function closePosition(exitPrice, realPnl) {
   if (isWin) {
     state.bot.wins++;
     state.bot.consecutiveLosses = 0;
+    state.bot.recoveryLevel = 0;
     state.bot.currentStake = state.cfg.minStake;
     addLog('win','Trade',`✓ WIN +$${pnl.toFixed(4)} | Exit @$${ep.toFixed(4)}`);
     toast('success', `WIN +$${pnl.toFixed(2)}`);
   } else {
     state.bot.losses++;
     state.bot.consecutiveLosses++;
+    state.bot.recoveryLevel++;
     addLog('loss','Trade',`✗ LOSS -$${Math.abs(pnl).toFixed(4)} | Exit @$${ep.toFixed(4)}`);
     toast('warn', `LOSS -$${Math.abs(pnl).toFixed(2)}`);
-    if (state.bot.consecutiveLosses < state.cfg.maxConsecutiveLosses) {
-      state.bot.currentStake = Math.round(Math.min(state.bot.currentStake * state.cfg.martingaleFactor, state.cfg.maxStake) * 100) / 100;
-      addLog('info','Bot',`Martingale ×${state.cfg.martingaleFactor}: next stake $${state.bot.currentStake.toFixed(2)}`);
+    if (state.bot.consecutiveLosses < state.cfg.maxConsecutiveLosses && state.bot.recoveryLevel <= state.cfg.maxRecoveryLevels) {
+      const factor = state.cfg.recoveryFactors[state.cfg.strategyEngine] || state.cfg.martingaleFactor;
+      state.bot.currentStake = Math.round(Math.min(state.bot.currentStake * factor, state.cfg.maxStake) * 100) / 100;
+      addLog('info','Bot',`Recovery ${state.bot.recoveryLevel}/${state.cfg.maxRecoveryLevels} ×${factor}: next stake $${state.bot.currentStake.toFixed(2)}`);
       // Spec rule 5: after a loss, run a thorough analysis of this market before re-entering
       state.bot.postLoss = POST_LOSS_TICKS;
       addLog('info','Analysis',`Loss recorded — analyzing ${state.market.symbol || 'market'} for ${POST_LOSS_TICKS} stable ticks before next trade`);
@@ -2007,12 +2287,12 @@ function closePosition(exitPrice, realPnl) {
     }
   }
 
-  if (state.bot.consecutiveLosses >= state.cfg.maxConsecutiveLosses) {
+  if (state.bot.consecutiveLosses >= state.cfg.maxConsecutiveLosses || state.bot.recoveryLevel > state.cfg.maxRecoveryLevels) {
     state.bot.state = 'closed';
     setBotState('closed');
     stopTradingUI();
-    addLog('warn','Bot',`${state.cfg.maxConsecutiveLosses} consecutive losses reached — trading stopped.`);
-    toast('danger', `${state.cfg.maxConsecutiveLosses} consecutive losses — trading stopped`);
+    addLog('warn','Bot','Risk limit reached — trading stopped.');
+    toast('danger', 'Risk limit reached — trading stopped');
   } else if (state.bot.postLoss > 0) {
     state.bot.state = 'monitoring';
     setBotState('monitoring');
@@ -2101,6 +2381,7 @@ function resetSession() {
   if (state.bot.activePosition) { addLog('warn','Bot','Close position first'); toast('warn','A position is open — close it before resetting'); return; }
   state.bot.consecutiveLosses = 0;
   state.bot.currentStake = state.cfg.minStake;
+  state.bot.recoveryLevel = 0;
   state.bot.postLoss = 0;
   state.bot.sessionPnl = 0;
   state.bot.totalPnl = 0;
@@ -2135,7 +2416,7 @@ function toggleAutoTrade() {
     setBotState('ready');
     startBtn.disabled = true;
     stopBtn.disabled = false;
-    addLog('info','Bot','🤖 Accumulator trading started (growth '+Math.round((state.cfg.growthRate||0.05)*100)+'%)');
+    addLog('info','Bot',`Trading started: ${state.cfg.strategyEngine} via ${state.cfg.executionVenue}`);
     toast('success','Trading started — executing on every tick');
   } else {
     state.bot.state = 'idle';
@@ -2614,6 +2895,18 @@ function clearLogs() {
 function updateDashboard() {
   const b = state.bot;
   const pnl = b.sessionPnl;
+  const venueLabel = state.cfg.executionVenue === 'mt5' ? 'MT5 Bridge' : state.cfg.executionVenue === 'paper' ? 'Paper' : 'Deriv';
+  const engineLabel = {
+    accumulator: 'Accumulator',
+    risefall: 'Rise/Fall',
+    overunder: 'Over/Under',
+    matchesdiffers: 'Matches/Differs',
+    evenodd: 'Even/Odd',
+  }[state.cfg.strategyEngine] || state.cfg.strategyEngine;
+  const engineEl = document.getElementById('m-engine');
+  const engineSubEl = document.getElementById('m-engine-sub');
+  if (engineEl) engineEl.textContent = venueLabel;
+  if (engineSubEl) engineSubEl.textContent = `${engineLabel} • recovery ${b.recoveryLevel || 0}/${state.cfg.maxRecoveryLevels}`;
   document.getElementById('m-pnl').textContent = (pnl>=0?'+':'−')+'$'+Math.abs(pnl).toFixed(2);
   document.getElementById('m-pnl').className = 'metric-value ' + (pnl>=0?'green':pnl<0?'red':'');
   document.getElementById('m-pnl-sub').textContent = b.positions.length + ' closed';
