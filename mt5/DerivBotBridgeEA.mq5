@@ -8,6 +8,9 @@
 #include <Trade/Trade.mqh>
 
 input string InpSignalUrl = "https://deriv-accumulator-bot.vercel.app/api/mt5-signal";
+input string InpBridgeToken = "";
+input string InpAccountLogin = "";
+input string InpServerName = "";
 input int    InpPollSeconds = 2;
 input int    InpDeviationPoints = 20;
 input long   InpMagic = 80689444;
@@ -20,6 +23,7 @@ int OnInit()
    trade.SetExpertMagicNumber(InpMagic);
    EventSetTimer(MathMax(1, InpPollSeconds));
    Print("Deriv Bot Bridge EA started. Allow WebRequest URL: ", InpSignalUrl);
+   Print("Bridge identity: login=", BridgeLogin(), " server=", BridgeServer());
    return INIT_SUCCEEDED;
 }
 
@@ -32,7 +36,7 @@ void OnTimer()
 {
    ReportPositions();
 
-   string json = HttpGet(InpSignalUrl);
+   string json = HttpGet(BridgeUrl());
    if(json == "" || StringFind(json, "\"signal\":null") >= 0)
       return;
 
@@ -172,7 +176,12 @@ string HttpGet(string url)
 
 void AckSignal(string id)
 {
-   string payload = "{\"executed_id\":\"" + id + "\"}";
+   string payload = "{";
+   payload += "\"executed_id\":\"" + JsonEscape(id) + "\",";
+   payload += "\"account_login\":\"" + JsonEscape(BridgeLogin()) + "\",";
+   payload += "\"server_name\":\"" + JsonEscape(BridgeServer()) + "\",";
+   payload += "\"bridge_token\":\"" + JsonEscape(InpBridgeToken) + "\"";
+   payload += "}";
    char data[];
    char result[];
    string result_headers;
@@ -182,7 +191,11 @@ void AckSignal(string id)
 
 void ReportPositions()
 {
-   string payload = "{\"positions\":[";
+   string payload = "{";
+   payload += "\"account_login\":\"" + JsonEscape(BridgeLogin()) + "\",";
+   payload += "\"server_name\":\"" + JsonEscape(BridgeServer()) + "\",";
+   payload += "\"bridge_token\":\"" + JsonEscape(InpBridgeToken) + "\",";
+   payload += "\"positions\":[";
    int added = 0;
    for(int i = 0; i < PositionsTotal(); i++)
    {
@@ -195,7 +208,7 @@ void ReportPositions()
       string side = type == POSITION_TYPE_BUY ? "buy" : "sell";
       payload += "{";
       payload += "\"ticket\":\"" + IntegerToString((long)ticket) + "\",";
-      payload += "\"symbol\":\"" + symbol + "\",";
+      payload += "\"symbol\":\"" + JsonEscape(symbol) + "\",";
       payload += "\"type\":\"" + side + "\",";
       payload += "\"volume\":" + DoubleToString(PositionGetDouble(POSITION_VOLUME), 2) + ",";
       payload += "\"price_open\":" + DoubleToString(PositionGetDouble(POSITION_PRICE_OPEN), (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS)) + ",";
@@ -212,6 +225,50 @@ void ReportPositions()
    string result_headers;
    StringToCharArray(payload, data, 0, WHOLE_ARRAY, CP_UTF8);
    WebRequest("POST", InpSignalUrl, "Content-Type: application/json\r\n", 5000, data, result, result_headers);
+}
+
+string BridgeLogin()
+{
+   if(InpAccountLogin != "")
+      return InpAccountLogin;
+   return IntegerToString((long)AccountInfoInteger(ACCOUNT_LOGIN));
+}
+
+string BridgeServer()
+{
+   if(InpServerName != "")
+      return InpServerName;
+   return AccountInfoString(ACCOUNT_SERVER);
+}
+
+string BridgeUrl()
+{
+   string url = InpSignalUrl;
+   string sep = StringFind(url, "?") >= 0 ? "&" : "?";
+   url += sep + "account_login=" + UrlEncode(BridgeLogin());
+   url += "&server_name=" + UrlEncode(BridgeServer());
+   url += "&bridge_token=" + UrlEncode(InpBridgeToken);
+   return url;
+}
+
+string UrlEncode(string value)
+{
+   StringReplace(value, " ", "%20");
+   StringReplace(value, "#", "%23");
+   StringReplace(value, "&", "%26");
+   StringReplace(value, "+", "%2B");
+   StringReplace(value, "=", "%3D");
+   StringReplace(value, "?", "%3F");
+   return value;
+}
+
+string JsonEscape(string value)
+{
+   StringReplace(value, "\\", "\\\\");
+   StringReplace(value, "\"", "\\\"");
+   StringReplace(value, "\r", "");
+   StringReplace(value, "\n", "");
+   return value;
 }
 
 string JsonString(string json, string key)

@@ -614,12 +614,32 @@
         </div>
         <div class="form-row">
           <div class="form-group">
+            <label>MT5 Account Login</label>
+            <input type="text" id="cfg-mt5-login" placeholder="e.g. 80689444">
+          </div>
+          <div class="form-group">
+            <label>MT5 Server Name</label>
+            <input type="text" id="cfg-mt5-server" placeholder="e.g. DerivSVG-Server-02">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Bridge Secret</label>
+            <input type="password" id="cfg-mt5-token" placeholder="Use the same secret in the MT5 EA">
+          </div>
+          <div class="form-group">
             <label>MT5 Signal URL</label>
             <input type="text" id="cfg-mt5-url" placeholder="/api/mt5-signal">
           </div>
+        </div>
+        <div class="form-row">
           <div class="form-group">
             <label>Default Symbol</label>
             <input type="text" id="cfg-mt5-symbol" placeholder="EURUSD" value="EURUSD">
+          </div>
+          <div class="form-group">
+            <label>Bridge Status</label>
+            <div id="mt5-bridge-status" class="alert warn" style="margin:0;min-height:44px;">Not linked. Enter MT5 account details, install the EA, then refresh.</div>
           </div>
         </div>
         <div class="form-row">
@@ -646,7 +666,7 @@
           </div>
         </div>
         <div class="btn-row">
-          <button class="btn btn-primary" onclick="applyMT5Config()"><i class="ti ti-check"></i> Link MT5 Bridge</button>
+          <button class="btn btn-primary" onclick="applyMT5Config()"><i class="ti ti-check"></i> Save &amp; Verify MT5 Bridge</button>
           <button class="btn btn-ghost" onclick="refreshMT5Status()"><i class="ti ti-refresh"></i> Refresh Positions</button>
           <button class="btn btn-ghost" onclick="queueManualMT5Signal()"><i class="ti ti-bell-ringing"></i> Test Signal</button>
         </div>
@@ -1055,6 +1075,9 @@ const state = {
     stopAfterLoss: true,
     llmAdvisory: false,
     mt5SignalUrl: '/api/mt5-signal',
+    mt5Login: '',
+    mt5Server: '',
+    mt5BridgeToken: '',
     mt5Symbol: 'EURUSD',
     mt5Lot: 0.01,
     mt5SlPoints: 0,
@@ -1074,6 +1097,7 @@ const state = {
   market: { symbol: null, label: null },
   mt5: {
     linked: false,
+    bridge: null,
     positions: [],
     signals: [],
     lastStatus: null,
@@ -1219,24 +1243,72 @@ function applyMT5Config() {
   const set = (id, value) => { const el = document.getElementById(id); if (el) el.value = value; };
   set('cfg-execution-venue', 'mt5');
   applyConfig();
-  state.mt5.linked = true;
+  state.mt5.linked = false;
   state.cfg.executionVenue = 'mt5';
   renderMT5Panel();
-  toast('success','MT5 bridge linked in bot');
+  if (!state.cfg.mt5Login || !state.cfg.mt5Server || !state.cfg.mt5BridgeToken) {
+    toast('warn','Enter MT5 login, server, and bridge secret first');
+    return;
+  }
+  toast('info','MT5 details saved. Waiting for matching EA bridge.');
+  refreshMT5Status();
+}
+
+function mt5BridgeIdentity() {
+  return {
+    account_login: String(state.cfg.mt5Login || '').trim(),
+    server_name: String(state.cfg.mt5Server || '').trim(),
+    bridge_token: String(state.cfg.mt5BridgeToken || '').trim(),
+  };
+}
+
+function appendMT5BridgeQuery(url) {
+  const identity = mt5BridgeIdentity();
+  const separator = url.includes('?') ? '&' : '?';
+  const params = new URLSearchParams({
+    account_login: identity.account_login,
+    server_name: identity.server_name,
+    bridge_token: identity.bridge_token,
+  });
+  return `${url}${separator}${params.toString()}`;
+}
+
+function mt5BridgeMatches(bridge) {
+  if (!bridge || !bridge.connected) return false;
+  const identity = mt5BridgeIdentity();
+  return bridge.verified === true
+    && String(bridge.account_login || '') === identity.account_login
+    && String(bridge.server_name || '') === identity.server_name
+    && Boolean(identity.bridge_token);
+}
+
+function mt5BridgeStatusText() {
+  if (!state.cfg.mt5Login || !state.cfg.mt5Server || !state.cfg.mt5BridgeToken) {
+    return { level:'warn', text:'Enter MT5 login, server name, and bridge secret. The bot will not connect without them.' };
+  }
+  if (state.mt5.linked) {
+    const updated = state.mt5.bridge?.updated_at ? ` Last EA heartbeat: ${new Date(state.mt5.bridge.updated_at).toLocaleTimeString()}.` : '';
+    return { level:'success', text:`Verified EA bridge for ${state.cfg.mt5Login} on ${state.cfg.mt5Server}.${updated}` };
+  }
+  if (state.mt5.bridge?.connected) {
+    return { level:'danger', text:`EA is online but not verified for this setup. It reported ${state.mt5.bridge.account_login || 'unknown'} on ${state.mt5.bridge.server_name || 'unknown'}; check the login, server, and bridge secret.` };
+  }
+  return { level:'warn', text:'Waiting for the MT5 EA to report this login/server/secret. Install the EA and enable WebRequest for the signal URL.' };
 }
 
 async function mt5BridgeRequest(payload = null) {
   const url = state.cfg.mt5SignalUrl || '/api/mt5-signal';
   if (!payload) {
-    const res = await fetch(url);
+    const res = await fetch(appendMT5BridgeQuery(url));
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(body.error || res.statusText);
     return body;
   }
+  const identity = mt5BridgeIdentity();
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, ...identity }),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.error || res.statusText);
@@ -1247,10 +1319,13 @@ async function refreshMT5Status(silent = false) {
   try {
     const body = await mt5BridgeRequest();
     state.mt5.positions = Array.isArray(body.positions) ? body.positions : [];
+    state.mt5.bridge = body.bridge || null;
+    state.mt5.linked = mt5BridgeMatches(state.mt5.bridge);
     state.mt5.lastStatus = Date.now();
     renderMT5Panel();
-    if (!silent) toast('success','MT5 status refreshed');
+    if (!silent) toast(state.mt5.linked ? 'success' : 'warn', state.mt5.linked ? 'MT5 bridge verified' : 'MT5 bridge not verified yet');
   } catch (error) {
+    state.mt5.linked = false;
     if (!silent) {
       toast('danger','Could not refresh MT5 status');
       addLog('warn','MT5','Status refresh failed: '+error.message);
@@ -1297,6 +1372,10 @@ async function queueManualMT5Signal(symbol = state.cfg.mt5Symbol, action = deriv
 }
 
 async function queueMT5Command(command) {
+  if (!state.mt5.linked) {
+    toast('danger','Verify the MT5 bridge before sending trades');
+    throw new Error('MT5 bridge is not verified');
+  }
   try {
     const body = await mt5BridgeRequest(command);
     addLog('win','MT5',`Queued ${command.action} ${command.symbol || command.ticket || ''}`);
@@ -1334,6 +1413,12 @@ function sendMT5SignalById(id) {
 function renderMT5Panel() {
   const sig = document.getElementById('mt5-signals');
   const pos = document.getElementById('mt5-positions');
+  const bridgeStatus = document.getElementById('mt5-bridge-status');
+  if (bridgeStatus) {
+    const status = mt5BridgeStatusText();
+    bridgeStatus.className = `alert ${status.level}`;
+    bridgeStatus.textContent = status.text;
+  }
   if (sig) {
     sig.innerHTML = state.mt5.signals.length ? state.mt5.signals.map(s => `
       <div class="position-row">
@@ -1389,6 +1474,9 @@ function loadConfigToUI(cfg) {
   setPlain('cfg-execution-venue', cfg.executionVenue);
   setPlain('cfg-strategy-engine', cfg.strategyEngine);
   setPlain('cfg-mt5-url', cfg.mt5SignalUrl);
+  setPlain('cfg-mt5-login', cfg.mt5Login);
+  setPlain('cfg-mt5-server', cfg.mt5Server);
+  setPlain('cfg-mt5-token', cfg.mt5BridgeToken);
   setPlain('cfg-mt5-symbol', cfg.mt5Symbol);
   setPlain('cfg-mt5-lot', cfg.mt5Lot);
   setPlain('cfg-mt5-sl', cfg.mt5SlPoints);
@@ -1704,6 +1792,9 @@ function applyConfig() {
   state.cfg.executionVenue = getVal('cfg-execution-venue', state.cfg.executionVenue);
   state.cfg.strategyEngine = getVal('cfg-strategy-engine', state.cfg.strategyEngine);
   state.cfg.mt5SignalUrl = getVal('cfg-mt5-url', state.cfg.mt5SignalUrl).trim() || '/api/mt5-signal';
+  state.cfg.mt5Login = getVal('cfg-mt5-login', state.cfg.mt5Login).trim();
+  state.cfg.mt5Server = getVal('cfg-mt5-server', state.cfg.mt5Server).trim();
+  state.cfg.mt5BridgeToken = getVal('cfg-mt5-token', state.cfg.mt5BridgeToken).trim();
   state.cfg.mt5Symbol = getVal('cfg-mt5-symbol', state.cfg.mt5Symbol).trim() || 'EURUSD';
   state.cfg.mt5Lot = Math.max(0.01, getNum('cfg-mt5-lot', state.cfg.mt5Lot));
   state.cfg.mt5SlPoints = Math.max(0, getNum('cfg-mt5-sl', state.cfg.mt5SlPoints));
@@ -2017,13 +2108,7 @@ async function sendTradeToMT5Bridge(pos) {
     created_at: new Date().toISOString(),
   };
   try {
-    const res = await fetch(state.cfg.mt5SignalUrl || '/api/mt5-signal', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(body.error || res.statusText);
+    await queueMT5Command(payload);
     addLog('win','MT5',`Signal ${payload.id} queued: ${payload.action.toUpperCase()} ${payload.symbol} ${payload.lot}`);
     toast('success','MT5 signal queued for EA');
   } catch (error) {

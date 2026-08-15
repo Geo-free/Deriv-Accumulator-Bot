@@ -1,7 +1,7 @@
 let latestSignal = null;
 let latestCommand = null;
 let positions = [];
-let bridgeStatus = { connected: false, updated_at: null };
+let bridgeStatus = { connected: false, account_login: null, server_name: null, updated_at: null };
 const executed = new Set();
 
 function setCors(res) {
@@ -50,8 +50,45 @@ function cleanSignal(raw) {
     strategy: String(raw.strategy || 'unknown').slice(0, 40),
     confidence: Math.max(0, Math.min(100, Number(raw.confidence) || 0)),
     source_symbol: String(raw.source_symbol || '').slice(0, 40),
+    account_login: String(raw.account_login || '').trim().slice(0, 40),
+    server_name: String(raw.server_name || '').trim().slice(0, 80),
+    bridge_token: String(raw.bridge_token || '').trim().slice(0, 120),
     created_at: raw.created_at || new Date().toISOString(),
   };
+}
+
+function bridgeIdentity(raw = {}) {
+  return {
+    account_login: String(raw.account_login || '').trim().slice(0, 40),
+    server_name: String(raw.server_name || '').trim().slice(0, 80),
+    bridge_token: String(raw.bridge_token || '').trim().slice(0, 120),
+  };
+}
+
+function sameBridge(a = {}, b = {}) {
+  return Boolean(a.account_login && a.server_name && a.bridge_token)
+    && a.account_login === b.account_login
+    && a.server_name === b.server_name
+    && a.bridge_token === b.bridge_token;
+}
+
+function publicBridgeStatus() {
+  return {
+    connected: Boolean(bridgeStatus.connected),
+    account_login: bridgeStatus.account_login,
+    server_name: bridgeStatus.server_name,
+    updated_at: bridgeStatus.updated_at,
+  };
+}
+
+function requestQuery(req) {
+  if (req.query) return req.query;
+  try {
+    const url = new URL(req.url || '', 'http://localhost');
+    return Object.fromEntries(url.searchParams.entries());
+  } catch {
+    return {};
+  }
 }
 
 module.exports = async function handler(req, res) {
@@ -63,8 +100,15 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
-    const command = latestCommand && !executed.has(latestCommand.id) ? latestCommand : null;
-    res.status(200).json({ signal: command, command, positions, bridge: bridgeStatus });
+    const requestIdentity = bridgeIdentity(requestQuery(req));
+    const verified = sameBridge(bridgeStatus, requestIdentity);
+    const bridge = { ...publicBridgeStatus(), verified };
+    const commandAllowed = latestCommand
+      && !executed.has(latestCommand.id)
+      && sameBridge(latestCommand, requestIdentity);
+    const command = commandAllowed ? latestCommand : null;
+    const matchingPositions = verified ? positions : [];
+    res.status(200).json({ signal: command, command, positions: matchingPositions, bridge });
     return;
   }
 
@@ -77,14 +121,27 @@ module.exports = async function handler(req, res) {
         return;
       }
       if (Array.isArray(body.positions)) {
+        const identity = bridgeIdentity(body);
+        if (!identity.account_login || !identity.server_name || !identity.bridge_token) {
+          res.status(400).json({ error: 'Bridge heartbeat requires account_login, server_name, and bridge_token' });
+          return;
+        }
         positions = body.positions.slice(0, 100);
-        bridgeStatus = { connected: true, updated_at: new Date().toISOString() };
+        bridgeStatus = { ...identity, connected: true, updated_at: new Date().toISOString() };
         res.status(200).json({ ok: true, positions });
         return;
       }
       latestSignal = cleanSignal(body);
+      if (!latestSignal.account_login || !latestSignal.server_name || !latestSignal.bridge_token) {
+        res.status(400).json({ error: 'MT5 command requires account_login, server_name, and bridge_token' });
+        return;
+      }
+      if (bridgeStatus.connected && !sameBridge(bridgeStatus, latestSignal)) {
+        res.status(409).json({ error: 'Command bridge identity does not match connected EA' });
+        return;
+      }
       latestCommand = latestSignal;
-      res.status(200).json({ ok: true, signal: latestSignal, command: latestCommand });
+      res.status(200).json({ ok: true, signal: latestSignal, command: latestCommand, bridge: publicBridgeStatus() });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
